@@ -155,7 +155,7 @@ export default function HomePage() {
         <div className="relative z-10 max-w-3xl space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D2332] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE]">
             <Sparkles className="w-3.5 h-3.5 text-[#CDE06A]" />
-            <span>M1 Finance & Robinhood Pies — On-Chain via xStocks</span>
+            <span>Non-Custodial Thematic Stock Baskets on Solana</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">

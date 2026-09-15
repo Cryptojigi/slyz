@@ -7,9 +7,9 @@
 
 ## Overview
 
-**Slyz** brings the intuitive "Pies" investing experience of M1 Finance and Robinhood to Solana. Instead of researching individual tickers and executing fragmented trades, retail investors can select curated thematic baskets (or build their own), input a dollar amount in USDC, and acquire fractional shares in a single seamless flow.
+**Slyz** is a non-custodial, consumer-grade thematic stock basket investing protocol on Solana. Instead of researching individual tickers and manually executing fragmented trades across disparate liquidity pools, investors can select curated thematic baskets (or design custom portfolios), input a dollar amount in USDC, and acquire fractional shares of tokenized US equities with automated drift tracking and smart rebalancing.
 
-Built for the **Stocklana 2026 Hackathon ($100K Main Track)**.
+Built natively for the **Stocklana 2026 Hackathon ($100K Main Track)**.
 
 ---
 
@@ -25,6 +25,7 @@ Built for the **Stocklana 2026 Hackathon ($100K Main Track)**.
 * **Sequential Swap Engine**: Multi-step transaction orchestration via Jupiter Unified Lite API (`lite-api.jup.ag`), avoiding Solana's 1232-byte transaction MTU limits and eliminating partial-fill rollback risks.
 * **Token-2022 Scaled-UI Precision**: True share-equivalent calculations integrating corporate actions and split multipliers directly from Jupiter v3 price oracles.
 * **Smart Top-Up Rebalancing**: Innovative water-filling algorithm that routes 100% of new deposits into underweight assets to restore target weights with **zero sell fees and zero sell slippage**.
+* **Exit to USDC Liquidation**: Seamlessly exit and liquidate any held basket back into USDC through sequential reverse swaps with real-time on-chain confirmation.
 * **Modern Editorial Aesthetic**: High-contrast, tactile UI inspired by EventBeds (Volt Lime `#CDE06A`, Periwinkle `#8D8AFF`, Obsidian `#0B0E14`, clean bento cards).
 
 ---
