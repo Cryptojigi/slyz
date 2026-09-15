@@ -111,11 +111,58 @@ export default function InvestPage() {
     );
   }
 
-  // Adjust sliders
-  const handleSliderChange = (idx: number, val: number) => {
+  // Auto-renormalizing sliders to ensure components always sum to 100%
+  const handleSliderChange = (idx: number, rawVal: number) => {
+    const clampedVal = Math.max(5, Math.min(90, rawVal));
+    const targetOthers = 100 - clampedVal;
+    const otherIndices = components.map((_, i) => i).filter((i) => i !== idx);
+    const sumOtherCurrent = otherIndices.reduce((sum, i) => sum + components[i].targetWeight, 0);
+
     const updated = [...components];
-    updated[idx].targetWeight = val;
+    updated[idx] = { ...updated[idx], targetWeight: clampedVal };
+
+    if (sumOtherCurrent > 0) {
+      let allocatedOther = 0;
+      otherIndices.forEach((otherIdx, pos) => {
+        if (pos === otherIndices.length - 1) {
+          updated[otherIdx] = {
+            ...updated[otherIdx],
+            targetWeight: Math.max(5, targetOthers - allocatedOther),
+          };
+        } else {
+          const prop = components[otherIdx].targetWeight / sumOtherCurrent;
+          const assigned = Math.max(5, Math.round(prop * targetOthers));
+          allocatedOther += assigned;
+          updated[otherIdx] = { ...updated[otherIdx], targetWeight: assigned };
+        }
+      });
+    } else {
+      const split = Math.floor(targetOthers / otherIndices.length);
+      otherIndices.forEach((otherIdx, pos) => {
+        updated[otherIdx] = {
+          ...updated[otherIdx],
+          targetWeight:
+            pos === otherIndices.length - 1
+              ? targetOthers - split * (otherIndices.length - 1)
+              : split,
+        };
+      });
+    }
+
     setComponents(updated);
+  };
+
+  const equalizeWeights = () => {
+    if (!components.length) return;
+    const count = components.length;
+    const base = Math.floor(100 / count);
+    const remainder = 100 - base * count;
+    setComponents(
+      components.map((c, i) => ({
+        ...c,
+        targetWeight: i === 0 ? base + remainder : base,
+      }))
+    );
   };
 
   const totalWeight = components.reduce((acc, c) => acc + c.targetWeight, 0);
@@ -201,9 +248,9 @@ export default function InvestPage() {
               const asset = VERIFIED_STOCKS[c.symbol];
               const priceInfo = asset ? prices[asset.mint] : null;
               const livePrice = priceInfo?.usdPrice || 0;
-              const multiplier = priceInfo?.scaledUiConfig?.multiplier || 1;
               const dollarSlice = (c.targetWeight / 100) * amountUsd;
-              const estimatedShares = livePrice > 0 ? (dollarSlice / livePrice) * multiplier : 0;
+              // On Solana Token-2022, uiAmount is already display units; estimated shares = dollarSlice / price
+              const estimatedShares = livePrice > 0 ? dollarSlice / livePrice : 0;
 
               return (
                 <div
@@ -296,9 +343,18 @@ export default function InvestPage() {
           {/* Allocation Sliders */}
           <div className="bento-card space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase text-[#8F9CAE] tracking-wider">
-                Fine-Tune Weights
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-extrabold uppercase text-[#8F9CAE] tracking-wider">
+                  Fine-Tune Weights
+                </span>
+                <button
+                  type="button"
+                  onClick={equalizeWeights}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#161B26] border border-[#262D3D] text-[#8D8AFF] hover:text-white transition-colors"
+                >
+                  Equalize
+                </button>
+              </div>
               <span
                 className={`text-xs font-mono font-bold ${
                   totalWeight === 100 ? "text-[#CDE06A]" : "text-rose-400"

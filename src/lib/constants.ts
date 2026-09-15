@@ -37,7 +37,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "NVDA",
     mint: "Xsc9qvGR1efVDFGLrVsmkzv3qi45LTBjeUKSPmx9qEh",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/NVDA.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/NVDAx.png",
     category: "tech",
   },
   AAPLx: {
@@ -46,7 +46,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "AAPL",
     mint: "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/AAPL.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/AAPLx.png",
     category: "tech",
   },
   MSFTx: {
@@ -55,7 +55,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "MSFT",
     mint: "XspzcW1PRtgf6Wj92HCiZdjzKCyFekVD8P5Ueh3dRMX",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/MSFT.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/MSFTx.png",
     category: "tech",
   },
   TSLAx: {
@@ -64,7 +64,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "TSLA",
     mint: "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/TSLA.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/TSLAx.png",
     category: "growth",
   },
   AMZNx: {
@@ -73,7 +73,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "AMZN",
     mint: "Xs3eBt7uRfJX8QUs4suhyU8p2M6DoUDrJyWBa8LLZsg",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/AMZN.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/AMZNx.png",
     category: "tech",
   },
   METAx: {
@@ -82,7 +82,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "META",
     mint: "Xsa62P5mvPszXL1krVUnU5ar38bBSVcWAB6fmPCo5Zu",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/META.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/METAx.png",
     category: "tech",
   },
   GOOGLx: {
@@ -91,7 +91,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "GOOGL",
     mint: "XsCPL9dNWBMvFtTmwcCA5v3xWPSMEBCszbQdiLLq6aN",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/GOOGL.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/GOOGLx.png",
     category: "tech",
   },
   SPYx: {
@@ -100,7 +100,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "SPY",
     mint: "XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/SPY.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/SPYx.png",
     category: "index",
   },
   QQQx: {
@@ -109,7 +109,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "QQQ",
     mint: "Xs8S1uUs1zvS2p7iwtsG3b6fkhpvmwz4GYU3gWAmWHZ",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/QQQ.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/QQQx.png",
     category: "index",
   },
   COINx: {
@@ -118,7 +118,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     underlying: "COIN",
     mint: "Xs7ZdzSHLU9ftNJsii5fCeJhoRWSC32SQGzGQtePxNu",
     decimals: 8,
-    logo: "https://xstocks-metadata.backed.fi/logos/tokens/COIN.png",
+    logo: "https://xstocks-metadata.backed.fi/logos/tokens/COINx.png",
     category: "crypto",
   },
 };

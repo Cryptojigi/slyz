@@ -54,20 +54,86 @@ export default function HomePage() {
 
   // Normalization helper for custom sliders
   const handleWeightChange = (index: number, newWeight: number) => {
+    const clampedVal = Math.max(5, Math.min(80, newWeight));
+    const targetOthers = 100 - clampedVal;
+    const otherIndices = customComponents.map((_, i) => i).filter((i) => i !== index);
+    const sumOtherCurrent = otherIndices.reduce((sum, i) => sum + customComponents[i].targetWeight, 0);
+
     const updated = [...customComponents];
-    updated[index].targetWeight = newWeight;
+    updated[index] = { ...updated[index], targetWeight: clampedVal };
+
+    if (sumOtherCurrent > 0) {
+      let allocatedOther = 0;
+      otherIndices.forEach((otherIdx, pos) => {
+        if (pos === otherIndices.length - 1) {
+          updated[otherIdx] = {
+            ...updated[otherIdx],
+            targetWeight: Math.max(5, targetOthers - allocatedOther),
+          };
+        } else {
+          const prop = customComponents[otherIdx].targetWeight / sumOtherCurrent;
+          const assigned = Math.max(5, Math.round(prop * targetOthers));
+          allocatedOther += assigned;
+          updated[otherIdx] = { ...updated[otherIdx], targetWeight: assigned };
+        }
+      });
+    } else {
+      const split = Math.floor(targetOthers / otherIndices.length);
+      otherIndices.forEach((otherIdx, pos) => {
+        updated[otherIdx] = {
+          ...updated[otherIdx],
+          targetWeight:
+            pos === otherIndices.length - 1
+              ? targetOthers - split * (otherIndices.length - 1)
+              : split,
+        };
+      });
+    }
+
     setCustomComponents(updated);
+  };
+
+  const equalizeCustomWeights = () => {
+    if (!customComponents.length) return;
+    const count = customComponents.length;
+    const base = Math.floor(100 / count);
+    const remainder = 100 - base * count;
+    setCustomComponents(
+      customComponents.map((c, i) => ({
+        ...c,
+        targetWeight: i === 0 ? base + remainder : base,
+      }))
+    );
   };
 
   const addCustomStock = (symbol: string) => {
     if (customComponents.length >= 4) return;
     if (customComponents.some((c) => c.symbol === symbol)) return;
-    setCustomComponents([...customComponents, { symbol, targetWeight: 20 }]);
+    const nextList = [...customComponents, { symbol, targetWeight: 20 }];
+    // Re-equalize when adding new leg
+    const count = nextList.length;
+    const base = Math.floor(100 / count);
+    const remainder = 100 - base * count;
+    setCustomComponents(
+      nextList.map((c, i) => ({
+        ...c,
+        targetWeight: i === 0 ? base + remainder : base,
+      }))
+    );
   };
 
   const removeCustomStock = (symbol: string) => {
     if (customComponents.length <= 2) return;
-    setCustomComponents(customComponents.filter((c) => c.symbol !== symbol));
+    const nextList = customComponents.filter((c) => c.symbol !== symbol);
+    const count = nextList.length;
+    const base = Math.floor(100 / count);
+    const remainder = 100 - base * count;
+    setCustomComponents(
+      nextList.map((c, i) => ({
+        ...c,
+        targetWeight: i === 0 ? base + remainder : base,
+      }))
+    );
   };
 
   const totalCustomWeight = customComponents.reduce((acc, c) => acc + c.targetWeight, 0);
@@ -99,7 +165,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-base sm:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
-            Invest in curated baskets of tokenized US equities on Solana with a single click.
+            Invest in curated baskets of tokenized US equities on Solana — three signatures, one theme.
             Non-custodial, fractional shares powered by Jupiter and xStocks Token-2022.
           </p>
 
@@ -279,6 +345,18 @@ export default function HomePage() {
             <div className="lg:col-span-7 space-y-6">
               {/* Sliders for each component */}
               <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase text-[#8F9CAE] tracking-wider">
+                    Component Weights
+                  </span>
+                  <button
+                    type="button"
+                    onClick={equalizeCustomWeights}
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#161B26] border border-[#262D3D] text-[#8D8AFF] hover:text-white hover:border-[#8D8AFF] transition-colors"
+                  >
+                    Equalize All
+                  </button>
+                </div>
                 {customComponents.map((comp, idx) => {
                   const asset = VERIFIED_STOCKS[comp.symbol];
                   return (

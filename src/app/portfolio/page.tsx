@@ -1,20 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   PieChart as PieIcon,
   TrendingUp,
-  RefreshCw,
   Zap,
   ArrowUpRight,
   ShieldCheck,
-  AlertTriangle,
   Wallet,
   ExternalLink,
   PlusCircle,
+  ArrowDownLeft,
+  Layers,
+  Sliders,
 } from "lucide-react";
 import {
   VERIFIED_STOCKS,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/portfolio";
 import { DonutChart, DONUT_COLORS } from "@/components/DonutChart";
 import { ExecutionModal } from "@/components/ExecutionModal";
+import { LiquidationModal } from "@/components/LiquidationModal";
 
 export default function PortfolioPage() {
   const wallet = useWallet();
@@ -52,6 +54,9 @@ export default function PortfolioPage() {
   const [topUpAmountUsd, setTopUpAmountUsd] = useState(50);
   const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
 
+  // Liquidation / Exit Modal State
+  const [isLiquidationOpen, setIsLiquidationOpen] = useState(false);
+
   // Load stored baskets from localStorage
   useEffect(() => {
     const loaded = getStoredBaskets();
@@ -59,39 +64,75 @@ export default function PortfolioPage() {
   }, []);
 
   // Fetch on-chain balances and live prices
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const allMints = Object.values(VERIFIED_STOCKS).map((s) => s.mint);
-        const priceMap = await getJupiterPrices(allMints);
-        setPrices(priceMap);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const allMints = Object.values(VERIFIED_STOCKS).map((s) => s.mint);
+      const priceMap = await getJupiterPrices(allMints);
+      setPrices(priceMap);
 
-        if (wallet.publicKey) {
-          const userBal = await fetchUserBalances(wallet.publicKey);
-          setBalances(userBal);
-        }
-      } catch (e) {
-        console.error("Error loading portfolio data:", e);
-      } finally {
-        setLoading(false);
+      if (wallet.publicKey) {
+        const userBal = await fetchUserBalances(wallet.publicKey);
+        setBalances(userBal);
       }
-    };
+    } catch (e) {
+      console.error("Error loading portfolio data:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet.publicKey]);
 
+  useEffect(() => {
     loadData();
     const interval = setInterval(loadData, 25000);
     return () => clearInterval(interval);
-  }, [wallet.publicKey]);
+  }, [loadData]);
 
-  // Determine active target components (either from stored basket, or default to Mag 3 demo)
-  const activeBasket = storedBaskets[selectedBasketIndex] || {
-    id: "mag-3",
-    name: "The Mag 3",
-    investedAt: Date.now(),
-    components: CURATED_BASKETS[0].components,
-    initialDepositUsd: 100,
-    txSignatures: [],
-  };
+  // Check if wallet holds any on-chain xStock balances
+  const onChainHoldingsCount = Object.values(balances.token2022Balances).filter(
+    (b) => b > 0.0001
+  ).length;
+
+  const hasInvestedBaskets = storedBaskets.length > 0;
+  const hasOnChainPositions = onChainHoldingsCount > 0;
+
+  // Active target components:
+  // 1. From user's saved baskets in localStorage
+  // 2. OR detected directly on-chain if user holds xStocks
+  // 3. Fallback placeholder (only used if actively viewing a demo)
+  let activeBasket: StoredBasket;
+
+  if (hasInvestedBaskets) {
+    activeBasket = storedBaskets[selectedBasketIndex] || storedBaskets[0];
+  } else if (hasOnChainPositions) {
+    const detectedComponents: BasketComponent[] = Object.entries(balances.token2022Balances)
+      .filter(([, bal]) => bal > 0.0001)
+      .map(([mint]) => {
+        const found = Object.values(VERIFIED_STOCKS).find((s) => s.mint === mint);
+        return {
+          symbol: found ? found.symbol : "NVDAx",
+          targetWeight: Math.round(100 / Math.max(1, onChainHoldingsCount)),
+        };
+      });
+
+    activeBasket = {
+      id: "onchain-detected",
+      name: "On-Chain Active Holdings",
+      investedAt: Date.now(),
+      components: detectedComponents,
+      initialDepositUsd: 0,
+      txSignatures: [],
+    };
+  } else {
+    activeBasket = {
+      id: "empty",
+      name: "Empty Portfolio",
+      investedAt: Date.now(),
+      components: CURATED_BASKETS[0].components,
+      initialDepositUsd: 0,
+      txSignatures: [],
+    };
+  }
 
   // Calculate positions and drift
   const { positions, totalValueUsd, maxDriftPct } = calculatePortfolioPositions(
@@ -111,11 +152,16 @@ export default function PortfolioPage() {
   // Calculate Smart Top-Up suggestions
   const topUpPlan = calculateSmartTopUp(positions, topUpAmountUsd);
 
-  // Build target components for Top-Up execution
-  const topUpComponents: BasketComponent[] = topUpPlan.map((p) => ({
-    symbol: p.symbol,
-    targetWeight: Math.round((p.allocationUsd / topUpAmountUsd) * 100),
-  }));
+  // Build target components for Top-Up execution ensuring exact 100% sum
+  let remainingWeight = 100;
+  const topUpComponents: BasketComponent[] = topUpPlan.map((p, idx) => {
+    if (idx === topUpPlan.length - 1) {
+      return { symbol: p.symbol, targetWeight: remainingWeight };
+    }
+    const weight = Math.round((p.allocationUsd / topUpAmountUsd) * 100);
+    remainingWeight -= weight;
+    return { symbol: p.symbol, targetWeight: weight };
+  });
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -135,12 +181,23 @@ export default function PortfolioPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsTopUpOpen(true)}
-            disabled={!wallet.connected}
-            className="btn-primary flex items-center gap-2 text-xs"
+            disabled={!wallet.connected || totalValueUsd <= 0}
+            className="btn-primary flex items-center gap-2 text-xs disabled:opacity-50"
           >
             <Zap className="w-3.5 h-3.5" />
             <span>Smart Top-Up</span>
           </button>
+
+          <button
+            onClick={() => setIsLiquidationOpen(true)}
+            disabled={!wallet.connected || totalValueUsd <= 0.05}
+            className="btn-secondary flex items-center gap-2 text-xs border-rose-500/30 text-rose-300 hover:bg-rose-950/40 hover:border-rose-500 disabled:opacity-50"
+            title="Liquidate all positions in this pie back to USDC"
+          >
+            <ArrowDownLeft className="w-3.5 h-3.5" />
+            <span>Liquidate to USDC</span>
+          </button>
+
           <Link href="/" className="btn-secondary flex items-center gap-1.5 text-xs">
             <PlusCircle className="w-3.5 h-3.5" />
             <span>New Pie</span>
@@ -150,193 +207,251 @@ export default function PortfolioPage() {
 
       {/* Disconnected Notice */}
       {!wallet.connected && (
-        <div className="p-6 rounded-2xl bg-[#161B26] border border-[#262D3D] text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-[#1D2332] text-[#CDE06A] mx-auto flex items-center justify-center">
-            <Wallet className="w-6 h-6" />
+        <div className="p-8 rounded-2xl bg-[#161B26] border border-[#262D3D] text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-[#1D2332] text-[#CDE06A] mx-auto flex items-center justify-center">
+            <Wallet className="w-7 h-7" />
           </div>
-          <h3 className="text-lg font-bold text-white">Connect Your Solana Wallet</h3>
-          <p className="text-xs text-[#8F9CAE] max-w-md mx-auto">
-            Connect Phantom or Solflare to view your active tokenized equity balances, track
-            portfolio drift, and execute rebalancing.
-          </p>
+          <div className="space-y-1">
+            <h3 className="text-xl font-bold text-white">Connect Your Solana Wallet</h3>
+            <p className="text-xs text-[#8F9CAE] max-w-md mx-auto leading-relaxed">
+              Connect Phantom or Solflare to view your active tokenized equity balances, track
+              portfolio drift, and execute automated rebalancing.
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Overview Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Card 1: Total Stock Value */}
-        <div className="bento-card">
-          <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
-            Total xStocks Holdings
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white font-mono">
-              ${totalValueUsd.toFixed(2)}
-            </span>
-            <span className="text-xs text-[#8F9CAE] font-mono">USD</span>
+      {/* Connected but Empty Wallet (Zero holdings and no saved baskets) */}
+      {wallet.connected && !loading && !hasInvestedBaskets && !hasOnChainPositions && (
+        <div className="bento-card text-center py-16 px-8 max-w-2xl mx-auto space-y-6">
+          <div className="w-16 h-16 rounded-full bg-[#161B26] border border-[#262D3D] text-[#8D8AFF] mx-auto flex items-center justify-center">
+            <PieIcon className="w-8 h-8" />
           </div>
-          <span className="text-[11px] text-[#CDE06A] font-semibold mt-2 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" />
-            <span>Multipliers Applied (Token-2022)</span>
-          </span>
-        </div>
-
-        {/* Card 2: Maximum Drift */}
-        <div className="bento-card">
-          <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
-            Portfolio Allocation Drift
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span
-              className={`text-3xl font-extrabold font-mono ${
-                maxDriftPct > 5 ? "text-amber-400" : "text-[#CDE06A]"
-              }`}
-            >
-              {maxDriftPct.toFixed(1)}%
-            </span>
-            <span className="text-xs text-[#8F9CAE]">max deviation</span>
+          <div className="space-y-2">
+            <span className="pill-badge pill-badge-lime">Clean Slate</span>
+            <h3 className="text-2xl font-extrabold text-white">No Active Theme Pies Yet</h3>
+            <p className="text-sm text-[#8F9CAE] max-w-md mx-auto leading-relaxed">
+              This wallet doesn&apos;t hold any tokenized stock positions yet. Choose a curated theme or design your own custom basket with fractional shares from just $10 USDC.
+            </p>
           </div>
-          <p className="text-[11px] text-[#8F9CAE] mt-2">
-            {maxDriftPct > 5
-              ? "Rebalance recommended via Smart Top-Up"
-              : "Well aligned with target weights"}
-          </p>
-        </div>
-
-        {/* Card 3: Wallet Liquidity */}
-        <div className="bento-card">
-          <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
-            Available Wallet Capital
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white font-mono">
-              ${balances.usdcBalance.toFixed(2)}
-            </span>
-            <span className="text-xs text-[#8F9CAE] font-mono">USDC</span>
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+            <Link href="/" className="btn-primary flex items-center gap-2">
+              <Layers className="w-4 h-4" />
+              <span>Explore Curated Pies</span>
+            </Link>
+            <Link href="/?tab=custom" className="btn-secondary flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-[#8D8AFF]" />
+              <span>Build Custom Slyz</span>
+            </Link>
           </div>
-          <span className="text-[11px] text-[#8F9CAE] mt-2 block font-mono">
-            Gas: {balances.solBalance.toFixed(3)} SOL{" "}
-            {balances.hasSufficientGas ? "✓" : "(Low Gas)"}
-          </span>
         </div>
-      </div>
+      )}
 
-      {/* Main Breakdown: Donut Chart + Holdings Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left: Donut Chart Allocation */}
-        <div className="lg:col-span-5 bento-card flex flex-col items-center">
-          <span className="pill-badge pill-badge-lime mb-2">
-            {activeBasket.name}
-          </span>
-          <DonutChart
-            data={donutData}
-            centerLabel={`$${totalValueUsd.toFixed(0)}`}
-            centerSublabel="xStocks Value"
-            height={260}
-          />
-          <p className="text-xs text-[#8F9CAE] text-center mt-4">
-            Target vs. Current Weight based on live Jupiter v1 oracle pricing.
-          </p>
-        </div>
+      {/* Active Holdings View */}
+      {(hasInvestedBaskets || hasOnChainPositions || totalValueUsd > 0) && (
+        <>
+          {/* Multiple Baskets Switcher Tabs */}
+          {storedBaskets.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[#262D3D]">
+              <span className="text-xs font-bold uppercase text-[#8F9CAE] mr-2">Your Pies:</span>
+              {storedBaskets.map((basket, idx) => (
+                <button
+                  key={basket.id}
+                  onClick={() => setSelectedBasketIndex(idx)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    selectedBasketIndex === idx
+                      ? "bg-[#CDE06A] text-[#0B0E14] shadow-lg shadow-[#CDE06A]/10"
+                      : "bg-[#161B26] border border-[#262D3D] text-[#8F9CAE] hover:text-white"
+                  }`}
+                >
+                  {basket.name}
+                </button>
+              ))}
+            </div>
+          )}
 
-        {/* Right: Detailed Table with Multipliers and Drift */}
-        <div className="lg:col-span-7 bento-card overflow-hidden p-0">
-          <div className="p-4 border-b border-[#262D3D] flex items-center justify-between">
-            <h3 className="font-extrabold text-sm text-white">Component Holdings</h3>
-            <span className="text-xs text-[#8F9CAE] font-mono">
-              {positions.length} Positions
-            </span>
+          {/* Overview Cards Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Card 1: Total Stock Value */}
+            <div className="bento-card">
+              <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
+                Total xStocks Holdings
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-white font-mono">
+                  ${totalValueUsd.toFixed(2)}
+                </span>
+                <span className="text-xs text-[#8F9CAE] font-mono">USD</span>
+              </div>
+              <span className="text-[11px] text-[#CDE06A] font-semibold mt-2 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                <span>Token-2022 Scaled UI Shares</span>
+              </span>
+            </div>
+
+            {/* Card 2: Maximum Drift */}
+            <div className="bento-card">
+              <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
+                Portfolio Allocation Drift
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={`text-3xl font-extrabold font-mono ${
+                    maxDriftPct > 5 ? "text-amber-400" : "text-[#CDE06A]"
+                  }`}
+                >
+                  {maxDriftPct.toFixed(1)}%
+                </span>
+                <span className="text-xs text-[#8F9CAE]">max deviation</span>
+              </div>
+              <p className="text-[11px] text-[#8F9CAE] mt-2">
+                {maxDriftPct > 5
+                  ? "Rebalance recommended via Smart Top-Up"
+                  : "Well aligned with target weights"}
+              </p>
+            </div>
+
+            {/* Card 3: Wallet Liquidity */}
+            <div className="bento-card">
+              <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
+                Available Wallet Capital
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-white font-mono">
+                  ${balances.usdcBalance.toFixed(2)}
+                </span>
+                <span className="text-xs text-[#8F9CAE] font-mono">USDC</span>
+              </div>
+              <span className="text-[11px] text-[#8F9CAE] mt-2 block font-mono">
+                Gas: {balances.solBalance.toFixed(3)} SOL{" "}
+                {balances.hasSufficientGas ? "✓" : "(Low Gas)"}
+              </span>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#0B0E14]/70 text-[#8F9CAE] uppercase font-semibold font-mono border-b border-[#262D3D]">
-                <tr>
-                  <th className="py-3 px-4">Asset</th>
-                  <th className="py-3 px-4">Shares (Scaled)</th>
-                  <th className="py-3 px-4">Value</th>
-                  <th className="py-3 px-4">Weight</th>
-                  <th className="py-3 px-4 text-right">Drift</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#262D3D]/50 font-mono">
-                {positions.map((pos) => {
-                  const isDriftPositive = pos.driftPct > 0;
-                  return (
-                    <tr key={pos.symbol} className="hover:bg-[#1D2332]/50 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-6 h-6 rounded-full overflow-hidden bg-[#0B0E14] border border-[#262D3D] flex items-center justify-center">
-                            {pos.logo ? (
-                              <Image
-                                src={pos.logo}
-                                alt={pos.symbol}
-                                width={24}
-                                height={24}
-                                className="object-cover"
-                                unoptimized
-                              />
-                            ) : (
-                              <span>{pos.symbol.slice(0, 2)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <span className="font-bold text-white block">{pos.underlying}</span>
-                            <span className="text-[10px] text-[#8F9CAE] font-sans">
-                              ${pos.usdPrice > 0 ? pos.usdPrice.toFixed(2) : "---"}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
+          {/* Main Breakdown: Donut Chart + Holdings Table */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left: Donut Chart Allocation */}
+            <div className="lg:col-span-5 bento-card flex flex-col items-center">
+              <span className="pill-badge pill-badge-lime mb-2">
+                {activeBasket.name}
+              </span>
+              <DonutChart
+                data={donutData}
+                centerLabel={`$${totalValueUsd.toFixed(0)}`}
+                centerSublabel="xStocks Value"
+                height={260}
+              />
+              <p className="text-xs text-[#8F9CAE] text-center mt-4 leading-relaxed">
+                Target vs. Current Weight based on live Jupiter v1 oracle pricing.
+              </p>
+            </div>
 
-                      <td className="py-3.5 px-4">
-                        <span className="text-white font-bold block">
-                          {pos.shareEquivalents > 0
-                            ? pos.shareEquivalents.toFixed(4)
-                            : "0.0000"}
-                        </span>
-                        <span className="text-[10px] text-[#8F9CAE]">
-                          mult: {pos.multiplier.toFixed(4)}
-                        </span>
-                      </td>
+            {/* Right: Detailed Table with Multipliers and Drift */}
+            <div className="lg:col-span-7 bento-card overflow-hidden p-0">
+              <div className="p-4 border-b border-[#262D3D] flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-sm text-white">Component Holdings</h3>
+                  <p className="text-[10px] text-[#8F9CAE]">
+                    Reflects wallet-wide on-chain Token-2022 balances
+                  </p>
+                </div>
+                <span className="text-xs text-[#8F9CAE] font-mono">
+                  {positions.length} Positions
+                </span>
+              </div>
 
-                      <td className="py-3.5 px-4 font-bold text-white">
-                        ${pos.currentValueUsd.toFixed(2)}
-                      </td>
-
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-white font-bold">
-                            {pos.currentWeightPct.toFixed(1)}%
-                          </span>
-                          <span className="text-[#8F9CAE] text-[10px]">
-                            (tgt {pos.targetWeightPct}%)
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="py-3.5 px-4 text-right">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
-                            Math.abs(pos.driftPct) < 1
-                              ? "text-[#8F9CAE] bg-[#161B26]"
-                              : isDriftPositive
-                              ? "text-[#CDE06A] bg-[#CDE06A]/10"
-                              : "text-rose-400 bg-rose-500/10"
-                          }`}
-                        >
-                          {isDriftPositive ? "+" : ""}
-                          {pos.driftPct.toFixed(1)}%
-                        </span>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#0B0E14]/70 text-[#8F9CAE] uppercase font-semibold font-mono border-b border-[#262D3D]">
+                    <tr>
+                      <th className="py-3 px-4">Asset</th>
+                      <th className="py-3 px-4">Shares</th>
+                      <th className="py-3 px-4">Value</th>
+                      <th className="py-3 px-4">Weight</th>
+                      <th className="py-3 px-4 text-right">Drift</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-[#262D3D]/50 font-mono">
+                    {positions.map((pos) => {
+                      const isDriftPositive = pos.driftPct > 0;
+                      return (
+                        <tr key={pos.symbol} className="hover:bg-[#1D2332]/50 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-6 h-6 rounded-full overflow-hidden bg-[#0B0E14] border border-[#262D3D] flex items-center justify-center">
+                                {pos.logo ? (
+                                  <Image
+                                    src={pos.logo}
+                                    alt={pos.symbol}
+                                    width={24}
+                                    height={24}
+                                    className="object-cover"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <span>{pos.symbol.slice(0, 2)}</span>
+                                )}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white block">{pos.underlying}</span>
+                                <span className="text-[10px] text-[#8F9CAE] font-sans">
+                                  ${pos.usdPrice > 0 ? pos.usdPrice.toFixed(2) : "---"}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <span className="text-white font-bold block">
+                              {pos.shareEquivalents > 0
+                                ? pos.shareEquivalents.toFixed(4)
+                                : "0.0000"}
+                            </span>
+                            <span className="text-[10px] text-[#8F9CAE]">
+                              {pos.symbol}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 font-bold text-white">
+                            ${pos.currentValueUsd.toFixed(2)}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-white font-bold">
+                                {pos.currentWeightPct.toFixed(1)}%
+                              </span>
+                              <span className="text-[#8F9CAE] text-[10px]">
+                                (tgt {pos.targetWeightPct}%)
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                                Math.abs(pos.driftPct) < 1
+                                  ? "text-[#8F9CAE] bg-[#161B26]"
+                                  : isDriftPositive
+                                  ? "text-[#CDE06A] bg-[#CDE06A]/10"
+                                  : "text-rose-400 bg-rose-500/10"
+                              }`}
+                            >
+                              {isDriftPositive ? "+" : ""}
+                              {pos.driftPct.toFixed(1)}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* SMART TOP-UP MODAL */}
       {isTopUpOpen && (
@@ -440,6 +555,19 @@ export default function PortfolioPage() {
           components={topUpComponents}
           solBalance={balances.solBalance}
           usdcBalance={balances.usdcBalance}
+        />
+      )}
+
+      {/* Liquidation / Exit Modal */}
+      {isLiquidationOpen && (
+        <LiquidationModal
+          isOpen={isLiquidationOpen}
+          onClose={() => setIsLiquidationOpen(false)}
+          positions={positions}
+          solBalance={balances.solBalance}
+          onSuccess={() => {
+            loadData();
+          }}
         />
       )}
     </div>

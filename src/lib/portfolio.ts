@@ -78,7 +78,8 @@ export function calculatePortfolioPositions(
     const priceInfo = (mint && prices[mint]) || { usdPrice: 0, scaledUiConfig: { multiplier: 1 } };
 
     const multiplier = priceInfo.scaledUiConfig?.multiplier || 1;
-    const shareEquivalents = rawBal * multiplier;
+    // On Solana Token-2022, uiAmount from RPC already accounts for decimals and scaling.
+    const shareEquivalents = rawBal;
     const usdPrice = priceInfo.usdPrice || 0;
     const currentValueUsd = shareEquivalents * usdPrice;
 
@@ -145,25 +146,46 @@ export function calculateSmartTopUp(
 
   // If sum of deficits > 0, distribute deposit proportionally among deficits
   if (sumDeficits > 0) {
-    return positions.map((p, i) => {
-      const allocationUsd = (deficits[i] / sumDeficits) * depositAmountUsd;
-      const targetShareAmount = p.usdPrice > 0 ? (allocationUsd / p.usdPrice) / p.multiplier : 0;
+    let allocatedSum = 0;
+    const items = positions.map((p, i) => {
+      let allocationUsd = (deficits[i] / sumDeficits) * depositAmountUsd;
+      allocationUsd = Math.floor(allocationUsd * 100) / 100;
+      allocatedSum += allocationUsd;
+      const targetShareAmount = p.usdPrice > 0 ? allocationUsd / p.usdPrice : 0;
       return {
         symbol: p.symbol,
-        allocationUsd: Math.round(allocationUsd * 100) / 100,
+        allocationUsd,
         targetShareAmount,
       };
     });
+
+    // Absorb any leftover rounding cents into the highest deficit item
+    const remainder = Math.round((depositAmountUsd - allocatedSum) * 100) / 100;
+    if (remainder > 0 && items.length > 0) {
+      items[0].allocationUsd = Math.round((items[0].allocationUsd + remainder) * 100) / 100;
+      items[0].targetShareAmount = positions[0].usdPrice > 0 ? items[0].allocationUsd / positions[0].usdPrice : 0;
+    }
+    return items;
   }
 
   // Fallback if all already balanced: distribute according to target weights
-  return positions.map((p) => {
-    const allocationUsd = (p.targetWeightPct / 100) * depositAmountUsd;
-    const targetShareAmount = p.usdPrice > 0 ? (allocationUsd / p.usdPrice) / p.multiplier : 0;
+  let allocatedSum = 0;
+  const items = positions.map((p) => {
+    let allocationUsd = (p.targetWeightPct / 100) * depositAmountUsd;
+    allocationUsd = Math.floor(allocationUsd * 100) / 100;
+    allocatedSum += allocationUsd;
+    const targetShareAmount = p.usdPrice > 0 ? allocationUsd / p.usdPrice : 0;
     return {
       symbol: p.symbol,
-      allocationUsd: Math.round(allocationUsd * 100) / 100,
+      allocationUsd,
       targetShareAmount,
     };
   });
+
+  const remainder = Math.round((depositAmountUsd - allocatedSum) * 100) / 100;
+  if (remainder > 0 && items.length > 0) {
+    items[0].allocationUsd = Math.round((items[0].allocationUsd + remainder) * 100) / 100;
+    items[0].targetShareAmount = positions[0].usdPrice > 0 ? items[0].allocationUsd / positions[0].usdPrice : 0;
+  }
+  return items;
 }

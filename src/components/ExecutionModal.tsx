@@ -143,8 +143,12 @@ export const ExecutionModal: React.FC<Props> = ({
           wrapAndUnwrapSol: true,
         });
 
-        // Deserialize transaction buffer
-        const swapTxBuf = Buffer.from(swapRes.swapTransaction, "base64");
+        // Deserialize transaction buffer using browser-native Uint8Array
+        const binaryString = atob(swapRes.swapTransaction);
+        const swapTxBuf = new Uint8Array(binaryString.length);
+        for (let b = 0; b < binaryString.length; b++) {
+          swapTxBuf[b] = binaryString.charCodeAt(b);
+        }
         const transaction = VersionedTransaction.deserialize(swapTxBuf);
 
         // Request wallet signature and broadcast
@@ -154,13 +158,17 @@ export const ExecutionModal: React.FC<Props> = ({
           maxRetries: 3,
         });
 
-        // Await confirmation
-        const latestBlockhash = await connection.getLatestBlockhash("confirmed");
+        // Await confirmation using transaction's recentBlockhash and swapRes.lastValidBlockHeight
+        const blockhash = transaction.message.recentBlockhash;
+        const lastValidBlockHeight =
+          swapRes.lastValidBlockHeight ??
+          (await connection.getLatestBlockhash("confirmed")).lastValidBlockHeight;
+
         await connection.confirmTransaction(
           {
             signature,
-            blockhash: latestBlockhash.blockhash,
-            lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            blockhash,
+            lastValidBlockHeight,
           },
           "confirmed"
         );
