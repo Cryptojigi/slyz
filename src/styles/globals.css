@@ -1,0 +1,185 @@
+@import "@solana/wallet-adapter-react-ui/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 11 14 20;
+    --foreground: 255 255 255;
+  }
+
+  body {
+    background-color: #0B0E14;
+    color: #FFFFFF;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* EventBeds-style high-contrast pill styling */
+.pill-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase;
+}
+
+.pill-badge-lime {
+  background-color: #CDE06A;
+  color: #0B0E14;
+}
+
+.pill-badge-periwinkle {
+  background-color: #8D8AFF;
+  color: #0B0E14;
+}
+
+.pill-badge-dark {
+  background-color: #1D2332;
+  color: #CDE06A;
+  border: 1px solid #262D3D;
+}
+
+/* Tactile button classes */
+.btn-primary {
+  @apply inline-flex items-center justify-center font-bold px-6 py-3.5 rounded-full transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
+  background-color: #CDE06A;
+  color: #0B0E14;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #B5C856;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center font-semibold px-5 py-3 rounded-full transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  background-color: #161B26;
+  color: #FFFFFF;
+  border: 1px solid #262D3D;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #1D2332;
+  border-color: #384257;
+}
+
+/* Bento card styling */
+.bento-card {
+  @apply bg-[#161B26] border border-[#262D3D] rounded-[18px] p-6 transition-all duration-200;
+}
+
+.bento-card:hover {
+  border-color: #384257;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0E14;
+}
+::-webkit-scrollbar-thumb {
+  background: #262D3D;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #384257;
+}
+
+/* Solana wallet button styling (scoped to trigger in navbar) */
+.slyz-wallet-btn .wallet-adapter-button {
+  font-family: inherit !important;
+  border-radius: 9999px !important;
+  background-color: #CDE06A !important;
+  color: #0B0E14 !important;
+  font-weight: 700 !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  padding: 0 18px !important;
+  font-size: 13px !important;
+  transition: all 0.15s ease !important;
+}
+
+.slyz-wallet-btn .wallet-adapter-button:hover {
+  background-color: #B5C856 !important;
+}
+
+/* Solana wallet modal overrides for premium dark theme */
+.wallet-adapter-modal-wrapper {
+  background: #161B26 !important;
+  border: 1px solid #262D3D !important;
+  border-radius: 24px !important;
+  font-family: inherit !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  padding: 32px 28px !important;
+}
+
+.wallet-adapter-modal-title {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+  margin-bottom: 20px !important;
+}
+
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.wallet-adapter-modal-list li {
+  margin: 0 !important;
+}
+
+.wallet-adapter-modal-list li .wallet-adapter-button {
+  background-color: #0B0E14 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #262D3D !important;
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  height: 52px !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  transition: all 0.15s ease !important;
+}
+
+.wallet-adapter-modal-list li .wallet-adapter-button:hover {
+  background-color: #1D2332 !important;
+  border-color: #8D8AFF !important;
+  transform: translateY(-1px) !important;
+}
+
+.wallet-adapter-modal-list li .wallet-adapter-button span {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #8D8AFF !important;
+  background-color: rgba(141, 138, 255, 0.1) !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  margin-left: auto !important;
+}
+
+.wallet-adapter-modal-button-close {
+  background: #1D2332 !important;
+  color: #8F9CAE !important;
+  border: 1px solid #262D3D !important;
+  border-radius: 9999px !important;
+  transition: all 0.15s ease !important;
+  top: 20px !important;
+  right: 20px !important;
+}
+
+.wallet-adapter-modal-button-close:hover {
+  background: #262D3D !important;
+  color: #FFFFFF !important;
+}
+
