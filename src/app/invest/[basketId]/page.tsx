@@ -72,6 +72,7 @@ export default function InvestPage() {
     solBalance: 0,
     usdcBalance: 0,
     token2022Balances: {},
+    token2022RawAmounts: {},
     hasSufficientGas: false,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -396,7 +397,7 @@ export default function InvestPage() {
           <div className="p-4 rounded-xl bg-[#161B26] border border-[#262D3D] text-xs space-y-2 text-[#8F9CAE]">
             <div className="flex items-center justify-between font-mono">
               <span>Jupiter Route Slippage:</span>
-              <span className="text-white">&lt; 0.3%</span>
+              <span className="text-white">1.0% max slippage</span>
             </div>
             <div className="flex items-center justify-between font-mono">
               <span>Estimated Solana Network Gas:</span>
@@ -435,7 +436,10 @@ export default function InvestPage() {
         basketId={basket.id}
         basketName={basket.name}
         totalUsdAmount={amountUsd}
-        components={components}
+        legs={components.map((c) => ({
+          symbol: c.symbol,
+          amountUsd: (c.targetWeight / 100) * amountUsd,
+        }))}
         solBalance={balances.solBalance}
         usdcBalance={balances.usdcBalance}
       />

@@ -54,7 +54,7 @@ export default function HomePage() {
 
   // Normalization helper for custom sliders
   const handleWeightChange = (index: number, newWeight: number) => {
-    const clampedVal = Math.max(5, Math.min(80, newWeight));
+    const clampedVal = Math.max(5, Math.min(90, newWeight));
     const targetOthers = 100 - clampedVal;
     const otherIndices = customComponents.map((_, i) => i).filter((i) => i !== index);
     const sumOtherCurrent = otherIndices.reduce((sum, i) => sum + customComponents[i].targetWeight, 0);
@@ -389,7 +389,7 @@ export default function HomePage() {
                       <input
                         type="range"
                         min="5"
-                        max="80"
+                        max="90"
                         step="5"
                         value={comp.targetWeight}
                         onChange={(e) => handleWeightChange(idx, Number(e.target.value))}

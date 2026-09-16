@@ -29,6 +29,7 @@ export interface LiquidationStepState {
   status: "idle" | "quoting" | "signing" | "confirming" | "success" | "failed";
   txSignature?: string;
   receivedUsdc?: number;
+  rawAmountString?: string;
   errorMessage?: string;
 }
 
@@ -57,6 +58,7 @@ export function LiquidationModal({
     activeHoldings.map((p) => ({
       symbol: p.symbol,
       shareAmount: p.rawBalance,
+      rawAmountString: p.rawAmountString,
       estimatedUsd: p.currentValueUsd,
       status: "idle",
     }))
@@ -117,8 +119,12 @@ export function LiquidationModal({
       }
 
       try {
-        // xStock has 8 decimals: raw base units = Math.floor(shares * 10^8)
-        const baseUnits = Math.floor(step.shareAmount * Math.pow(10, asset.decimals));
+        // Use exact on-chain base units string if available to avoid floating-point dust
+        const baseUnits =
+          step.rawAmountString && step.rawAmountString !== "0"
+            ? Number(step.rawAmountString)
+            : Math.floor(step.shareAmount * Math.pow(10, asset.decimals));
+
         if (baseUnits <= 0) {
           updateStep(i, { status: "success", receivedUsdc: 0 });
           continue;
@@ -313,7 +319,7 @@ export function LiquidationModal({
                       {step.status === "success" && (
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono font-bold text-[#CDE06A]">
-                            +${(step.receivedUsdc || step.estimatedUsd).toFixed(2)} USDC
+                            ~${(step.receivedUsdc || step.estimatedUsd).toFixed(2)} USDC (filled)
                           </span>
                           {step.txSignature && (
                             <a

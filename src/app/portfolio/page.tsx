@@ -44,6 +44,7 @@ export default function PortfolioPage() {
     solBalance: 0,
     usdcBalance: 0,
     token2022Balances: {},
+    token2022RawAmounts: {},
     hasSufficientGas: false,
   });
   const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
@@ -138,7 +139,8 @@ export default function PortfolioPage() {
   const { positions, totalValueUsd, maxDriftPct } = calculatePortfolioPositions(
     activeBasket.components,
     balances.token2022Balances,
-    prices
+    prices,
+    balances.token2022RawAmounts
   );
 
   // Donut chart slices for current holdings
@@ -152,16 +154,18 @@ export default function PortfolioPage() {
   // Calculate Smart Top-Up suggestions
   const topUpPlan = calculateSmartTopUp(positions, topUpAmountUsd);
 
-  // Build target components for Top-Up execution ensuring exact 100% sum
-  let remainingWeight = 100;
-  const topUpComponents: BasketComponent[] = topUpPlan.map((p, idx) => {
-    if (idx === topUpPlan.length - 1) {
-      return { symbol: p.symbol, targetWeight: remainingWeight };
-    }
-    const weight = Math.round((p.allocationUsd / topUpAmountUsd) * 100);
-    remainingWeight -= weight;
-    return { symbol: p.symbol, targetWeight: weight };
-  });
+  // Build exact dollar legs for Top-Up execution (filter dust < $1, push residual cents into largest leg)
+  const rawTopUpLegs = topUpPlan
+    .filter((p) => p.allocationUsd >= 1)
+    .map((p) => ({ symbol: p.symbol, amountUsd: p.allocationUsd }));
+
+  const topUpLegs = [...rawTopUpLegs];
+  const totalAllocated = topUpLegs.reduce((acc, l) => acc + l.amountUsd, 0);
+  const residual = Math.round((topUpAmountUsd - totalAllocated) * 100) / 100;
+  if (residual > 0 && topUpLegs.length > 0) {
+    const largest = topUpLegs.reduce((a, b) => (b.amountUsd > a.amountUsd ? b : a));
+    largest.amountUsd = Math.round((largest.amountUsd + residual) * 100) / 100;
+  }
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -204,6 +208,22 @@ export default function PortfolioPage() {
           </Link>
         </div>
       </div>
+
+      {/* RPC Error Alert */}
+      {balances.rpcError && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-rose-400" />
+            <span>Could not reach Solana RPC. Please check your network or RPC configuration.</span>
+          </div>
+          <button
+            onClick={() => loadData()}
+            className="px-3 py-1 rounded-lg bg-rose-500 text-white font-bold text-xs hover:bg-rose-600 transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
 
       {/* Disconnected Notice */}
       {!wallet.connected && (
@@ -525,12 +545,18 @@ export default function PortfolioPage() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => {
+                  if (topUpLegs.length === 0) return;
                   setIsTopUpOpen(false);
                   setIsExecutionModalOpen(true);
                 }}
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
+                disabled={topUpLegs.length === 0}
+                className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <span>Execute Top-Up (${topUpAmountUsd} USDC)</span>
+                <span>
+                  {topUpLegs.length === 0
+                    ? "Portfolio Already Balanced"
+                    : `Execute Top-Up (${topUpLegs.length} legs • $${topUpAmountUsd} USDC)`}
+                </span>
                 <ArrowUpRight className="w-4 h-4" />
               </button>
               <button
@@ -545,14 +571,14 @@ export default function PortfolioPage() {
       )}
 
       {/* Top-Up Execution Stepper Modal */}
-      {isExecutionModalOpen && (
+      {isExecutionModalOpen && topUpLegs.length > 0 && (
         <ExecutionModal
           isOpen={isExecutionModalOpen}
           onClose={() => setIsExecutionModalOpen(false)}
           basketId={`${activeBasket.id}-topup`}
           basketName={`${activeBasket.name} (Top-Up)`}
           totalUsdAmount={topUpAmountUsd}
-          components={topUpComponents}
+          legs={topUpLegs}
           solBalance={balances.solBalance}
           usdcBalance={balances.usdcBalance}
         />

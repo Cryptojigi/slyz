@@ -17,6 +17,10 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  ),
   title: "Slyz — Thematic Stock Basket Investing on Solana",
   description:
     "Pick a theme, set a dollar amount, own the basket. Non-custodial fractional US equities on Solana powered by xStocks and Jupiter.",

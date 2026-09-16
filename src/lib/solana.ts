@@ -3,7 +3,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { USDC_MINT, TOKEN_2022_PROGRAM_ID, MIN_SOL_BALANCE } from "./constants";
 
 const PRIMARY_RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || "https://api.mainnet-beta.solana.com";
-const FALLBACK_RPC_URL = "https://api.mainnet-beta.solana.com";
+const FALLBACK_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_FALLBACK_RPC || PRIMARY_RPC_URL;
 
 let primaryConn: Connection | null = null;
 let fallbackConn: Connection | null = null;
@@ -26,7 +26,9 @@ export interface UserBalances {
   solBalance: number;
   usdcBalance: number;
   token2022Balances: Record<string, number>; // mint address -> raw token balance (decimal adjusted)
+  token2022RawAmounts?: Record<string, string>; // mint address -> exact on-chain base units string (no float rounding)
   hasSufficientGas: boolean;
+  rpcError?: boolean;
 }
 
 /**
@@ -39,18 +41,20 @@ export async function fetchUserBalances(walletPublicKey: PublicKey): Promise<Use
   try {
     return await queryBalances(primary, walletPublicKey);
   } catch (error: any) {
-    // If blocked by Alchemy origin whitelist or network error, failover to public fallback
-    console.warn("Primary RPC failed (likely origin whitelist restriction), failing over to backup RPC:", error?.message);
+    // If blocked by Alchemy origin whitelist or network error, failover to backup RPC
+    console.warn("Primary RPC failed, failing over to backup RPC:", error?.message);
     try {
       const fallback = getFallbackConnection();
       return await queryBalances(fallback, walletPublicKey);
-    } catch (fallbackError) {
+    } catch (fallbackError: any) {
       console.error("Both primary and fallback RPC failed:", fallbackError);
       return {
         solBalance: 0,
         usdcBalance: 0,
         token2022Balances: {},
+        token2022RawAmounts: {},
         hasSufficientGas: false,
+        rpcError: true,
       };
     }
   }
@@ -82,12 +86,14 @@ async function queryBalances(connection: Connection, walletPublicKey: PublicKey)
   });
 
   const token2022Balances: Record<string, number> = {};
+  const token2022RawAmounts: Record<string, string> = {};
   for (const { account } of token2022Accounts.value) {
     const info = account.data.parsed.info;
     const mint = info.mint;
     const uiAmount = Number(info.tokenAmount.uiAmount || 0);
     if (uiAmount > 0) {
       token2022Balances[mint] = uiAmount;
+      token2022RawAmounts[mint] = String(info.tokenAmount.amount || "0");
     }
   }
 
@@ -95,6 +101,8 @@ async function queryBalances(connection: Connection, walletPublicKey: PublicKey)
     solBalance,
     usdcBalance,
     token2022Balances,
+    token2022RawAmounts,
     hasSufficientGas: solBalance >= MIN_SOL_BALANCE,
+    rpcError: false,
   };
 }

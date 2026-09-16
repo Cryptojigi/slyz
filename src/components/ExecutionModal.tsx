@@ -46,7 +46,7 @@ interface Props {
   basketId: string;
   basketName: string;
   totalUsdAmount: number;
-  components: BasketComponent[];
+  legs: { symbol: string; amountUsd: number }[];
   solBalance: number;
   usdcBalance: number;
 }
@@ -57,7 +57,7 @@ export const ExecutionModal: React.FC<Props> = ({
   basketId,
   basketName,
   totalUsdAmount,
-  components,
+  legs,
   solBalance,
   usdcBalance,
 }) => {
@@ -65,11 +65,13 @@ export const ExecutionModal: React.FC<Props> = ({
   const wallet = useWallet();
 
   const [steps, setSteps] = useState<SwapStepState[]>(() =>
-    components.map((c) => ({
-      symbol: c.symbol,
-      dollarAmount: (c.targetWeight / 100) * totalUsdAmount,
-      status: "pending",
-    }))
+    legs
+      .filter((l) => l.amountUsd >= 1)
+      .map((l) => ({
+        symbol: l.symbol,
+        dollarAmount: l.amountUsd,
+        status: "pending",
+      }))
   );
 
   const [isRunning, setIsRunning] = useState(false);
@@ -77,7 +79,7 @@ export const ExecutionModal: React.FC<Props> = ({
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [gasError, setGasError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  if (!isOpen || steps.length === 0) return null;
 
   const hasEnoughSol = solBalance >= MIN_SOL_BALANCE;
   const hasEnoughUsdc = usdcBalance >= totalUsdAmount;
@@ -90,7 +92,7 @@ export const ExecutionModal: React.FC<Props> = ({
 
     if (!hasEnoughSol) {
       setGasError(
-        `Low SOL balance (${solBalance.toFixed(4)} SOL). You need at least 0.02 SOL to pay for transaction fees and Token-2022 account rent exemption.`
+        `Low SOL balance (${solBalance.toFixed(4)} SOL). You need at least 0.015 SOL to pay for transaction fees and Token-2022 account rent exemption.`
       );
       return;
     }
@@ -134,6 +136,25 @@ export const ExecutionModal: React.FC<Props> = ({
           amount: baseUnits,
           slippageBps: 100, // 1% for safety during basket allocation
         });
+
+        // Price Impact Safety Check (quote.priceImpactPct is a decimal fraction, e.g. 0.002 = 0.2%)
+        const impact = Number(quote.priceImpactPct || 0);
+        if (impact > 0.05) {
+          // 5%+ -> BLOCK: do not sign. Show actionable alert, stop the run.
+          updateStep(i, {
+            status: "failed",
+            errorMessage: `Price impact ${(impact * 100).toFixed(2)}% exceeds the 5% safety limit. Reduce this leg.`,
+          });
+          setIsRunning(false);
+          return;
+        }
+
+        if (impact > 0.025) {
+          // 2.5%+ -> WARN: display badge on step, continue.
+          updateStep(i, {
+            errorMessage: `⚠ High price impact: ${(impact * 100).toFixed(2)}%`,
+          });
+        }
 
         // 2. Build Swap Transaction
         updateStep(i, { status: "signing" });
@@ -209,7 +230,10 @@ export const ExecutionModal: React.FC<Props> = ({
       id: `${basketId}-${Date.now()}`,
       name: basketName,
       investedAt: Date.now(),
-      components,
+      components: legs.map((l) => ({
+        symbol: l.symbol,
+        targetWeight: totalUsdAmount > 0 ? Math.round((l.amountUsd / totalUsdAmount) * 100) : 0,
+      })),
       initialDepositUsd: totalUsdAmount,
       txSignatures: executedSignatures,
     });
@@ -222,6 +246,8 @@ export const ExecutionModal: React.FC<Props> = ({
   };
 
   const completedCount = steps.filter((s) => s.status === "success").length;
+
+  if (!isOpen || steps.length === 0) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">

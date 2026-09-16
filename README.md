@@ -22,8 +22,8 @@ Built natively for the **Stocklana 2026 Hackathon ($100K Main Track)**.
   * 🚀 **High Beta**: TSLA (40%), NVDA (30%), COIN (30%)
   * 🛒 **Big Commerce**: AMZN (40%), META (30%), GOOGL (30%)
 * **Custom Slyz Studio**: Interactive sandbox to assemble personalized 2-to-4 stock baskets with auto-normalizing allocation sliders and live Donut chart visualization.
-* **Sequential Swap Engine**: Multi-step transaction orchestration via Jupiter Unified Lite API (`lite-api.jup.ag`), avoiding Solana's 1232-byte transaction MTU limits and eliminating partial-fill rollback risks.
-* **Token-2022 Scaled-UI Precision**: True share-equivalent calculations integrating corporate actions and split multipliers directly from Jupiter v3 price oracles.
+* **Sequential Swap Engine**: Multi-step transaction orchestration via Jupiter Unified Lite API (`lite-api.jup.ag`), eliminating Solana's 1232-byte MTU packet limits and bundled instruction caps with isolated leg retries and Solscan verification links.
+* **Token-2022 Real-World Asset Integration**: Native accounting for Backed Finance xStocks on Solana, reading on-chain Token-2022 program accounts and displaying accurate fractional share quantities.
 * **Smart Top-Up Rebalancing**: Innovative water-filling algorithm that routes 100% of new deposits into underweight assets to restore target weights with **zero sell fees and zero sell slippage**.
 * **Exit to USDC Liquidation**: Seamlessly exit and liquidate any held basket back into USDC through sequential reverse swaps with real-time on-chain confirmation.
 * **Modern Editorial Aesthetic**: High-contrast, tactile UI inspired by EventBeds (Volt Lime `#CDE06A`, Periwinkle `#8D8AFF`, Obsidian `#0B0E14`, clean bento cards).

@@ -17,6 +17,7 @@ export interface PortfolioPosition {
   mint: string;
   logo: string;
   rawBalance: number;
+  rawAmountString?: string;
   multiplier: number;
   shareEquivalents: number;
   usdPrice: number;
@@ -62,7 +63,8 @@ export function saveBasketInvestment(basket: StoredBasket): void {
 export function calculatePortfolioPositions(
   targetComponents: BasketComponent[],
   balances: Record<string, number>, // mint -> raw ui amount
-  prices: Record<string, TokenPriceInfo>
+  prices: Record<string, TokenPriceInfo>,
+  rawAmounts?: Record<string, string>
 ): {
   positions: PortfolioPosition[];
   totalValueUsd: number;
@@ -75,6 +77,7 @@ export function calculatePortfolioPositions(
     const asset = VERIFIED_STOCKS[comp.symbol];
     const mint = asset ? asset.mint : "";
     const rawBal = (mint && balances[mint]) || 0;
+    const rawAmountStr = (mint && rawAmounts && rawAmounts[mint]) || "";
     const priceInfo = (mint && prices[mint]) || { usdPrice: 0, scaledUiConfig: { multiplier: 1 } };
 
     const multiplier = priceInfo.scaledUiConfig?.multiplier || 1;
@@ -92,6 +95,7 @@ export function calculatePortfolioPositions(
       mint,
       logo: asset?.logo || "",
       rawBalance: rawBal,
+      rawAmountString: rawAmountStr,
       multiplier,
       shareEquivalents,
       usdPrice,
