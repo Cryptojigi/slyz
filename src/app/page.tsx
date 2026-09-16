@@ -194,8 +194,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right Column: Live Slyz Logo Sculpture (slides in on reload) */}
-          <div className="lg:col-span-5 flex justify-center lg:justify-end">
+          {/* Right Column: Live Slyz Logo Sculpture (beside the app on desktop, hidden on mobile) */}
+          <div className="hidden lg:flex lg:col-span-5 justify-center lg:justify-end">
             <LiveSlyzSculpture />
           </div>
         </div>
