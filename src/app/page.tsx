@@ -19,6 +19,7 @@ import { CURATED_BASKETS, VERIFIED_STOCKS, Basket, BasketComponent } from "@/lib
 import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
 import { BasketCard } from "@/components/BasketCard";
 import { DonutChart, DONUT_COLORS } from "@/components/DonutChart";
+import { LiveSlyzSculpture } from "@/components/LiveSlyzSculpture";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"curated" | "custom">("curated");
@@ -152,42 +153,50 @@ export default function HomePage() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#CDE06A]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8D8AFF]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"></div>
 
-        <div className="relative z-10 max-w-3xl space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D2332] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE]">
-            <Sparkles className="w-3.5 h-3.5 text-[#CDE06A]" />
-            <span>Non-Custodial Thematic Stock Baskets on Solana</span>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+          {/* Left Column: Copy & Actions */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D2332] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE]">
+              <Sparkles className="w-3.5 h-3.5 text-[#CDE06A]" />
+              <span>Non-Custodial Thematic Stock Baskets on Solana</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
+              Slice the Market.
+              <br />
+              <span className="text-[#CDE06A]">Own the Theme.</span>
+            </h1>
+
+            <p className="text-base sm:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
+              Invest in curated baskets of tokenized US equities on Solana — three signatures, one theme.
+              Non-custodial, fractional shares powered by Jupiter and xStocks Token-2022.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <button
+                onClick={() => setActiveTab("curated")}
+                className={`btn-primary flex items-center gap-2 ${
+                  activeTab === "curated" ? "ring-2 ring-[#CDE06A]/40" : ""
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>Explore Thematic Pies</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("custom")}
+                className={`btn-secondary flex items-center gap-2 ${
+                  activeTab === "custom" ? "border-[#8D8AFF] text-white" : ""
+                }`}
+              >
+                <Sliders className="w-4 h-4 text-[#8D8AFF]" />
+                <span>Build Custom Slyz</span>
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
-            Slice the Market.
-            <br />
-            <span className="text-[#CDE06A]">Own the Theme.</span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
-            Invest in curated baskets of tokenized US equities on Solana — three signatures, one theme.
-            Non-custodial, fractional shares powered by Jupiter and xStocks Token-2022.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 pt-2">
-            <button
-              onClick={() => setActiveTab("curated")}
-              className={`btn-primary flex items-center gap-2 ${
-                activeTab === "curated" ? "ring-2 ring-[#CDE06A]/40" : ""
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Explore Thematic Pies</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("custom")}
-              className={`btn-secondary flex items-center gap-2 ${
-                activeTab === "custom" ? "border-[#8D8AFF] text-white" : ""
-              }`}
-            >
-              <Sliders className="w-4 h-4 text-[#8D8AFF]" />
-              <span>Build Custom Slyz</span>
-            </button>
+          {/* Right Column: Live Slyz Logo Sculpture (slides in on reload) */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end">
+            <LiveSlyzSculpture />
           </div>
         </div>
 
