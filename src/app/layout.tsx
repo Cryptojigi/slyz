@@ -53,7 +53,7 @@ export default function RootLayout({
                 <span>•</span>
                 <span>Token-2022 Verified</span>
                 <span>•</span>
-                <span>Stocklana 2026</span>
+                <span>Slyz 2026</span>
               </div>
             </div>
           </footer>

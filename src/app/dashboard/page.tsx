@@ -25,6 +25,7 @@ import {
   ArrowRight,
   DollarSign,
   Briefcase,
+  AlertCircle,
 } from "lucide-react";
 import {
   CURATED_BASKETS,
@@ -37,12 +38,31 @@ import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
 import { fetchUserBalances, UserBalances } from "@/lib/solana";
 import { DonutChart, DONUT_COLORS } from "@/components/DonutChart";
 import { ExecutionModal } from "@/components/ExecutionModal";
+import { ThemeMultiStockChart } from "@/components/ThemeMultiStockChart";
 
 export default function DashboardPage() {
   const wallet = useWallet();
 
   // Active Tab: 'curated' | 'catalog' | 'custom'
   const [activeTab, setActiveTab] = useState<"curated" | "catalog" | "custom">("curated");
+
+  // Selected Theme for Real-Time 3-Stock Chart & Featured Spotlight
+  const [selectedThemeId, setSelectedThemeId] = useState<string>("mag-3");
+  const selectedTheme =
+    CURATED_BASKETS.find((b) => b.id === selectedThemeId) || CURATED_BASKETS[0];
+
+  // Custom Investment Amounts & Clear Validation Errors (No fixed $100)
+  const [featuredAmount, setFeaturedAmount] = useState<number>(50);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
+
+  const [cardAmounts, setCardAmounts] = useState<Record<string, number>>({
+    "mag-3": 50,
+    "the-index": 50,
+    "ai-frontier": 50,
+    "high-beta": 50,
+    "big-commerce": 50,
+  });
+  const [cardErrors, setCardErrors] = useState<Record<string, string | null>>({});
 
   // Prices & Balances
   const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
@@ -205,19 +225,69 @@ export default function DashboardPage() {
     );
   };
 
-  // Launch quick investment for a curated theme
-  const handleQuickInvest = (basket: Basket, depositUsd: number = 100) => {
+  // Launch validated investment for a curated theme
+  const handleInvestWithValidation = (basket: Basket, amount: number, isFeatured: boolean = false) => {
+    const setError = (msg: string | null) => {
+      if (isFeatured) {
+        setFeaturedError(msg);
+      } else {
+        setCardErrors((prev) => ({ ...prev, [basket.id]: msg }));
+      }
+    };
+
+    setError(null);
+
+    // 1. Check wallet connection
+    if (!wallet.connected || !wallet.publicKey) {
+      setError("Please connect your Solana wallet first.");
+      return;
+    }
+
+    // 2. Validate amount number
+    if (isNaN(amount) || amount <= 0) {
+      setError("Please enter an investment amount greater than $0.");
+      return;
+    }
+
+    // 3. Minimum amount constraint
+    if (amount < 5) {
+      setError("Minimum investment is $5 USDC ($1 minimum per stock leg for Jupiter routing).");
+      return;
+    }
+
+    // 4. USDC wallet balance check
+    if (amount > balances.usdcBalance) {
+      setError(
+        `Insufficient USDC. You entered $${amount.toFixed(2)} but your wallet has $${balances.usdcBalance.toFixed(2)} USDC available.`
+      );
+      return;
+    }
+
+    // 5. SOL gas balance check
+    if (balances.solBalance < MIN_SOL_BALANCE) {
+      setError(
+        `Low SOL balance for fees. You have ${balances.solBalance.toFixed(4)} SOL (at least ${MIN_SOL_BALANCE} SOL is required for network gas & Token-2022 account rent).`
+      );
+      return;
+    }
+
+    // 6. Build execution legs
     const legs = basket.components
       .map((c) => ({
         symbol: c.symbol,
-        amountUsd: Math.round(((c.targetWeight / 100) * depositUsd) * 100) / 100,
+        amountUsd: Math.round(((c.targetWeight / 100) * amount) * 100) / 100,
       }))
       .filter((l) => l.amountUsd >= 1);
+
+    if (legs.length === 0) {
+      setError("Allocation resulted in legs under $1. Please increase your deposit amount.");
+      return;
+    }
 
     setModalBasket({
       id: basket.id,
       name: basket.name,
-      totalAmountUsd: depositUsd,
+      totalAmountUsd: amount,
       legs,
     });
     setIsExecutionModalOpen(true);
@@ -343,114 +413,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. Top Bento Row: Performance Trend Curves & Featured Theme Spotlight */}
+      {/* 2. Top Bento Row: Real-Time 3-Stock Curve & Selected Theme Spotlight */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left / Center: Thematic Trend Curve (Resq.io Wave Chart adaptation) */}
-        <div className="lg:col-span-8 bento-card space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-bold text-[#8F9CAE] uppercase tracking-wider block">
-                Benchmark Comparison
-              </span>
-              <h2 className="text-lg font-black text-white flex items-center gap-2 mt-0.5">
-                <span>The Mag 3 vs. Broader Market</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[#CDE06A]/15 text-[#CDE06A] font-bold">
-                  +18.4% Alpha
-                </span>
-              </h2>
-            </div>
-
-            {/* Timeframe Toggles */}
-            <div className="flex items-center gap-1 bg-[#1D2332] p-1 rounded-full border border-[#262D3D] self-start sm:self-auto">
-              {(["24H", "7D", "30D", "1Y"] as const).map((tf) => (
-                <button
-                  key={tf}
-                  onClick={() => setChartTimeframe(tf)}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                    chartTimeframe === tf
-                      ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
-                      : "text-[#8F9CAE] hover:text-white"
-                  }`}
-                >
-                  {tf}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* SVG Comparative Wave Curves */}
-          <div className="relative w-full h-44 sm:h-52 bg-[#0B0E14]/60 rounded-2xl border border-[#262D3D] p-4 flex flex-col justify-between overflow-hidden">
-            {/* Background Grid Lines */}
-            <div className="absolute inset-0 grid grid-rows-3 opacity-20 pointer-events-none">
-              <div className="border-b border-[#262D3D]" />
-              <div className="border-b border-[#262D3D]" />
-              <div />
-            </div>
-
-            {/* SVG Chart Line */}
-            <svg
-              viewBox="0 0 500 160"
-              className="absolute inset-0 w-full h-full preserve-3d overflow-visible"
-            >
-              <defs>
-                <linearGradient id="limeCurveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#CDE06A" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#CDE06A" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-
-              {/* Benchmark Curve (SPY: Indigo) */}
-              <path
-                d="M 10 130 Q 120 110, 240 100 T 490 85"
-                fill="none"
-                stroke="#8D8AFF"
-                strokeWidth="2.5"
-                strokeDasharray="4 4"
-                className="opacity-75"
-              />
-
-              {/* Outperformer Curve (The Mag 3: Lime) */}
-              <path
-                d="M 10 140 Q 100 135, 180 90 T 320 40 T 490 20"
-                fill="none"
-                stroke="#CDE06A"
-                strokeWidth="3.5"
-              />
-              <path
-                d="M 10 140 Q 100 135, 180 90 T 320 40 T 490 20 L 490 160 L 10 160 Z"
-                fill="url(#limeCurveGrad)"
-              />
-
-              {/* Peak Point Glow */}
-              <circle cx="320" cy="40" r="5" fill="#CDE06A" className="animate-pulse" />
-              <circle cx="320" cy="40" r="9" fill="#CDE06A" opacity="0.3" />
-            </svg>
-
-            {/* Active Data Tooltip Indicator */}
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-[#161B26]/95 border border-[#CDE06A]/40 shadow-xl backdrop-blur-md flex items-center gap-2 pointer-events-none">
-              <span className="w-2 h-2 rounded-full bg-[#CDE06A]" />
-              <span className="text-[11px] font-bold text-white">The Mag 3 Peak: $428.10 Avg</span>
-              <span className="text-[10px] text-[#CDE06A] font-bold">+18.4%</span>
-            </div>
-
-            {/* Legend Footer */}
-            <div className="relative z-10 flex items-center justify-between pt-2 text-[11px] text-[#8F9CAE]">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#CDE06A]" />
-                  <span className="text-white font-semibold">The Mag 3 (NVDA, AAPL, MSFT)</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#8D8AFF]" />
-                  <span>SPY Index Benchmark</span>
-                </div>
-              </div>
-              <span className="font-mono text-[10px]">Updated Real-Time via Jupiter</span>
-            </div>
-          </div>
+        {/* Left: Dynamic Real-Time 3-Stock Trend Curve */}
+        <div className="lg:col-span-8 bento-card">
+          <ThemeMultiStockChart
+            basket={selectedTheme}
+            prices={prices}
+            timeframe={chartTimeframe}
+            onTimeframeChange={setChartTimeframe}
+          />
         </div>
 
-        {/* Right: Featured Theme Spotlight Card (Resq.io Vulnerability Card Style) */}
+        {/* Right: Featured Theme Spotlight Card (Synced with Selected Theme) */}
         <div className="lg:col-span-4 rounded-[22px] bg-gradient-to-br from-[#1E2536] via-[#161B26] to-[#0F131D] border border-[#262D3D] p-6 flex flex-col justify-between shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-36 h-36 bg-[#CDE06A]/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10" />
 
@@ -465,38 +440,85 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <h3 className="text-xl font-extrabold text-white">The Mag 3</h3>
+            <h3 className="text-xl font-extrabold text-white">{selectedTheme.name}</h3>
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Targeted exposure to the 3 global technology drivers: Nvidia, Apple, and Microsoft.
+              {selectedTheme.description}
             </p>
 
             {/* Asset distribution preview */}
             <div className="grid grid-cols-3 gap-2 pt-2">
-              <div className="p-2 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D] text-center">
-                <span className="text-[10px] text-[#8F9CAE] block">NVDA</span>
-                <span className="text-xs font-black text-white block">40%</span>
-              </div>
-              <div className="p-2 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D] text-center">
-                <span className="text-[10px] text-[#8F9CAE] block">AAPL</span>
-                <span className="text-xs font-black text-white block">30%</span>
-              </div>
-              <div className="p-2 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D] text-center">
-                <span className="text-[10px] text-[#8F9CAE] block">MSFT</span>
-                <span className="text-xs font-black text-white block">30%</span>
-              </div>
+              {selectedTheme.components.map((c) => {
+                const asset = VERIFIED_STOCKS[c.symbol];
+                const priceInfo = asset ? prices[asset.mint] : undefined;
+                return (
+                  <div
+                    key={c.symbol}
+                    className="p-2 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D] text-center"
+                  >
+                    <span className="text-[10px] text-[#8F9CAE] block font-bold">
+                      {asset?.underlying || c.symbol}
+                    </span>
+                    <span className="text-xs font-black text-white block">{c.targetWeight}%</span>
+                    <span className="text-[10px] font-mono text-[#CDE06A] block mt-0.5">
+                      {priceInfo ? `$${priceInfo.usdPrice.toFixed(2)}` : "..."}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="pt-6 space-y-2 relative z-10">
+          <div className="pt-4 space-y-3 relative z-10">
+            {/* Wallet-driven amount input */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <label className="text-[11px] font-semibold text-[#8F9CAE]">Investment Amount</label>
+                <span className="text-[11px] font-mono text-[#8F9CAE]">
+                  Wallet: ${balances.usdcBalance.toFixed(2)} USDC
+                </span>
+              </div>
+              <div className="relative">
+                <DollarSign className="w-3.5 h-3.5 text-[#8F9CAE] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="number"
+                  min={5}
+                  placeholder="50"
+                  value={featuredAmount || ""}
+                  onChange={(e) => {
+                    setFeaturedAmount(Number(e.target.value));
+                    if (featuredError) setFeaturedError(null);
+                  }}
+                  className="w-full pl-8 pr-14 py-2.5 bg-[#0B0E14] border border-[#262D3D] rounded-xl text-xs font-mono font-bold text-white focus:outline-none focus:border-[#CDE06A]"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFeaturedAmount(Math.floor(balances.usdcBalance));
+                    if (featuredError) setFeaturedError(null);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#CDE06A] px-2 py-0.5 rounded bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20"
+                >
+                  MAX
+                </button>
+              </div>
+
+              {featuredError && (
+                <div className="p-2 rounded-xl bg-rose-950/40 border border-rose-800 text-[11px] text-rose-300 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{featuredError}</span>
+                </div>
+              )}
+            </div>
+
             <button
-              onClick={() => handleQuickInvest(CURATED_BASKETS[0])}
+              onClick={() => handleInvestWithValidation(selectedTheme, featuredAmount, true)}
               className="btn-primary w-full flex items-center justify-center gap-2 text-xs !py-3 shadow-lg"
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>Quick Invest in Mag 3 ($100 USDC)</span>
+              <span>Invest in {selectedTheme.name}</span>
             </button>
             <button
-              onClick={() => openWeightCustomizer(CURATED_BASKETS[0])}
+              onClick={() => openWeightCustomizer(selectedTheme)}
               className="btn-secondary w-full flex items-center justify-center gap-2 text-xs !py-2.5 text-[#8F9CAE] hover:text-white"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-[#8D8AFF]" />
@@ -564,83 +586,150 @@ export default function DashboardPage() {
       {activeTab === "curated" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {curatedBasketsList.map((basket) => (
-              <div
-                key={basket.id}
-                className="bento-card flex flex-col justify-between hover:border-[#8D8AFF]/40 transition-all duration-200"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-full bg-[#1D2332] text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
-                      {basket.category}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs font-bold text-[#CDE06A]">
-                      <TrendingUp className="w-3 h-3" />
-                      <span>Curated</span>
-                    </span>
-                  </div>
+            {curatedBasketsList.map((basket) => {
+              const isSelected = basket.id === selectedThemeId;
+              const cardAmt = cardAmounts[basket.id] ?? 50;
+              const cardErr = cardErrors[basket.id];
 
-                  <div>
-                    <h3 className="text-xl font-black text-white">{basket.name}</h3>
-                    <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">
-                      {basket.description}
-                    </p>
-                  </div>
+              return (
+                <div
+                  key={basket.id}
+                  onClick={() => setSelectedThemeId(basket.id)}
+                  className={`bento-card flex flex-col justify-between transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? "border-[#CDE06A] ring-1 ring-[#CDE06A]/40 shadow-xl shadow-[#CDE06A]/5"
+                      : "hover:border-[#8D8AFF]/40"
+                  }`}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-1 rounded-full bg-[#1D2332] text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
+                        {basket.category}
+                      </span>
+                      {isSelected ? (
+                        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#CDE06A]/20 text-[#CDE06A]">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Active in Chart</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-[#8F9CAE] group-hover:text-white transition-colors">
+                          <TrendingUp className="w-3 h-3 text-[#CDE06A]" />
+                          <span>Click to View in Chart</span>
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Components breakdown with live prices */}
-                  <div className="space-y-2 pt-2 border-t border-[#262D3D]">
-                    {basket.components.map((c) => {
-                      const asset = VERIFIED_STOCKS[c.symbol];
-                      const priceInfo = asset ? prices[asset.mint] : undefined;
-                      return (
-                        <div
-                          key={c.symbol}
-                          className="flex items-center justify-between text-xs py-1"
-                        >
-                          <div className="flex items-center gap-2">
-                            {asset?.logo ? (
-                              <Image
-                                src={asset.logo}
-                                alt={c.symbol}
-                                width={18}
-                                height={18}
-                                className="rounded-full bg-white/10"
-                              />
-                            ) : (
-                              <div className="w-4 h-4 rounded-full bg-white/10" />
-                            )}
-                            <span className="font-bold text-white">{asset?.underlying || c.symbol}</span>
-                            <span className="text-[10px] text-[#8F9CAE]">
-                              {priceInfo ? `$${priceInfo.usdPrice.toFixed(2)}` : "..."}
+                    <div>
+                      <h3 className="text-xl font-black text-white">{basket.name}</h3>
+                      <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">
+                        {basket.description}
+                      </p>
+                    </div>
+
+                    {/* Components breakdown with live prices */}
+                    <div className="space-y-2 pt-2 border-t border-[#262D3D]">
+                      {basket.components.map((c) => {
+                        const asset = VERIFIED_STOCKS[c.symbol];
+                        const priceInfo = asset ? prices[asset.mint] : undefined;
+                        return (
+                          <div
+                            key={c.symbol}
+                            className="flex items-center justify-between text-xs py-1"
+                          >
+                            <div className="flex items-center gap-2">
+                              {asset?.logo ? (
+                                <Image
+                                  src={asset.logo}
+                                  alt={c.symbol}
+                                  width={18}
+                                  height={18}
+                                  className="rounded-full bg-white/10"
+                                />
+                              ) : (
+                                <div className="w-4 h-4 rounded-full bg-white/10" />
+                              )}
+                              <span className="font-bold text-white">{asset?.underlying || c.symbol}</span>
+                              <span className="text-[10px] text-[#8F9CAE]">
+                                {priceInfo ? `$${priceInfo.usdPrice.toFixed(2)}` : "..."}
+                              </span>
+                            </div>
+                            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#1D2332] text-[#8D8AFF]">
+                              {c.targetWeight}%
                             </span>
                           </div>
-                          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#1D2332] text-[#8D8AFF]">
-                            {c.targetWeight}%
-                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-[#262D3D] space-y-3" onClick={(e) => e.stopPropagation()}>
+                    {/* Wallet-driven custom amount input */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-[#8F9CAE]">USDC Amount</span>
+                        <span className="font-mono text-[#8F9CAE]">
+                          Wallet: ${balances.usdcBalance.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <DollarSign className="w-3.5 h-3.5 text-[#8F9CAE] absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="number"
+                          min={5}
+                          placeholder="50"
+                          value={cardAmt || ""}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setCardAmounts((prev) => ({ ...prev, [basket.id]: val }));
+                            if (cardErrors[basket.id]) {
+                              setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
+                            }
+                          }}
+                          className="w-full pl-8 pr-14 py-2 bg-[#0B0E14] border border-[#262D3D] rounded-xl text-xs font-mono font-bold text-white focus:outline-none focus:border-[#CDE06A]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCardAmounts((prev) => ({
+                              ...prev,
+                              [basket.id]: Math.floor(balances.usdcBalance),
+                            }));
+                            if (cardErrors[basket.id]) {
+                              setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
+                            }
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#CDE06A] px-2 py-0.5 rounded bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20"
+                        >
+                          MAX
+                        </button>
+                      </div>
+
+                      {cardErr && (
+                        <div className="p-2 rounded-xl bg-rose-950/40 border border-rose-800 text-[11px] text-rose-300 flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{cardErr}</span>
                         </div>
-                      );
-                    })}
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => handleInvestWithValidation(basket, cardAmt, false)}
+                      className="btn-primary w-full flex items-center justify-center gap-2 text-xs !py-3"
+                    >
+                      <span>Invest in {basket.name}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => openWeightCustomizer(basket)}
+                      className="btn-secondary w-full flex items-center justify-center gap-2 text-xs !py-2 text-[#8F9CAE] hover:text-white"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-[#8D8AFF]" />
+                      <span>Customize Weights</span>
+                    </button>
                   </div>
                 </div>
-
-                <div className="pt-6 mt-4 border-t border-[#262D3D] space-y-2">
-                  <button
-                    onClick={() => handleQuickInvest(basket)}
-                    className="btn-primary w-full flex items-center justify-center gap-2 text-xs !py-3"
-                  >
-                    <span>Invest ($100 USDC)</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => openWeightCustomizer(basket)}
-                    className="btn-secondary w-full flex items-center justify-center gap-2 text-xs !py-2 text-[#8F9CAE] hover:text-white"
-                  >
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#8D8AFF]" />
-                    <span>Customize Weights</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
