@@ -103,11 +103,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 2. How It Works Section (White Theme Container) */}
-      <section id="how-it-works" className="scroll-mt-24 rounded-[32px] bg-white border border-slate-200 p-8 sm:p-12 lg:p-14 shadow-2xl shadow-slate-950/20 text-[#0B0E14] space-y-10 relative overflow-hidden">
+      {/* 2. How It Works Section (White Background with Dark Tiles) */}
+      <section id="how-it-works" className="scroll-mt-24 rounded-[32px] bg-white border border-slate-200 p-8 sm:p-12 lg:p-14 shadow-2xl shadow-slate-950/20 space-y-10 relative overflow-hidden">
         {/* Subtle decorative background blur for depth */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-50 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20 opacity-70" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-50 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20 opacity-70" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
         <div className="text-center max-w-2xl mx-auto space-y-3 relative z-10">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0B0E14] text-[#CDE06A] text-[10px] font-black uppercase tracking-wider shadow-sm">
@@ -123,53 +123,47 @@ export default function LandingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-          {/* Step 1 */}
-          <div className="rounded-2xl bg-[#F8FAFC] border border-slate-200/90 p-6 space-y-3 shadow-sm hover:shadow-md hover:border-[#8D8AFF]/50 transition-all duration-200 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#0B0E14] flex items-center justify-center font-black text-sm text-[#CDE06A] shadow-sm">
-                01
-              </div>
-              <h3 className="text-lg font-bold text-[#0B0E14]">Pick or Build a Theme</h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Select an expert curated pie like <strong className="text-[#0B0E14] font-bold">The Mag 3</strong> or <strong className="text-[#0B0E14] font-bold">AI Frontier</strong>, or assemble 2–4 stocks in our Custom Studio.
-              </p>
+          {/* Step 1 - Dark Tile */}
+          <div className="bento-card relative overflow-hidden group shadow-xl">
+            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center font-black text-sm text-[#CDE06A] mb-4">
+              01
             </div>
-            <div className="pt-4 border-t border-slate-200 flex items-center gap-2 text-[11px] font-bold text-emerald-700">
-              <Layers className="w-3.5 h-3.5 text-emerald-600" />
+            <h3 className="text-lg font-bold text-white mb-2">Pick or Build a Theme</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Select an expert curated pie like <strong className="text-white">The Mag 3</strong> or <strong className="text-white">AI Frontier</strong>, or assemble 2–4 stocks in our Custom Studio.
+            </p>
+            <div className="mt-4 pt-4 border-t border-[#262D3D] flex items-center gap-2 text-[11px] font-semibold text-[#CDE06A]">
+              <Layers className="w-3.5 h-3.5" />
               <span>5 Curated Pies or Custom 2–4 Mix</span>
             </div>
           </div>
 
-          {/* Step 2 */}
-          <div className="rounded-2xl bg-[#F8FAFC] border border-slate-200/90 p-6 space-y-3 shadow-sm hover:shadow-md hover:border-[#8D8AFF]/50 transition-all duration-200 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#0B0E14] flex items-center justify-center font-black text-sm text-[#8D8AFF] shadow-sm">
-                02
-              </div>
-              <h3 className="text-lg font-bold text-[#0B0E14]">Customize Weights & Amount</h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Enter any USDC dollar amount ($10+) and adjust individual asset percentages with auto-normalizing sliders or numeric inputs.
-              </p>
+          {/* Step 2 - Dark Tile */}
+          <div className="bento-card relative overflow-hidden group shadow-xl">
+            <div className="w-10 h-10 rounded-2xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center font-black text-sm text-[#8D8AFF] mb-4">
+              02
             </div>
-            <div className="pt-4 border-t border-slate-200 flex items-center gap-2 text-[11px] font-bold text-indigo-700">
-              <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+            <h3 className="text-lg font-bold text-white mb-2">Customize Weights & Amount</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Enter any USDC dollar amount ($10+) and adjust individual asset percentages with auto-normalizing sliders or numeric inputs.
+            </p>
+            <div className="mt-4 pt-4 border-t border-[#262D3D] flex items-center gap-2 text-[11px] font-semibold text-[#8D8AFF]">
+              <Sliders className="w-3.5 h-3.5" />
               <span>Exact Dollar Allocations (No Dust)</span>
             </div>
           </div>
 
-          {/* Step 3 */}
-          <div className="rounded-2xl bg-[#F8FAFC] border border-slate-200/90 p-6 space-y-3 shadow-sm hover:shadow-md hover:border-[#8D8AFF]/50 transition-all duration-200 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#0B0E14] flex items-center justify-center font-black text-sm text-white shadow-sm">
-                03
-              </div>
-              <h3 className="text-lg font-bold text-[#0B0E14]">Three Signatures, One Theme</h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Approve sequential Jupiter swaps with real-time slippage bounds and price impact guards. Fractional xStocks arrive directly in your wallet.
-              </p>
+          {/* Step 3 - Dark Tile */}
+          <div className="bento-card relative overflow-hidden group shadow-xl">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-white mb-4">
+              03
             </div>
-            <div className="pt-4 border-t border-slate-200 flex items-center gap-2 text-[11px] font-bold text-slate-900">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <h3 className="text-lg font-bold text-white mb-2">Three Signatures, One Theme</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Approve sequential Jupiter swaps with real-time slippage bounds and price impact guards. Fractional xStocks arrive directly in your wallet.
+            </p>
+            <div className="mt-4 pt-4 border-t border-[#262D3D] flex items-center gap-2 text-[11px] font-semibold text-white">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#CDE06A]" />
               <span>100% Non-Custodial & Solscan Verified</span>
             </div>
           </div>
