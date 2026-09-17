@@ -25,8 +25,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "Plus Jakarta Sans", "Aeonik", "Inter", "sans-serif"],
-        mono: ["var(--font-mono)", "JetBrains Mono", "monospace"],
+        sans: ["Aeonik", "var(--font-montserrat)", "Montserrat", "sans-serif"],
+        heading: ["Aeonik", "var(--font-montserrat)", "Montserrat", "sans-serif"],
+        mono: ["var(--font-montserrat)", "monospace"],
       },
       borderRadius: {
         pill: "9999px",

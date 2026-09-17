@@ -184,11 +184,11 @@ export default function InvestPage() {
       {/* Top Breadcrumb & Header */}
       <div>
         <Link
-          href="/"
+          href="/dashboard"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8F9CAE] hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Themes</span>
+          <span>Back to Dashboard</span>
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -374,9 +374,17 @@ export default function InvestPage() {
                       <span className="font-bold text-white">
                         {asset?.underlying || comp.symbol} ({asset?.name})
                       </span>
-                      <span className="font-mono font-bold text-[#CDE06A]">
-                        {comp.targetWeight}%
-                      </span>
+                      <div className="flex items-center gap-1 bg-[#161B26] border border-[#262D3D] px-2 py-0.5 rounded-lg">
+                        <input
+                          type="number"
+                          min={5}
+                          max={90}
+                          value={comp.targetWeight}
+                          onChange={(e) => handleSliderChange(idx, Number(e.target.value) || 5)}
+                          className="w-8 bg-transparent text-right font-mono font-bold text-xs text-white focus:outline-none"
+                        />
+                        <span className="text-[10px] text-[#8F9CAE] font-bold">%</span>
+                      </div>
                     </div>
                     <input
                       type="range"

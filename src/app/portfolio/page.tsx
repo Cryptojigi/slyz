@@ -202,7 +202,7 @@ export default function PortfolioPage() {
             <span>Liquidate to USDC</span>
           </button>
 
-          <Link href="/" className="btn-secondary flex items-center gap-1.5 text-xs">
+          <Link href="/dashboard" className="btn-secondary flex items-center gap-1.5 text-xs">
             <PlusCircle className="w-3.5 h-3.5" />
             <span>New Pie</span>
           </Link>
@@ -255,11 +255,11 @@ export default function PortfolioPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-            <Link href="/" className="btn-primary flex items-center gap-2">
+            <Link href="/dashboard" className="btn-primary flex items-center gap-2">
               <Layers className="w-4 h-4" />
               <span>Explore Curated Pies</span>
             </Link>
-            <Link href="/?tab=custom" className="btn-secondary flex items-center gap-2">
+            <Link href="/dashboard" className="btn-secondary flex items-center gap-2">
               <Sliders className="w-4 h-4 text-[#8D8AFF]" />
               <span>Build Custom Slyz</span>
             </Link>

@@ -1,4 +1,4 @@
-import { USDC_MINT } from "./constants";
+import { USDC_MINT, VERIFIED_STOCKS } from "./constants";
 
 const JUPITER_API_URL = process.env.NEXT_PUBLIC_JUPITER_API_URL || "https://lite-api.jup.ag";
 
@@ -91,9 +91,13 @@ export async function buildSwapTransaction(params: {
 /**
  * Fetch live USD prices, 24h changes, and Token-2022 scaled-ui-amount multipliers in a single roundtrip.
  */
-export async function getJupiterPrices(mintAddresses: string[]): Promise<Record<string, TokenPriceInfo>> {
-  if (!mintAddresses.length) return {};
-  const ids = mintAddresses.join(",");
+export async function getJupiterPrices(mintAddresses?: string[]): Promise<Record<string, TokenPriceInfo>> {
+  const mints =
+    mintAddresses && mintAddresses.length > 0
+      ? mintAddresses
+      : Object.values(VERIFIED_STOCKS).map((s) => s.mint);
+  if (!mints.length) return {};
+  const ids = mints.join(",");
   const url = `${JUPITER_API_URL}/price/v3?ids=${ids}`;
 
   const res = await fetch(url);

@@ -1,160 +1,38 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  Layers,
   Sparkles,
-  Sliders,
-  TrendingUp,
+  ArrowRight,
   ShieldCheck,
   Zap,
-  ArrowUpRight,
-  Plus,
-  Trash2,
-  PieChart as PieIcon,
+  TrendingUp,
+  Layers,
+  Sliders,
+  CheckCircle2,
+  PieChart,
+  Lock,
+  ExternalLink,
+  ChevronRight,
+  Flame,
 } from "lucide-react";
-import { CURATED_BASKETS, VERIFIED_STOCKS, Basket, BasketComponent } from "@/lib/constants";
-import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
-import { BasketCard } from "@/components/BasketCard";
-import { DonutChart, DONUT_COLORS } from "@/components/DonutChart";
+import { CURATED_BASKETS, VERIFIED_STOCKS } from "@/lib/constants";
 import { LiveSlyzSculpture } from "@/components/LiveSlyzSculpture";
 
-export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<"curated" | "custom">("curated");
-  const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
-  const [loadingPrices, setLoadingPrices] = useState(true);
-
-  // Custom Slyz Builder State
-  const [customName, setCustomName] = useState("My Tech Core");
-  const [customComponents, setCustomComponents] = useState<BasketComponent[]>([
-    { symbol: "NVDAx", targetWeight: 50 },
-    { symbol: "AAPLx", targetWeight: 30 },
-    { symbol: "TSLAx", targetWeight: 20 },
-  ]);
-
-  // Fetch prices for all verified tokens on load
-  useEffect(() => {
-    const fetchAllPrices = async () => {
-      try {
-        const allMints = Object.values(VERIFIED_STOCKS).map((s) => s.mint);
-        const priceMap = await getJupiterPrices(allMints);
-        setPrices(priceMap);
-      } catch (e) {
-        console.error("Error fetching market prices:", e);
-      } finally {
-        setLoadingPrices(false);
-      }
-    };
-
-    fetchAllPrices();
-    const interval = setInterval(fetchAllPrices, 20000); // 20s live refresh
-    return () => clearInterval(interval);
-  }, []);
-
-  // Normalization helper for custom sliders
-  const handleWeightChange = (index: number, newWeight: number) => {
-    const clampedVal = Math.max(5, Math.min(90, newWeight));
-    const targetOthers = 100 - clampedVal;
-    const otherIndices = customComponents.map((_, i) => i).filter((i) => i !== index);
-    const sumOtherCurrent = otherIndices.reduce((sum, i) => sum + customComponents[i].targetWeight, 0);
-
-    const updated = [...customComponents];
-    updated[index] = { ...updated[index], targetWeight: clampedVal };
-
-    if (sumOtherCurrent > 0) {
-      let allocatedOther = 0;
-      otherIndices.forEach((otherIdx, pos) => {
-        if (pos === otherIndices.length - 1) {
-          updated[otherIdx] = {
-            ...updated[otherIdx],
-            targetWeight: Math.max(5, targetOthers - allocatedOther),
-          };
-        } else {
-          const prop = customComponents[otherIdx].targetWeight / sumOtherCurrent;
-          const assigned = Math.max(5, Math.round(prop * targetOthers));
-          allocatedOther += assigned;
-          updated[otherIdx] = { ...updated[otherIdx], targetWeight: assigned };
-        }
-      });
-    } else {
-      const split = Math.floor(targetOthers / otherIndices.length);
-      otherIndices.forEach((otherIdx, pos) => {
-        updated[otherIdx] = {
-          ...updated[otherIdx],
-          targetWeight:
-            pos === otherIndices.length - 1
-              ? targetOthers - split * (otherIndices.length - 1)
-              : split,
-        };
-      });
-    }
-
-    setCustomComponents(updated);
-  };
-
-  const equalizeCustomWeights = () => {
-    if (!customComponents.length) return;
-    const count = customComponents.length;
-    const base = Math.floor(100 / count);
-    const remainder = 100 - base * count;
-    setCustomComponents(
-      customComponents.map((c, i) => ({
-        ...c,
-        targetWeight: i === 0 ? base + remainder : base,
-      }))
-    );
-  };
-
-  const addCustomStock = (symbol: string) => {
-    if (customComponents.length >= 4) return;
-    if (customComponents.some((c) => c.symbol === symbol)) return;
-    const nextList = [...customComponents, { symbol, targetWeight: 20 }];
-    // Re-equalize when adding new leg
-    const count = nextList.length;
-    const base = Math.floor(100 / count);
-    const remainder = 100 - base * count;
-    setCustomComponents(
-      nextList.map((c, i) => ({
-        ...c,
-        targetWeight: i === 0 ? base + remainder : base,
-      }))
-    );
-  };
-
-  const removeCustomStock = (symbol: string) => {
-    if (customComponents.length <= 2) return;
-    const nextList = customComponents.filter((c) => c.symbol !== symbol);
-    const count = nextList.length;
-    const base = Math.floor(100 / count);
-    const remainder = 100 - base * count;
-    setCustomComponents(
-      nextList.map((c, i) => ({
-        ...c,
-        targetWeight: i === 0 ? base + remainder : base,
-      }))
-    );
-  };
-
-  const totalCustomWeight = customComponents.reduce((acc, c) => acc + c.targetWeight, 0);
-
-  // Data for custom donut preview
-  const customDonutData = customComponents.map((c, idx) => ({
-    name: VERIFIED_STOCKS[c.symbol]?.underlying || c.symbol,
-    value: c.targetWeight,
-    color: DONUT_COLORS[idx % DONUT_COLORS.length],
-  }));
+export default function LandingPage() {
+  const previewBaskets = CURATED_BASKETS.slice(0, 3); // The Mag 3, The Index, AI Frontier
 
   return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-[24px] bg-[#161B26] border border-[#262D3D] p-8 sm:p-12 lg:p-16">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#CDE06A]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8D8AFF]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"></div>
+    <div className="space-y-24 pb-12">
+      {/* 1. Hero Section */}
+      <section className="relative overflow-hidden rounded-[28px] bg-[#161B26] border border-[#262D3D] p-6 sm:p-10 lg:p-14 shadow-2xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#CDE06A]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8D8AFF]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
-          {/* Left Column: Copy & Actions */}
+          {/* Left Column: Headline, Value Proposition & CTAs */}
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D2332] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE]">
               <Sparkles className="w-3.5 h-3.5 text-[#CDE06A]" />
@@ -173,35 +51,37 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
-              <button
-                onClick={() => setActiveTab("curated")}
-                className={`btn-primary flex items-center gap-2 ${
-                  activeTab === "curated" ? "ring-2 ring-[#CDE06A]/40" : ""
-                }`}
+              <Link
+                href="/dashboard"
+                className="btn-primary flex items-center gap-2 text-sm shadow-lg hover:shadow-xl transition-all"
               >
-                <Layers className="w-4 h-4" />
                 <span>Explore Thematic Pies</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("custom")}
-                className={`btn-secondary flex items-center gap-2 ${
-                  activeTab === "custom" ? "border-[#8D8AFF] text-white" : ""
-                }`}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <a
+                href="#how-it-works"
+                className="btn-secondary flex items-center gap-2 text-sm hover:border-[#8D8AFF] hover:text-white"
               >
-                <Sliders className="w-4 h-4 text-[#8D8AFF]" />
-                <span>Build Custom Slyz</span>
-              </button>
+                <span>How It Works</span>
+                <ChevronRight className="w-4 h-4 text-[#8F9CAE]" />
+              </a>
             </div>
           </div>
 
-          {/* Right Column: Live Slyz Logo Sculpture (beside the app on desktop, hidden on mobile) */}
+          {/* Right Column: Live Slyz Logo Sculpture (slides in on reload, desktop only) */}
           <div className="hidden lg:flex lg:col-span-5 justify-center lg:justify-end">
             <LiveSlyzSculpture />
           </div>
         </div>
 
-        {/* Feature Highlights Grid */}
-        <div className="relative z-10 mt-12 pt-8 border-t border-[#262D3D]/60 grid grid-cols-2 sm:grid-cols-4 gap-6">
+        {/* Live Metrics / Highlights Bar */}
+        <div className="relative z-10 mt-12 pt-8 border-t border-[#262D3D]/70 grid grid-cols-2 sm:grid-cols-4 gap-6">
+          <div>
+            <span className="text-xs text-[#8F9CAE] font-medium block">Verified Stocks</span>
+            <span className="text-base font-extrabold text-white font-mono mt-0.5 block">
+              10 US Equities
+            </span>
+          </div>
           <div>
             <span className="text-xs text-[#8F9CAE] font-medium block">Trade Speed</span>
             <span className="text-base font-extrabold text-white font-mono mt-0.5 block">
@@ -216,251 +96,284 @@ export default function HomePage() {
           </div>
           <div>
             <span className="text-xs text-[#8F9CAE] font-medium block">Execution Mode</span>
-            <span className="text-base font-extrabold text-white font-mono mt-0.5 block">
-              Sequential MTU-Safe
-            </span>
-          </div>
-          <div>
-            <span className="text-xs text-[#8F9CAE] font-medium block">Smart Rebalance</span>
             <span className="text-base font-extrabold text-[#8D8AFF] font-mono mt-0.5 block">
-              Zero Sell Slippage
+              Sequential MTU-Safe
             </span>
           </div>
         </div>
       </section>
 
-      {/* Tabs Selector */}
-      <div className="flex items-center justify-between border-b border-[#262D3D] pb-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setActiveTab("curated")}
-            className={`pb-2 text-sm font-bold transition-all relative ${
-              activeTab === "curated"
-                ? "text-white"
-                : "text-[#8F9CAE] hover:text-white"
-            }`}
-          >
-            <span>Curated Theme Pies ({CURATED_BASKETS.length})</span>
-            {activeTab === "curated" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#CDE06A]"></span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("custom")}
-            className={`pb-2 text-sm font-bold transition-all relative ${
-              activeTab === "custom"
-                ? "text-white"
-                : "text-[#8F9CAE] hover:text-white"
-            }`}
-          >
-            <span>Custom Slyz Studio</span>
-            {activeTab === "custom" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8D8AFF]"></span>
-            )}
-          </button>
+      {/* 2. How It Works Section */}
+      <section id="how-it-works" className="scroll-mt-24 space-y-10">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="pill-badge pill-badge-lime">Streamlined Workflow</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            How Slyz Works
+          </h2>
+          <p className="text-sm sm:text-base text-[#8F9CAE]">
+            Traditional brokerages force you into fractional order queues and manual rebalancing.
+            Slyz packs thematic portfolio management into three sequential Solana signatures.
+          </p>
         </div>
 
-        <span className="text-xs text-[#8F9CAE] hidden sm:flex items-center gap-1.5 font-mono">
-          <span className="w-2 h-2 rounded-full bg-[#CDE06A] animate-pulse"></span>
-          Live Jupiter v1 Feeds
-        </span>
-      </div>
-
-      {/* TAB 1: CURATED BASKETS */}
-      {activeTab === "curated" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {CURATED_BASKETS.map((basket) => (
-            <BasketCard key={basket.id} basket={basket} prices={prices} />
-          ))}
-
-          {/* Quick Custom Builder Callout Card */}
-          <div
-            onClick={() => setActiveTab("custom")}
-            className="bento-card border-dashed border-[#262D3D] hover:border-[#8D8AFF] flex flex-col items-center justify-center text-center p-8 cursor-pointer transition-all hover:scale-[1.01] group min-h-[320px]"
-          >
-            <div className="w-12 h-12 rounded-full bg-[#1D2332] border border-[#262D3D] flex items-center justify-center text-[#8D8AFF] group-hover:scale-110 transition-transform mb-4">
-              <Sliders className="w-5 h-5" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Step 1 */}
+          <div className="bento-card relative overflow-hidden group">
+            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center font-black text-sm text-[#CDE06A] mb-4">
+              01
             </div>
-            <h4 className="text-lg font-extrabold text-white">Create a Custom Pie</h4>
-            <p className="text-xs text-[#8F9CAE] max-w-xs mt-1.5 leading-relaxed">
-              Mix and match any 2 to 4 tokenized equities with your own customized percentages.
+            <h3 className="text-lg font-bold text-white mb-2">Pick or Build a Theme</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Select an expert curated pie like <strong className="text-white">The Mag 3</strong> or <strong className="text-white">AI Frontier</strong>, or assemble 2–4 stocks in our Custom Studio.
             </p>
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#8D8AFF] mt-4">
-              <span>Open Studio</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
+            <div className="mt-4 pt-4 border-t border-[#262D3D] flex items-center gap-2 text-[11px] font-semibold text-[#CDE06A]">
+              <Layers className="w-3.5 h-3.5" />
+              <span>5 Curated Pies or Custom 2–4 Mix</span>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="bento-card relative overflow-hidden group">
+            <div className="w-10 h-10 rounded-2xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center font-black text-sm text-[#8D8AFF] mb-4">
+              02
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Customize Weights & Amount</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Enter any USDC dollar amount ($10+) and adjust individual asset percentages with auto-normalizing sliders or numeric inputs.
+            </p>
+            <div className="mt-4 pt-4 border-t border-[#262D3D] flex items-center gap-2 text-[11px] font-semibold text-[#8D8AFF]">
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Exact Dollar Allocations (No Dust)</span>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="bento-card relative overflow-hidden group">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-white mb-4">
+              03
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Three Signatures, One Theme</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Approve sequential Jupiter swaps with real-time slippage bounds and price impact guards. Fractional xStocks arrive directly in your wallet.
+            </p>
+            <div className="mt-4 pt-4 border-t border-[#262D3D] flex items-center gap-2 text-[11px] font-semibold text-white">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#CDE06A]" />
+              <span>100% Non-Custodial & Solscan Verified</span>
+            </div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* TAB 2: CUSTOM SLYZ STUDIO */}
-      {activeTab === "custom" && (
-        <div className="bento-card space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#262D3D]">
-            <div>
-              <span className="pill-badge pill-badge-periwinkle mb-2">Custom Studio</span>
-              <h3 className="text-2xl font-extrabold text-white">
-                Assemble Your Personal Basket
-              </h3>
-              <p className="text-xs text-[#8F9CAE] mt-1">
-                Select between 2 and 4 stocks and adjust your allocation targets. Total must equal 100%.
-              </p>
-            </div>
-
-            {/* Custom Basket Name Input */}
-            <div className="w-full sm:w-64">
-              <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase block mb-1">
-                Basket Name
-              </label>
-              <input
-                type="text"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                className="w-full px-4 py-2 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-sm text-white font-bold focus:outline-none focus:border-[#8D8AFF]"
-                placeholder="e.g. My AI & Chip Fund"
-              />
-            </div>
+      {/* 3. Curated Themes Spotlight Showcase */}
+      <section id="themes" className="scroll-mt-24 space-y-10">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <span className="pill-badge pill-badge-periwinkle">Thematic Strategies</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Flagship Curated Pies
+            </h2>
+            <p className="text-xs sm:text-sm text-[#8F9CAE] max-w-xl">
+              Diversify into pre-assembled baskets built around high-conviction macroeconomic and technology theses.
+            </p>
           </div>
+          <Link
+            href="/dashboard"
+            className="btn-secondary text-xs flex items-center gap-2 self-start sm:self-auto hover:border-[#CDE06A] hover:text-[#CDE06A]"
+          >
+            <span>View All 5 Themes in Dashboard</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left: Donut Chart Preview */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-[#0B0E14]/40 rounded-2xl border border-[#262D3D]">
-              <DonutChart
-                data={customDonutData}
-                centerLabel={`${totalCustomWeight}%`}
-                centerSublabel={totalCustomWeight === 100 ? "Balanced" : "Adjustment Needed"}
-                height={260}
-              />
-              <div className="mt-4 flex flex-wrap justify-center gap-3">
-                {customComponents.map((c, i) => (
-                  <span
-                    key={c.symbol}
-                    className="inline-flex items-center gap-1.5 text-xs font-mono text-[#8F9CAE]"
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }}
-                    ></span>
-                    <strong className="text-white">
-                      {VERIFIED_STOCKS[c.symbol]?.underlying || c.symbol}:
-                    </strong>
-                    {c.targetWeight}%
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Sliders and Asset Management */}
-            <div className="lg:col-span-7 space-y-6">
-              {/* Sliders for each component */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {previewBaskets.map((basket) => (
+            <div
+              key={basket.id}
+              className="bento-card flex flex-col justify-between hover:border-[#8D8AFF]/40 transition-all duration-200"
+            >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase text-[#8F9CAE] tracking-wider">
-                    Component Weights
+                  <span className="px-2.5 py-1 rounded-full bg-[#1D2332] text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
+                    {basket.category}
                   </span>
-                  <button
-                    type="button"
-                    onClick={equalizeCustomWeights}
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#161B26] border border-[#262D3D] text-[#8D8AFF] hover:text-white hover:border-[#8D8AFF] transition-colors"
-                  >
-                    Equalize All
-                  </button>
+                  <span className="flex items-center gap-1 text-xs font-bold text-[#CDE06A]">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Active Theme</span>
+                  </span>
                 </div>
-                {customComponents.map((comp, idx) => {
-                  const asset = VERIFIED_STOCKS[comp.symbol];
-                  return (
-                    <div
-                      key={comp.symbol}
-                      className="p-4 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D]"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-sm text-white">
-                            {asset?.underlying || comp.symbol}
-                          </span>
-                          <span className="text-xs text-[#8F9CAE]">{asset?.name}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono font-extrabold text-sm text-[#8D8AFF]">
-                            {comp.targetWeight}%
-                          </span>
-                          {customComponents.length > 2 && (
-                            <button
-                              onClick={() => removeCustomStock(comp.symbol)}
-                              className="text-[#8F9CAE] hover:text-rose-400 p-1 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
 
-                      <input
-                        type="range"
-                        min="5"
-                        max="90"
-                        step="5"
-                        value={comp.targetWeight}
-                        onChange={(e) => handleWeightChange(idx, Number(e.target.value))}
-                        className="w-full h-1.5 bg-[#161B26] rounded-lg appearance-none cursor-pointer accent-[#8D8AFF]"
-                      />
-                    </div>
-                  );
-                })}
+                <div>
+                  <h3 className="text-xl font-black text-white">{basket.name}</h3>
+                  <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">
+                    {basket.description}
+                  </p>
+                </div>
+
+                {/* Holdings Preview */}
+                <div className="space-y-2 pt-2 border-t border-[#262D3D]">
+                  {basket.components.map((c) => {
+                    const asset = VERIFIED_STOCKS[c.symbol];
+                    return (
+                      <div
+                        key={c.symbol}
+                        className="flex items-center justify-between text-xs py-1"
+                      >
+                        <div className="flex items-center gap-2">
+                          {asset?.logo ? (
+                            <Image
+                              src={asset.logo}
+                              alt={c.symbol}
+                              width={18}
+                              height={18}
+                              className="rounded-full bg-white/10"
+                            />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full bg-white/10" />
+                          )}
+                          <span className="font-bold text-white">{c.symbol}</span>
+                          <span className="text-[10px] text-[#8F9CAE] hidden sm:inline">
+                            {asset?.underlying}
+                          </span>
+                        </div>
+                        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#1D2332] text-[#8D8AFF]">
+                          {c.targetWeight}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Add Asset Picker (if < 4 stocks) */}
-              {customComponents.length < 4 && (
-                <div>
-                  <span className="text-xs text-[#8F9CAE] font-medium block mb-2">
-                    Add another stock to your custom basket (max 4):
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.values(VERIFIED_STOCKS)
-                      .filter((s) => !customComponents.some((c) => c.symbol === s.symbol))
-                      .map((stock) => (
-                        <button
-                          key={stock.symbol}
-                          onClick={() => addCustomStock(stock.symbol)}
-                          className="px-3 py-1.5 rounded-lg bg-[#161B26] border border-[#262D3D] hover:border-[#8D8AFF] text-xs font-bold text-white flex items-center gap-1.5 transition-all"
-                        >
-                          <Plus className="w-3 h-3 text-[#8D8AFF]" />
-                          <span>{stock.underlying}</span>
-                        </button>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Total Allocation Validation & Proceed Button */}
-              <div className="pt-4 border-t border-[#262D3D] flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-[#8F9CAE] block">Total Allocation:</span>
-                  <span
-                    className={`font-mono text-lg font-extrabold ${
-                      totalCustomWeight === 100 ? "text-[#CDE06A]" : "text-rose-400"
-                    }`}
-                  >
-                    {totalCustomWeight}% / 100%
-                  </span>
-                </div>
-
+              <div className="pt-6 mt-4 border-t border-[#262D3D]">
                 <Link
-                  href={`/invest/custom?name=${encodeURIComponent(customName)}&components=${encodeURIComponent(
-                    JSON.stringify(customComponents)
-                  )}`}
-                  className={`btn-primary flex items-center gap-2 ${
-                    totalCustomWeight !== 100 ? "opacity-50 pointer-events-none" : ""
-                  }`}
+                  href="/dashboard"
+                  className="btn-primary w-full flex items-center justify-center gap-2 text-xs !py-3"
                 >
-                  <span>Invest in {customName}</span>
-                  <ArrowUpRight className="w-4 h-4" />
+                  <span>Trade in Terminal</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Security & Architecture Pillars */}
+      <section id="security" className="scroll-mt-24 space-y-10">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="pill-badge pill-badge-lime">Solana Native</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Built with Institutional Rigor
+          </h2>
+          <p className="text-sm sm:text-base text-[#8F9CAE]">
+            Slyz eliminates custodial vulnerabilities by combining Solana Token-2022 raw unit math with Jupiter routing.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
+              <Zap className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Dust-Free Raw Math</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Every swap and liquidation is built using exact on-chain base units (`u64` string amounts) rather than lossy IEEE-754 floating points. Zero residual dust left in your token accounts.
+            </p>
+          </div>
+
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
+              <Lock className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Non-Custodial Architecture</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Slyz never holds your keys, deposits, or share balances. Transactions are signed directly in your wallet standard adapter, with immediate Solscan verifiable signatures.
+            </p>
+          </div>
+
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
+              <TrendingUp className="w-5 h-5 text-[#CDE06A]" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Automated Drift Rebalancing</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              As individual assets outpace or lag behind their target weights, our Smart Top-Up engine directs fresh deposits solely to underweight legs, bringing your portfolio back into balance without taxable sales.
+            </p>
+          </div>
+
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Decimal Price Impact Guards</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Every leg is inspected against Jupiter's live fraction impact before prompting your signature. Trades exceeding 5% impact are automatically blocked to protect your capital.
+            </p>
           </div>
         </div>
-      )}
+      </section>
+
+      {/* 5. Frequently Asked Questions */}
+      <section id="faq" className="scroll-mt-24 space-y-8 max-w-3xl mx-auto">
+        <div className="text-center space-y-2">
+          <span className="pill-badge pill-badge-periwinkle">Transparency</span>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bento-card space-y-2">
+            <h4 className="text-sm font-bold text-white">What are xStocks and how are they backed?</h4>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              xStocks are tokenized representations of US equities issued under the Solana Token-2022 standard. They trade 24/7 on decentralized liquidity pools with verified on-chain mint addresses.
+            </p>
+          </div>
+
+          <div className="bento-card space-y-2">
+            <h4 className="text-sm font-bold text-white">Can I customize the percentages of a theme?</h4>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Yes! In the Slyz Terminal, you can freely edit the percentage weight of any stock in a curated theme or build your own custom pie from scratch with 2 to 4 assets.
+            </p>
+          </div>
+
+          <div className="bento-card space-y-2">
+            <h4 className="text-sm font-bold text-white">What is the minimum investment?</h4>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              You can start investing with as little as $10 USDC. Slyz enforces a $1 minimum leg floor so you never trigger failed swaps or zero-amount errors.
+            </p>
+          </div>
+
+          <div className="bento-card space-y-2">
+            <h4 className="text-sm font-bold text-white">Why does Slyz require sequential signatures?</h4>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Solana transactions have strict 1232-byte packet limits (MTU). Executing multiple token swaps within a single transaction frequently exceeds this limit and fails. Slyz routes each swap sequentially with skip-and-retry safety.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Bottom Call to Action Banner */}
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-[#161B26] via-[#1D2332] to-[#161B26] border border-[#262D3D] p-8 sm:p-12 text-center space-y-6">
+        <div className="max-w-xl mx-auto space-y-3">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Ready to Slice the Market?
+          </h2>
+          <p className="text-xs sm:text-sm text-[#8F9CAE]">
+            Launch the Slyz Dashboard Terminal to explore all 10 verified US stocks, customize thematic pies, and track on-chain performance.
+          </p>
+        </div>
+
+        <div className="flex justify-center pt-2">
+          <Link
+            href="/dashboard"
+            className="btn-primary flex items-center gap-2 text-sm !px-8 !py-4 font-black shadow-xl"
+          >
+            <span>Launch Dashboard Terminal</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

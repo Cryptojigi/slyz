@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "@/styles/globals.css";
 import { WalletContextProvider } from "@/components/WalletContextProvider";
 import { Navbar } from "@/components/Navbar";
 
-const sans = Plus_Jakarta_Sans({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-montserrat",
   display: "swap",
 });
 
@@ -41,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} dark`}>
+    <html lang="en" className={`${montserrat.variable} dark`}>
       <body className="min-h-screen flex flex-col bg-[#0B0E14] text-white selection:bg-[#CDE06A] selection:text-[#0B0E14]">
         <WalletContextProvider>
           <Navbar />
