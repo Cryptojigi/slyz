@@ -22,6 +22,8 @@ const WalletMultiButton = dynamic(
   { ssr: false }
 );
 
+import { MobileWalletLink } from "./MobileWalletLink";
+
 export const Navbar = () => {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -236,6 +238,10 @@ export const Navbar = () => {
           )}
         </div>
       )}
+
+      {/* Mobile-only deep-link fallback: shows only when no wallet is available
+          in a phone browser (Safari/Chrome). Renders nothing on desktop. */}
+      <MobileWalletLink />
     </header>
   );
 };
