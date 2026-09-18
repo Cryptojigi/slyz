@@ -357,7 +357,7 @@ export default function DashboardPage() {
       id: basket.id,
       name: basket.name,
       components: [...basket.components],
-      depositUsd: 100,
+      depositUsd: basket.market === "private" ? 25 : 100,
     });
     setIsWeightModalOpen(true);
   };
@@ -757,7 +757,7 @@ export default function DashboardPage() {
                 <input
                   type="number"
                   min={5}
-                  placeholder="50"
+                  placeholder={selectedTheme.market === "private" ? "20" : "50"}
                   value={featuredAmount || ""}
                   onChange={(e) => {
                     setFeaturedAmount(Number(e.target.value));
@@ -768,7 +768,10 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setFeaturedAmount(Math.floor(balances.usdcBalance));
+                    const maxVal = selectedTheme.market === "private"
+                      ? Math.min(25, Math.floor(balances.usdcBalance))
+                      : Math.floor(balances.usdcBalance);
+                    setFeaturedAmount(maxVal);
                     if (featuredError) setFeaturedError(null);
                   }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#CDE06A] px-2 py-0.5 rounded bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20"
@@ -776,6 +779,13 @@ export default function DashboardPage() {
                   MAX
                 </button>
               </div>
+
+              {selectedTheme.market === "private" && featuredAmount > 25 && (
+                <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-500/40 text-[11px] text-amber-200 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Pool liquidity advisory: orders over $25 risk &gt;5% price impact.</span>
+                </div>
+              )}
 
               {featuredError && (
                 <div className="p-2 rounded-xl bg-rose-950/40 border border-rose-800 text-[11px] text-rose-300 flex items-center gap-1.5">
@@ -1006,9 +1016,12 @@ export default function DashboardPage() {
                         <button
                           type="button"
                           onClick={() => {
+                            const maxVal = basket.market === "private"
+                              ? Math.min(25, Math.floor(balances.usdcBalance))
+                              : Math.floor(balances.usdcBalance);
                             setCardAmounts((prev) => ({
                               ...prev,
-                              [basket.id]: Math.floor(balances.usdcBalance),
+                              [basket.id]: maxVal,
                             }));
                             if (cardErrors[basket.id]) {
                               setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
@@ -1623,19 +1636,25 @@ export default function DashboardPage() {
 
             {/* Deposit Amount Input */}
             <div className="space-y-1.5 pt-2">
-              <label className="text-xs font-semibold text-[#8F9CAE]">
-                USDC Dollar Amount
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[#8F9CAE]">
+                  USDC Dollar Amount
+                </label>
+                {editingTheme.components.some((c) => isPreStock(c.symbol)) && (
+                  <span className="text-[10px] text-[#8D8AFF]">Suggested max: $25 (Liquidity Guard)</span>
+                )}
+              </div>
               <input
                 type="number"
-                min={10}
+                min={editingTheme.components.some((c) => isPreStock(c.symbol)) ? 5 : 10}
                 value={editingTheme.depositUsd}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const minLimit = editingTheme.components.some((c) => isPreStock(c.symbol)) ? 5 : 10;
                   setEditingTheme({
                     ...editingTheme,
-                    depositUsd: Math.max(10, Number(e.target.value)),
-                  })
-                }
+                    depositUsd: Math.max(minLimit, Number(e.target.value)),
+                  });
+                }}
                 className="w-full px-3.5 py-2.5 bg-[#0B0E14] border border-[#262D3D] rounded-xl text-sm font-mono font-bold text-white focus:outline-none focus:border-[#CDE06A]"
               />
             </div>

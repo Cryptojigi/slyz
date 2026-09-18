@@ -13,6 +13,7 @@ import {
   Sliders,
   DollarSign,
   AlertTriangle,
+  AlertCircle,
   Info,
 } from "lucide-react";
 import {
@@ -358,7 +359,7 @@ export default function InvestPage() {
                 Investment Amount (USDC)
               </label>
               <span className="text-xs text-[#8F9CAE]">
-                Min: $5 USDC • Powered by Jupiter
+                {isPrivateMarket ? "Min: $5 USDC • Suggested cap: $25" : "Min: $5 USDC • Powered by Jupiter"}
               </span>
             </div>
 
@@ -377,9 +378,20 @@ export default function InvestPage() {
               />
             </div>
 
+            {/* Private Market Liquidity Warning if user enters > $25 */}
+            {isPrivateMarket && amountUsd > 25 && (
+              <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/40 text-xs text-amber-200 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold block">Pre-IPO Pool Liquidity Notice</span>
+                  <span>Order sizes above $25 USDC invite high price impact (&gt;5%) on decentralized AMM pools. Jupiter execution safeguards will abort trades that exceed 5% impact.</span>
+                </div>
+              </div>
+            )}
+
             {/* Quick Amount Buttons */}
             <div className="flex flex-wrap gap-2">
-              {(isPrivateMarket ? [5, 10, 25, 50, 100] : [25, 50, 100, 250, 500]).map((preset) => (
+              {(isPrivateMarket ? [5, 10, 15, 20, 25] : [25, 50, 100, 250, 500]).map((preset) => (
                 <button
                   key={preset}
                   type="button"
@@ -396,10 +408,17 @@ export default function InvestPage() {
               {balances.usdcBalance > 0 && (
                 <button
                   type="button"
-                  onClick={() => setAmountUsd(Math.floor(balances.usdcBalance))}
+                  onClick={() => {
+                    const maxVal = isPrivateMarket
+                      ? Math.min(25, Math.floor(balances.usdcBalance))
+                      : Math.floor(balances.usdcBalance);
+                    setAmountUsd(maxVal);
+                  }}
                   className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-[#161B26] border border-[#8D8AFF] text-[#8D8AFF] hover:bg-[#8D8AFF] hover:text-[#0B0E14] transition-all"
                 >
-                  Max (${Math.floor(balances.usdcBalance)})
+                  {isPrivateMarket
+                    ? `Max Safe ($${Math.min(25, Math.floor(balances.usdcBalance))})`
+                    : `Max ($${Math.floor(balances.usdcBalance)})`}
                 </button>
               )}
             </div>
