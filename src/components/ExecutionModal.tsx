@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
@@ -13,6 +13,7 @@ import {
   ArrowRight,
   ShieldAlert,
   RotateCcw,
+  X,
 } from "lucide-react";
 import {
   getJupiterQuote,
@@ -64,22 +65,51 @@ export const ExecutionModal: React.FC<Props> = ({
   const { connection } = useConnection();
   const wallet = useWallet();
 
-  const [steps, setSteps] = useState<SwapStepState[]>(() =>
-    legs
-      .filter((l) => l.amountUsd >= 1)
-      .map((l) => ({
-        symbol: l.symbol,
-        dollarAmount: l.amountUsd,
-        status: "pending",
-      }))
-  );
-
+  const [steps, setSteps] = useState<SwapStepState[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [gasError, setGasError] = useState<string | null>(null);
 
-  if (!isOpen || steps.length === 0) return null;
+  // Re-sync steps whenever modal opens or legs change
+  useEffect(() => {
+    if (isOpen) {
+      setSteps(
+        legs
+          .filter((l) => l.amountUsd >= 1)
+          .map((l) => ({
+            symbol: l.symbol,
+            dollarAmount: l.amountUsd,
+            status: "pending",
+          }))
+      );
+      setIsRunning(false);
+      setCompleted(false);
+      setActiveStepIndex(0);
+      setGasError(null);
+    }
+  }, [isOpen, legs]);
+
+  if (!isOpen) return null;
+
+  if (steps.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div className="bg-[#161B26] border border-[#262D3D] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center mx-auto text-[#CDE06A]">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h3 className="text-xl font-bold text-white">No Eligible Legs to Swap</h3>
+          <p className="text-xs text-[#8F9CAE] leading-relaxed">
+            Every stock leg requires at least $1.00 USDC for Jupiter routing. Please increase your investment amount.
+          </p>
+          <button onClick={onClose} className="btn-secondary w-full text-sm">
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const hasEnoughSol = solBalance >= MIN_SOL_BALANCE;
   const hasEnoughUsdc = usdcBalance >= totalUsdAmount;

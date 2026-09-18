@@ -1,5 +1,6 @@
-import { VERIFIED_STOCKS, BasketComponent } from "./constants";
+import { VERIFIED_STOCKS, BasketComponent, isPreStock } from "./constants";
 import { TokenPriceInfo } from "./jupiter";
+import { PreStockAssetLive, PRESTOCKS_FALLBACK } from "./prestocks";
 
 export interface StoredBasket {
   id: string;
@@ -25,6 +26,9 @@ export interface PortfolioPosition {
   currentWeightPct: number;
   targetWeightPct: number;
   driftPct: number; // currentWeightPct - targetWeightPct
+  market?: "public" | "private";
+  markPrice?: number;
+  premiumPct?: number;
 }
 
 const STORAGE_KEY = "slyz_invested_baskets";
@@ -59,12 +63,14 @@ export function saveBasketInvestment(basket: StoredBasket): void {
 
 /**
  * Calculate full portfolio positions, applying multipliers and calculating drift.
+ * Handles both public xStocks (Jupiter prices) and private PreStocks (live PreStocks API).
  */
 export function calculatePortfolioPositions(
   targetComponents: BasketComponent[],
   balances: Record<string, number>, // mint -> raw ui amount
   prices: Record<string, TokenPriceInfo>,
-  rawAmounts?: Record<string, string>
+  rawAmounts?: Record<string, string>,
+  prestocksLive?: Record<string, PreStockAssetLive>
 ): {
   positions: PortfolioPosition[];
   totalValueUsd: number;
@@ -78,12 +84,29 @@ export function calculatePortfolioPositions(
     const mint = asset ? asset.mint : "";
     const rawBal = (mint && balances[mint]) || 0;
     const rawAmountStr = (mint && rawAmounts && rawAmounts[mint]) || "";
-    const priceInfo = (mint && prices[mint]) || { usdPrice: 0, scaledUiConfig: { multiplier: 1 } };
+    const isPrivate = isPreStock(comp.symbol);
 
-    const multiplier = priceInfo.scaledUiConfig?.multiplier || 1;
+    let usdPrice = 0;
+    let markPrice: number | undefined = undefined;
+    let premiumPct: number | undefined = undefined;
+
+    if (isPrivate) {
+      const liveData =
+        prestocksLive?.[comp.symbol] || PRESTOCKS_FALLBACK[comp.symbol];
+      usdPrice = liveData?.tokenPrice || 0;
+      markPrice = liveData?.markPrice;
+      premiumPct = liveData?.premiumPct;
+    } else {
+      const priceInfo = (mint && prices[mint]) || {
+        usdPrice: 0,
+        scaledUiConfig: { multiplier: 1 },
+      };
+      usdPrice = priceInfo.usdPrice || 0;
+    }
+
+    const multiplier = 1;
     // On Solana Token-2022, uiAmount from RPC already accounts for decimals and scaling.
     const shareEquivalents = rawBal;
-    const usdPrice = priceInfo.usdPrice || 0;
     const currentValueUsd = shareEquivalents * usdPrice;
 
     totalValueUsd += currentValueUsd;
@@ -101,6 +124,9 @@ export function calculatePortfolioPositions(
       usdPrice,
       currentValueUsd,
       targetWeightPct: comp.targetWeight,
+      market: asset?.market || "public",
+      markPrice,
+      premiumPct,
     };
   });
 

@@ -21,9 +21,15 @@ import {
   Basket,
   BasketComponent,
   MIN_SOL_BALANCE,
+  isPreStock,
 } from "@/lib/constants";
 import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
 import { fetchUserBalances, UserBalances } from "@/lib/solana";
+import {
+  fetchPreStocksLive,
+  PreStockAssetLive,
+  PRESTOCKS_FALLBACK,
+} from "@/lib/prestocks";
 import { DonutChart, DONUT_COLORS } from "@/components/DonutChart";
 import { ExecutionModal } from "@/components/ExecutionModal";
 
@@ -56,18 +62,22 @@ export default function InvestPage() {
         description: "Custom allocation configured in Slyz Studio.",
         category: "Custom",
         themeColor: "#8D8AFF",
+        market: "public",
         components,
       };
     }
     return CURATED_BASKETS.find((b) => b.id === basketId) || null;
   }, [basketId, searchParams]);
 
+  const isPrivateMarket = basket?.market === "private";
+
   // State
   const [components, setComponents] = useState<BasketComponent[]>(
     basket?.components || []
   );
-  const [amountUsd, setAmountUsd] = useState<number>(100);
+  const [amountUsd, setAmountUsd] = useState<number>(isPrivateMarket ? 5 : 50);
   const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
+  const [preStocksLive, setPreStocksLive] = useState<Record<string, PreStockAssetLive>>(PRESTOCKS_FALLBACK);
   const [balances, setBalances] = useState<UserBalances>({
     solBalance: 0,
     usdcBalance: 0,
@@ -77,21 +87,42 @@ export default function InvestPage() {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Sync components if basket changes
+  // Sync components and default amount if basket changes
   useEffect(() => {
     if (basket) {
       setComponents(basket.components);
+      setAmountUsd(basket.market === "private" ? 5 : 50);
     }
   }, [basket]);
 
-  // Fetch prices
+  // Fetch prices for both public xStocks and private PreStocks
   useEffect(() => {
     if (!basket) return;
-    const mints = basket.components
+    let isMounted = true;
+
+    // 1. Fetch public xStocks prices from Jupiter
+    const publicMints = basket.components
+      .filter((c) => !isPreStock(c.symbol))
       .map((c) => VERIFIED_STOCKS[c.symbol]?.mint)
       .filter(Boolean) as string[];
 
-    getJupiterPrices(mints).then(setPrices);
+    if (publicMints.length > 0) {
+      getJupiterPrices(publicMints).then((p) => {
+        if (isMounted) setPrices(p);
+      });
+    }
+
+    // 2. Fetch live PreStocks prices if basket contains private assets
+    const hasPrivateAssets = basket.components.some((c) => isPreStock(c.symbol));
+    if (hasPrivateAssets) {
+      fetchPreStocksLive().then((pMap) => {
+        if (isMounted && pMap) setPreStocksLive(pMap);
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [basket]);
 
   // Fetch balances when wallet connects
@@ -247,36 +278,69 @@ export default function InvestPage() {
           <div className="w-full mt-6 space-y-2 border-t border-[#262D3D]/60 pt-4">
             {components.map((c, i) => {
               const asset = VERIFIED_STOCKS[c.symbol];
-              const priceInfo = asset ? prices[asset.mint] : null;
-              const livePrice = priceInfo?.usdPrice || 0;
+              const isPrivate = isPreStock(c.symbol);
+              const preData = isPrivate
+                ? preStocksLive[c.symbol] || PRESTOCKS_FALLBACK[c.symbol]
+                : null;
+              const livePrice = isPrivate
+                ? preData?.tokenPrice || 0
+                : prices[asset?.mint || ""]?.usdPrice || 0;
+
               const dollarSlice = (c.targetWeight / 100) * amountUsd;
-              // On Solana Token-2022, uiAmount is already display units; estimated shares = dollarSlice / price
-              const estimatedShares = livePrice > 0 ? dollarSlice / livePrice : 0;
+              const estimatedUnits = livePrice > 0 ? dollarSlice / livePrice : 0;
 
               return (
                 <div
                   key={c.symbol}
-                  className="flex items-center justify-between p-2 rounded-xl bg-[#0B0E14]/40 border border-[#262D3D]/40 text-xs"
+                  className="p-2.5 rounded-xl bg-[#0B0E14]/40 border border-[#262D3D]/40 text-xs space-y-1.5"
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }}
-                    ></span>
-                    <span className="font-bold text-white">
-                      {asset?.underlying || c.symbol}
-                    </span>
-                    <span className="text-[10px] text-[#8F9CAE]">
-                      (${livePrice > 0 ? livePrice.toFixed(2) : "---"})
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }}
+                      ></span>
+                      <span className="font-bold text-white">
+                        {asset?.underlying || c.symbol}
+                      </span>
+                      {isPrivate ? (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30">
+                          Pre-IPO (9 dec)
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#CDE06A]/20 text-[#CDE06A] border border-[#CDE06A]/30">
+                          xStock (8 dec)
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="font-mono font-bold text-white">
+                      ${dollarSlice.toFixed(2)}
                     </span>
                   </div>
 
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-white block">
-                      ${dollarSlice.toFixed(2)}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#8F9CAE]">
-                      ~{estimatedShares.toFixed(4)} shares
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[#8F9CAE]">
+                    <div className="flex items-center gap-2">
+                      <span>Token: ${livePrice > 0 ? livePrice.toFixed(2) : "---"}</span>
+                      {isPrivate && preData && (
+                        <span>
+                          • Mark: ${preData.markPrice.toFixed(2)}
+                          <span
+                            className={
+                              preData.premiumPct >= 0
+                                ? " text-emerald-400 font-bold ml-1"
+                                : " text-rose-400 font-bold ml-1"
+                            }
+                          >
+                            ({preData.premiumPct >= 0 ? "+" : ""}
+                            {preData.premiumPct.toFixed(1)}%)
+                          </span>
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="text-[#8F9CAE]">
+                      ~{estimatedUnits.toFixed(4)} {isPrivate ? "tokens" : "shares"}
                     </span>
                   </div>
                 </div>
@@ -294,7 +358,7 @@ export default function InvestPage() {
                 Investment Amount (USDC)
               </label>
               <span className="text-xs text-[#8F9CAE]">
-                Min: $10 • Powered by Jupiter
+                Min: $5 USDC • Powered by Jupiter
               </span>
             </div>
 
@@ -304,18 +368,18 @@ export default function InvestPage() {
               </div>
               <input
                 type="number"
-                min="10"
-                step="5"
+                min={5}
+                step="1"
                 value={amountUsd}
                 onChange={(e) => setAmountUsd(Math.max(1, Number(e.target.value)))}
                 className="w-full pl-11 pr-4 py-4 rounded-2xl bg-[#0B0E14] border border-[#262D3D] text-2xl font-extrabold font-mono text-white focus:outline-none focus:border-[#CDE06A] transition-colors"
-                placeholder="100.00"
+                placeholder={isPrivateMarket ? "5.00" : "50.00"}
               />
             </div>
 
             {/* Quick Amount Buttons */}
             <div className="flex flex-wrap gap-2">
-              {[25, 50, 100, 250, 500].map((preset) => (
+              {(isPrivateMarket ? [5, 10, 25, 50, 100] : [25, 50, 100, 250, 500]).map((preset) => (
                 <button
                   key={preset}
                   type="button"
@@ -388,8 +452,8 @@ export default function InvestPage() {
                     </div>
                     <input
                       type="range"
-                      min="5"
-                      max="90"
+                      min={5}
+                      max={90}
                       step="5"
                       value={comp.targetWeight}
                       onChange={(e) => handleSliderChange(idx, Number(e.target.value))}
@@ -412,15 +476,38 @@ export default function InvestPage() {
               <span className="text-white">~0.003 SOL ($0.45)</span>
             </div>
             <div className="flex items-center justify-between font-mono">
-              <span>Token-2022 ATA Account Rent:</span>
-              <span className="text-[#CDE06A]">Handled automatically</span>
+              <span>Asset Standard:</span>
+              <span className="text-[#CDE06A]">
+                {isPrivateMarket ? "Token-2022 • 9 Decimals (PreStocks)" : "Token-2022 • 8 Decimals (xStocks)"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between font-mono">
+              <span>Liquidity Safeguard:</span>
+              <span className="text-[#8D8AFF]">
+                {isPrivateMarket ? "< 5% Impact Protection on AMM" : "Multi-DEX Deep Routing"}
+              </span>
             </div>
           </div>
+
+          {/* PreStocks Regulatory & Jurisdiction Disclaimer Box */}
+          {isPrivateMarket && (
+            <div className="p-4 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/30 space-y-1.5 text-xs">
+              <div className="flex items-center gap-2 font-bold text-white">
+                <Info className="w-4 h-4 text-[#8D8AFF]" />
+                <span>Pre-IPO Tokenized Economic Exposure</span>
+              </div>
+              <p className="text-[#8F9CAE] leading-relaxed text-[11px]">
+                PreStocks provide economic exposure only. Not equity, voting rights, or corporate dividends.
+                Issuer terms restrict some jurisdictions (including US persons). Always verify contract addresses
+                on Solana Explorer before transacting.
+              </p>
+            </div>
+          )}
 
           {/* Action CTA Button */}
           <button
             onClick={() => setIsModalOpen(true)}
-            disabled={!wallet.connected || totalWeight !== 100 || amountUsd < 10}
+            disabled={!wallet.connected || totalWeight !== 100 || amountUsd < 5}
             className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2 shadow-lg"
           >
             {!wallet.connected ? (

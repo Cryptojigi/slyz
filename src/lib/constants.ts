@@ -1,3 +1,5 @@
+export type MarketKind = "public" | "private";
+
 export interface StockAsset {
   symbol: string;
   name: string;
@@ -5,7 +7,9 @@ export interface StockAsset {
   mint: string;
   decimals: number;
   logo: string;
-  category: "tech" | "index" | "crypto" | "growth";
+  category: "tech" | "index" | "crypto" | "growth" | "preipo";
+  market: MarketKind;
+  issuer: "xstocks" | "prestocks";
 }
 
 export interface BasketComponent {
@@ -20,6 +24,7 @@ export interface Basket {
   description: string;
   category: string;
   themeColor: string;
+  market: MarketKind;
   components: BasketComponent[];
 }
 
@@ -31,6 +36,7 @@ export const TOKEN_2022_PROGRAM_ID = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuE
 export const MIN_SOL_BALANCE = 0.015;
 
 export const VERIFIED_STOCKS: Record<string, StockAsset> = {
+  // --- Public Listed Equities (xStocks - 8 decimals) ---
   NVDAx: {
     symbol: "NVDAx",
     name: "NVIDIA Corp",
@@ -39,6 +45,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/NVDAx.png",
     category: "tech",
+    market: "public",
+    issuer: "xstocks",
   },
   AAPLx: {
     symbol: "AAPLx",
@@ -48,6 +56,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/AAPLx.png",
     category: "tech",
+    market: "public",
+    issuer: "xstocks",
   },
   MSFTx: {
     symbol: "MSFTx",
@@ -57,6 +67,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/MSFTx.png",
     category: "tech",
+    market: "public",
+    issuer: "xstocks",
   },
   TSLAx: {
     symbol: "TSLAx",
@@ -66,6 +78,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/TSLAx.png",
     category: "growth",
+    market: "public",
+    issuer: "xstocks",
   },
   AMZNx: {
     symbol: "AMZNx",
@@ -75,6 +89,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/AMZNx.png",
     category: "tech",
+    market: "public",
+    issuer: "xstocks",
   },
   METAx: {
     symbol: "METAx",
@@ -84,6 +100,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/METAx.png",
     category: "tech",
+    market: "public",
+    issuer: "xstocks",
   },
   GOOGLx: {
     symbol: "GOOGLx",
@@ -93,6 +111,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/GOOGLx.png",
     category: "tech",
+    market: "public",
+    issuer: "xstocks",
   },
   SPYx: {
     symbol: "SPYx",
@@ -102,6 +122,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/SPYx.png",
     category: "index",
+    market: "public",
+    issuer: "xstocks",
   },
   QQQx: {
     symbol: "QQQx",
@@ -111,6 +133,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/QQQx.png",
     category: "index",
+    market: "public",
+    issuer: "xstocks",
   },
   COINx: {
     symbol: "COINx",
@@ -120,10 +144,110 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     decimals: 8,
     logo: "https://xstocks-metadata.backed.fi/logos/tokens/COINx.png",
     category: "crypto",
+    market: "public",
+    issuer: "xstocks",
+  },
+
+  // --- Pre-IPO Private Market Exposure (PreStocks - 9 decimals) ---
+  OPENAI: {
+    symbol: "OPENAI",
+    name: "OpenAI PreStocks",
+    underlying: "OpenAI",
+    mint: "PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/openai.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
+  },
+  ANTHROPIC: {
+    symbol: "ANTHROPIC",
+    name: "Anthropic PreStocks",
+    underlying: "Anthropic",
+    mint: "Pren1FvFX6J3E4kXhJuCiAD5aDmGEb7qJRncwA8Lkhw",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/anthropic.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
+  },
+  SPACEX: {
+    symbol: "SPACEX",
+    name: "SpaceX PreStocks",
+    underlying: "SpaceX",
+    mint: "PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/spacex.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
+  },
+  ANDURIL: {
+    symbol: "ANDURIL",
+    name: "Anduril PreStocks",
+    underlying: "Anduril",
+    mint: "PresTj4Yc2bAR197Er7wz4UUKSfqt6FryBEdAriBoQB",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/anduril.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
+  },
+  FIGUREAI: {
+    symbol: "FIGUREAI",
+    name: "Figure AI PreStocks",
+    underlying: "Figure AI",
+    mint: "PreZad18qfPtbxNpMtMuAuX2zVpvkEU8DnJx56faCWd",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/figureai.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
+  },
+  KALSHI: {
+    symbol: "KALSHI",
+    name: "Kalshi PreStocks",
+    underlying: "Kalshi",
+    mint: "PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/kalshi.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
+  },
+  NEURALINK: {
+    symbol: "NEURALINK",
+    name: "Neuralink PreStocks",
+    underlying: "Neuralink",
+    mint: "PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/neuralink.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
+  },
+  POLYMARKET: {
+    symbol: "POLYMARKET",
+    name: "Polymarket PreStocks",
+    underlying: "Polymarket",
+    mint: "Pre8AREmFPtoJFT8mQSXQLh56cwJmM7CFDRuoGBZiUP",
+    decimals: 9,
+    logo: "https://www.prestocks.com/logos/polymarket.png",
+    category: "preipo",
+    market: "private",
+    issuer: "prestocks",
   },
 };
 
+// Only mints with confirmed liquidity (<5% impact on Jupiter) are executable in v1
+export const EXECUTABLE_PRIVATE_SYMBOLS = ["OPENAI", "ANTHROPIC", "SPACEX"] as const;
+
+export function isPreStock(symbol: string): boolean {
+  return VERIFIED_STOCKS[symbol]?.issuer === "prestocks";
+}
+
 export const CURATED_BASKETS: Basket[] = [
+  // --- Public Equity Pies (xStocks) ---
   {
     id: "mag-3",
     name: "The Mag 3",
@@ -131,6 +255,7 @@ export const CURATED_BASKETS: Basket[] = [
     description: "Concentrated exposure in the three highest-capitalization technology giants in the world: Nvidia, Apple, and Microsoft.",
     category: "Big Tech",
     themeColor: "#CDE06A",
+    market: "public",
     components: [
       { symbol: "NVDAx", targetWeight: 40 },
       { symbol: "AAPLx", targetWeight: 30 },
@@ -144,6 +269,7 @@ export const CURATED_BASKETS: Basket[] = [
     description: "Broad macro stability via SPY paired with the innovation horsepower of Nasdaq-100 and Apple.",
     category: "Foundational",
     themeColor: "#8D8AFF",
+    market: "public",
     components: [
       { symbol: "SPYx", targetWeight: 50 },
       { symbol: "QQQx", targetWeight: 30 },
@@ -157,6 +283,7 @@ export const CURATED_BASKETS: Basket[] = [
     description: "The complete artificial intelligence value stack: Nvidia GPU compute, Microsoft OpenAI partnership, and Google DeepMind.",
     category: "AI & Future",
     themeColor: "#CDE06A",
+    market: "public",
     components: [
       { symbol: "NVDAx", targetWeight: 40 },
       { symbol: "MSFTx", targetWeight: 30 },
@@ -170,6 +297,7 @@ export const CURATED_BASKETS: Basket[] = [
     description: "High-octane growth assets combining EV disruption, AI dominance, and on-chain economy gateway Coinbase.",
     category: "Risk-On",
     themeColor: "#8D8AFF",
+    market: "public",
     components: [
       { symbol: "TSLAx", targetWeight: 40 },
       { symbol: "NVDAx", targetWeight: 30 },
@@ -183,10 +311,27 @@ export const CURATED_BASKETS: Basket[] = [
     description: "Own the pipelines of global consumer spending, cloud infrastructure, and social engagement.",
     category: "Consumer Tech",
     themeColor: "#CDE06A",
+    market: "public",
     components: [
       { symbol: "AMZNx", targetWeight: 40 },
       { symbol: "METAx", targetWeight: 30 },
       { symbol: "GOOGLx", targetWeight: 30 },
+    ],
+  },
+
+  // --- Private Market Pies (PreStocks) ---
+  {
+    id: "frontier",
+    name: "Frontier",
+    tagline: "Private AI and space, one ticket",
+    description: "Concentrated exposure in premier private venture giants: OpenAI, Anthropic, and SpaceX via verified PreStocks tokens.",
+    category: "Pre-IPO",
+    themeColor: "#8D8AFF",
+    market: "private",
+    components: [
+      { symbol: "OPENAI", targetWeight: 40 },
+      { symbol: "ANTHROPIC", targetWeight: 35 },
+      { symbol: "SPACEX", targetWeight: 25 },
     ],
   },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
 import {
@@ -68,6 +68,26 @@ export function LiquidationModal({
   const [activeStepIndex, setActiveStepIndex] = useState<number>(-1);
   const [completed, setCompleted] = useState(false);
   const [gasError, setGasError] = useState<string | null>(null);
+
+  // Synchronize steps whenever modal opens or positions update
+  useEffect(() => {
+    if (isOpen) {
+      const freshActive = positions.filter((p) => p.rawBalance > 0.000001);
+      setSteps(
+        freshActive.map((p) => ({
+          symbol: p.symbol,
+          shareAmount: p.rawBalance,
+          rawAmountString: p.rawAmountString,
+          estimatedUsd: p.currentValueUsd,
+          status: "idle",
+        }))
+      );
+      setIsRunning(false);
+      setActiveStepIndex(-1);
+      setCompleted(false);
+      setGasError(null);
+    }
+  }, [isOpen, positions]);
 
   if (!isOpen) return null;
 

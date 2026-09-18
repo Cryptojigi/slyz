@@ -92,10 +92,21 @@ export async function buildSwapTransaction(params: {
  * Fetch live USD prices, 24h changes, and Token-2022 scaled-ui-amount multipliers in a single roundtrip.
  */
 export async function getJupiterPrices(mintAddresses?: string[]): Promise<Record<string, TokenPriceInfo>> {
-  const mints =
+  // Never pass PreStocks mints to Jupiter Price v3 (PreStocks mints return 403 on Price API)
+  const prestocksMints = new Set(
+    Object.values(VERIFIED_STOCKS)
+      .filter((s) => s.issuer === "prestocks")
+      .map((s) => s.mint)
+  );
+
+  const candidateMints =
     mintAddresses && mintAddresses.length > 0
       ? mintAddresses
-      : Object.values(VERIFIED_STOCKS).map((s) => s.mint);
+      : Object.values(VERIFIED_STOCKS)
+          .filter((s) => s.issuer === "xstocks")
+          .map((s) => s.mint);
+
+  const mints = candidateMints.filter((m) => !prestocksMints.has(m));
   if (!mints.length) return {};
   const ids = mints.join(",");
   const url = `${JUPITER_API_URL}/price/v3?ids=${ids}`;

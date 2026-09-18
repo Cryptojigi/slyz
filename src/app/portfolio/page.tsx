@@ -25,6 +25,11 @@ import {
 import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
 import { fetchUserBalances, UserBalances } from "@/lib/solana";
 import {
+  fetchPreStocksLive,
+  PreStockAssetLive,
+  PRESTOCKS_FALLBACK,
+} from "@/lib/prestocks";
+import {
   getStoredBaskets,
   StoredBasket,
   calculatePortfolioPositions,
@@ -48,6 +53,7 @@ export default function PortfolioPage() {
     hasSufficientGas: false,
   });
   const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
+  const [preStocksLive, setPreStocksLive] = useState<Record<string, PreStockAssetLive>>(PRESTOCKS_FALLBACK);
   const [loading, setLoading] = useState(true);
 
   // Smart Top-Up Modal State
@@ -69,8 +75,12 @@ export default function PortfolioPage() {
     setLoading(true);
     try {
       const allMints = Object.values(VERIFIED_STOCKS).map((s) => s.mint);
-      const priceMap = await getJupiterPrices(allMints);
+      const [priceMap, preStocksMap] = await Promise.all([
+        getJupiterPrices(allMints),
+        fetchPreStocksLive(),
+      ]);
       setPrices(priceMap);
+      if (preStocksMap) setPreStocksLive(preStocksMap);
 
       if (wallet.publicKey) {
         const userBal = await fetchUserBalances(wallet.publicKey);
@@ -140,7 +150,8 @@ export default function PortfolioPage() {
     activeBasket.components,
     balances.token2022Balances,
     prices,
-    balances.token2022RawAmounts
+    balances.token2022RawAmounts,
+    preStocksLive
   );
 
   // Donut chart slices for current holdings
@@ -414,10 +425,31 @@ export default function PortfolioPage() {
                                 )}
                               </div>
                               <div>
-                                <span className="font-bold text-white block">{pos.underlying}</span>
-                                <span className="text-[10px] text-[#8F9CAE] font-sans">
-                                  ${pos.usdPrice > 0 ? pos.usdPrice.toFixed(2) : "---"}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-white block">{pos.underlying}</span>
+                                  {pos.market === "private" ? (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30">
+                                      Pre-IPO
+                                    </span>
+                                  ) : (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#CDE06A]/20 text-[#CDE06A] border border-[#CDE06A]/30">
+                                      xStock
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-[#8F9CAE] font-sans flex items-center gap-1.5">
+                                  <span>${pos.usdPrice > 0 ? pos.usdPrice.toFixed(2) : "---"}</span>
+                                  {pos.market === "private" && pos.markPrice !== undefined && (
+                                    <span className="text-[#8F9CAE]">
+                                      • Mark: ${pos.markPrice.toFixed(2)}
+                                      {pos.premiumPct !== undefined && (
+                                        <span className={pos.premiumPct >= 0 ? " text-emerald-400 font-semibold" : " text-rose-400 font-semibold"}>
+                                          {" "}({pos.premiumPct >= 0 ? "+" : ""}{pos.premiumPct.toFixed(1)}%)
+                                        </span>
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </td>

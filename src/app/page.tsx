@@ -44,8 +44,8 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
-              Invest in curated baskets of tokenized US equities on Solana — three signatures, one theme.
-              Non-custodial, fractional shares powered by Jupiter and xStocks Token-2022.
+              Invest in curated baskets of tokenized US equities and pre-IPO venture companies on Solana — three signatures, one theme.
+              Non-custodial, fractional shares powered by Jupiter, xStocks Token-2022, and PreStocks.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -75,9 +75,9 @@ export default function LandingPage() {
         {/* Live Metrics / Highlights Bar */}
         <div className="relative z-10 mt-12 pt-8 border-t border-[#262D3D]/70 grid grid-cols-2 sm:grid-cols-4 gap-6">
           <div>
-            <span className="text-xs text-[#8F9CAE] font-medium block">Verified Stocks</span>
+            <span className="text-xs text-[#8F9CAE] font-medium block">Verified Equities & Pre-IPO</span>
             <span className="text-base font-extrabold text-white font-mono mt-0.5 block">
-              10 US Equities
+              10 xStocks + 8 PreStocks
             </span>
           </div>
           <div>
@@ -93,9 +93,9 @@ export default function LandingPage() {
             </span>
           </div>
           <div>
-            <span className="text-xs text-[#8F9CAE] font-medium block">Execution Mode</span>
+            <span className="text-xs text-[#8F9CAE] font-medium block">Curated Pies</span>
             <span className="text-base font-extrabold text-[#8D8AFF] font-mono mt-0.5 block">
-              Sequential MTU-Safe
+              6 Themes (Public & Private)
             </span>
           </div>
         </div>

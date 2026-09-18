@@ -26,6 +26,9 @@ import {
   DollarSign,
   Briefcase,
   AlertCircle,
+  Globe,
+  Lock,
+  Info,
 } from "lucide-react";
 import {
   CURATED_BASKETS,
@@ -33,9 +36,17 @@ import {
   Basket,
   BasketComponent,
   MIN_SOL_BALANCE,
+  MarketKind,
+  isPreStock,
+  EXECUTABLE_PRIVATE_SYMBOLS,
 } from "@/lib/constants";
 import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
 import { fetchUserBalances, UserBalances } from "@/lib/solana";
+import {
+  fetchPreStocksLive,
+  PreStockAssetLive,
+  PRESTOCKS_FALLBACK,
+} from "@/lib/prestocks";
 import { DonutChart, DONUT_COLORS } from "@/components/DonutChart";
 import { ExecutionModal } from "@/components/ExecutionModal";
 import { ThemeMultiStockChart } from "@/components/ThemeMultiStockChart";
@@ -45,6 +56,10 @@ export default function DashboardPage() {
 
   // Active Tab: 'curated' | 'catalog' | 'custom'
   const [activeTab, setActiveTab] = useState<"curated" | "catalog" | "custom">("curated");
+
+  // Market Filter: 'public' (xStocks) | 'private' (PreStocks)
+  const [marketFilter, setMarketFilter] = useState<MarketKind>("public");
+  const [preStocksLive, setPreStocksLive] = useState<Record<string, PreStockAssetLive>>(PRESTOCKS_FALLBACK);
 
   // Selected Theme for Real-Time 3-Stock Chart & Featured Spotlight
   const [selectedThemeId, setSelectedThemeId] = useState<string>("mag-3");
@@ -61,6 +76,7 @@ export default function DashboardPage() {
     "ai-frontier": 50,
     "high-beta": 50,
     "big-commerce": 50,
+    frontier: 5,
   });
   const [cardErrors, setCardErrors] = useState<Record<string, string | null>>({});
 
@@ -133,6 +149,48 @@ export default function DashboardPage() {
       clearInterval(interval);
     };
   }, []);
+
+  // Load live PreStocks data
+  useEffect(() => {
+    let isMounted = true;
+    const loadPreStocks = async () => {
+      try {
+        const data = await fetchPreStocksLive();
+        if (isMounted && data) {
+          setPreStocksLive(data);
+        }
+      } catch (err) {
+        console.warn("Failed to load PreStocks:", err);
+      }
+    };
+    loadPreStocks();
+    const interval = setInterval(loadPreStocks, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Switch between Public Equities (xStocks) and Private Pre-IPO (PreStocks)
+  const handleSwitchMarket = (market: MarketKind) => {
+    setMarketFilter(market);
+    if (market === "private") {
+      setSelectedThemeId("frontier");
+      setFeaturedAmount(5);
+    } else {
+      setSelectedThemeId("mag-3");
+      setFeaturedAmount(50);
+    }
+  };
+
+  // Helper to resolve live price for either public or private asset
+  const getAssetPrice = (symbol: string): number | undefined => {
+    if (isPreStock(symbol)) {
+      return preStocksLive[symbol]?.tokenPrice ?? PRESTOCKS_FALLBACK[symbol]?.tokenPrice;
+    }
+    const asset = VERIFIED_STOCKS[symbol];
+    return asset ? prices[asset.mint]?.usdPrice : undefined;
+  };
 
   // Fetch balances when wallet connects
   useEffect(() => {
@@ -335,6 +393,8 @@ export default function DashboardPage() {
 
   // Filter stocks and curated pies
   const verifiedStocksList = Object.values(VERIFIED_STOCKS).filter((stock) => {
+    if (marketFilter === "public" && stock.market === "private") return false;
+    if (marketFilter === "private" && stock.market !== "private") return false;
     const q = searchQuery.toLowerCase();
     return (
       stock.symbol.toLowerCase().includes(q) ||
@@ -344,6 +404,7 @@ export default function DashboardPage() {
   });
 
   const curatedBasketsList = CURATED_BASKETS.filter((basket) => {
+    if ((basket.market || "public") !== marketFilter) return false;
     const q = searchQuery.toLowerCase();
     return (
       basket.name.toLowerCase().includes(q) ||
@@ -379,61 +440,266 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Quick Stat Metric Badges (Resq.io Style) */}
+        {/* Quick Stat Metric Badges */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="px-4 py-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
             <div className="w-8 h-8 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A] font-black text-xs">
-              10
+              {marketFilter === "public" ? "10" : "8"}
             </div>
             <div>
-              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">Verified Equities</span>
-              <span className="text-xs font-black text-white font-mono block">24/7 xStocks</span>
+              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">
+                {marketFilter === "public" ? "Verified Equities" : "Pre-IPO Assets"}
+              </span>
+              <span className="text-xs font-black text-white font-mono block">
+                {marketFilter === "public" ? "24/7 xStocks" : "PreStocks Mints"}
+              </span>
             </div>
           </div>
 
           <div className="px-4 py-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
             <div className="w-8 h-8 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF] font-black text-xs">
-              5
+              {marketFilter === "public" ? "5" : "1"}
             </div>
             <div>
-              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">Curated Themes</span>
-              <span className="text-xs font-black text-white font-mono block">Multi-Asset Pies</span>
+              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">
+                {marketFilter === "public" ? "Curated Themes" : "Frontier Basket"}
+              </span>
+              <span className="text-xs font-black text-white font-mono block">
+                {marketFilter === "public" ? "Multi-Asset Pies" : "AI & Space Venture"}
+              </span>
             </div>
           </div>
 
           <div className="px-4 py-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
             <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-black text-xs">
-              ~3.2s
+              {marketFilter === "public" ? "8 Dec" : "9 Dec"}
             </div>
             <div>
-              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">Jupiter Speed</span>
-              <span className="text-xs font-black text-[#CDE06A] font-mono block">Sequential Fills</span>
+              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">Token Standard</span>
+              <span className="text-xs font-black text-[#CDE06A] font-mono block">
+                {marketFilter === "public" ? "Token-2022" : "Token-2022"}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. Top Bento Row: Real-Time 3-Stock Curve & Selected Theme Spotlight */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Dynamic Real-Time 3-Stock Trend Curve */}
-        <div className="lg:col-span-8 bento-card">
-          <ThemeMultiStockChart
-            basket={selectedTheme}
-            prices={prices}
-            timeframe={chartTimeframe}
-            onTimeframeChange={setChartTimeframe}
-          />
+      {/* 2. Public vs Private Shelf Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-2 rounded-2xl bg-[#161B26] border border-[#262D3D]">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleSwitchMarket("public")}
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+              marketFilter === "public"
+                ? "bg-[#CDE06A] text-[#0B0E14] shadow-md shadow-[#CDE06A]/20"
+                : "text-[#8F9CAE] hover:text-white hover:bg-[#1D2332]"
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Public Equities (xStocks)</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/20">
+              5 Themes • 10 Assets
+            </span>
+          </button>
+
+          <button
+            onClick={() => handleSwitchMarket("private")}
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+              marketFilter === "private"
+                ? "bg-gradient-to-r from-[#8D8AFF] to-[#B48AFF] text-white shadow-md shadow-[#8D8AFF]/20"
+                : "text-[#8F9CAE] hover:text-white hover:bg-[#1D2332]"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Private Pre-IPO (PreStocks)</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/20">
+              Frontier • 8 Assets
+            </span>
+          </button>
         </div>
+
+        <div className="text-xs text-[#8F9CAE] px-3 font-mono flex items-center gap-2">
+          {marketFilter === "public" ? (
+            <span>24/7 xStocks Equities • 8 Decimals • Jupiter Routing</span>
+          ) : (
+            <span className="text-[#8D8AFF] font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#8D8AFF]" />
+              Official PreStocks Pipeline • 9 Decimals • Economic Exposure
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Top Bento Row: Chart (Public) OR Valuation Radar (Private) & Featured Theme Spotlight */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {marketFilter === "public" ? (
+          /* Left: Dynamic Real-Time 3-Stock Trend Curve for Public xStocks */
+          <div className="lg:col-span-8 bento-card">
+            <ThemeMultiStockChart
+              basket={selectedTheme}
+              prices={prices}
+              timeframe={chartTimeframe}
+              onTimeframeChange={setChartTimeframe}
+            />
+          </div>
+        ) : (
+          /* Left: PreStocks Private Market Valuation Radar Deck */
+          <div className="lg:col-span-8 bento-card relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#8D8AFF]/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+
+            <div className="space-y-4 relative z-10">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#262D3D]">
+                <div className="flex items-center gap-2.5">
+                  <span className="px-2.5 py-1 rounded-full bg-[#8D8AFF]/15 border border-[#8D8AFF]/30 text-[#8D8AFF] text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3" />
+                    PreStocks™ Verified Pipeline
+                  </span>
+                  <span className="text-xs text-[#8F9CAE] font-mono">
+                    Source: prestocks.com/api/prestocks
+                  </span>
+                </div>
+                <span className="pill-badge pill-badge-purple text-[10px]">
+                  9 Decimals • Token-2022
+                </span>
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                  Private Venture Pre-IPO Valuation Radar
+                </h2>
+                <p className="text-xs text-[#8F9CAE] mt-1 leading-relaxed">
+                  Direct on-chain economic exposure to tier-one venture companies. Verified PreStocks mints with 9 decimals and automated Jupiter AMM routing.
+                </p>
+              </div>
+
+              {/* Live 3-Asset Cards for Executable Frontier Basket */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                {EXECUTABLE_PRIVATE_SYMBOLS.map((sym) => {
+                  const live = preStocksLive[sym] || PRESTOCKS_FALLBACK[sym];
+                  const stock = VERIFIED_STOCKS[sym];
+                  const isPremiumPositive = (live?.premiumPct ?? 0) >= 0;
+
+                  return (
+                    <div
+                      key={sym}
+                      className="p-4 rounded-xl bg-[#0B0E14]/80 border border-[#262D3D] hover:border-[#8D8AFF]/40 transition-all space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          {stock?.logo && (
+                            <Image
+                              src={stock.logo}
+                              alt={sym}
+                              width={28}
+                              height={28}
+                              className="rounded-full bg-white/10"
+                              unoptimized
+                            />
+                          )}
+                          <div>
+                            <span className="font-extrabold text-white text-sm block">{sym}</span>
+                            <span className="text-[10px] text-[#8F9CAE] block">
+                              {stock?.underlying || sym}
+                            </span>
+                          </div>
+                        </div>
+                        <span
+                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                            isPremiumPositive
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                          }`}
+                        >
+                          {isPremiumPositive ? "+" : ""}
+                          {live?.premiumPct.toFixed(1)}% vs mark
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 pt-1 border-t border-[#262D3D]/60 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#8F9CAE] text-[11px]">Live Token Price:</span>
+                          <span className="font-mono font-extrabold text-white text-sm">
+                            ${live?.tokenPrice.toFixed(2) || "---"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#8F9CAE] text-[11px]">Official Mark Price:</span>
+                          <span className="font-mono text-[#8F9CAE] text-xs">
+                            ${live?.markPrice.toFixed(2) || "---"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-[#262D3D]/60 flex items-center justify-between text-[10px] font-mono text-[#8F9CAE]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>&lt; 5% Impact Verified</span>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(stock?.mint || "")}
+                          className="hover:text-white flex items-center gap-1 transition-colors"
+                          title="Copy Mint"
+                        >
+                          <span>{stock?.mint.slice(0, 4)}..{stock?.mint.slice(-4)}</span>
+                          {copiedMint === stock?.mint ? (
+                            <CheckCircle2 className="w-3 h-3 text-[#CDE06A]" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Protocol Trust Badges */}
+            <div className="pt-4 mt-4 border-t border-[#262D3D] grid grid-cols-1 sm:grid-cols-3 gap-3 relative z-10">
+              <div className="p-2.5 rounded-xl bg-[#0B0E14]/40 border border-[#262D3D] flex items-center gap-2.5 text-xs">
+                <ShieldCheck className="w-4 h-4 text-[#8D8AFF] shrink-0" />
+                <div>
+                  <span className="font-bold text-white block text-[11px]">PreStocks API Verified</span>
+                  <span className="text-[10px] text-[#8F9CAE] block">Zero spoofed or unverified mints</span>
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#0B0E14]/40 border border-[#262D3D] flex items-center gap-2.5 text-xs">
+                <Zap className="w-4 h-4 text-[#CDE06A] shrink-0" />
+                <div>
+                  <span className="font-bold text-white block text-[11px]">Jupiter Lite AMM Swaps</span>
+                  <span className="text-[10px] text-[#8F9CAE] block">Raw 9-decimal precision routing</span>
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-[#0B0E14]/40 border border-[#262D3D] flex items-center gap-2.5 text-xs">
+                <Info className="w-4 h-4 text-white/80 shrink-0" />
+                <div>
+                  <span className="font-bold text-white block text-[11px]">Economic Exposure Only</span>
+                  <span className="text-[10px] text-[#8F9CAE] block">Not equity, voting, or dividends</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Right: Featured Theme Spotlight Card (Synced with Selected Theme) */}
         <div className="lg:col-span-4 rounded-[22px] bg-gradient-to-br from-[#1E2536] via-[#161B26] to-[#0F131D] border border-[#262D3D] p-6 flex flex-col justify-between shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-36 h-36 bg-[#CDE06A]/10 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10" />
+          <div
+            className={`absolute top-0 right-0 w-36 h-36 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10 ${
+              marketFilter === "private" ? "bg-[#8D8AFF]/10" : "bg-[#CDE06A]/10"
+            }`}
+          />
 
           <div className="space-y-3 relative z-10">
             <div className="flex items-center justify-between">
-              <span className="px-2.5 py-1 rounded-full bg-[#CDE06A]/15 text-[#CDE06A] text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+              <span
+                className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                  marketFilter === "private"
+                    ? "bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30"
+                    : "bg-[#CDE06A]/15 text-[#CDE06A]"
+                }`}
+              >
                 <Sparkles className="w-3 h-3" />
-                Featured Theme
+                {marketFilter === "private" ? "Featured Pre-IPO Pie" : "Featured Theme"}
               </span>
               <div className="w-7 h-7 rounded-full bg-[#262D3D] flex items-center justify-center text-white">
                 <ArrowUpRight className="w-4 h-4" />
@@ -449,7 +715,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-2 pt-2">
               {selectedTheme.components.map((c) => {
                 const asset = VERIFIED_STOCKS[c.symbol];
-                const priceInfo = asset ? prices[asset.mint] : undefined;
+                const isPrivate = isPreStock(c.symbol);
+                const livePrice = getAssetPrice(c.symbol);
+                const preData = isPrivate
+                  ? preStocksLive[c.symbol] || PRESTOCKS_FALLBACK[c.symbol]
+                  : null;
                 return (
                   <div
                     key={c.symbol}
@@ -460,8 +730,13 @@ export default function DashboardPage() {
                     </span>
                     <span className="text-xs font-black text-white block">{c.targetWeight}%</span>
                     <span className="text-[10px] font-mono text-[#CDE06A] block mt-0.5">
-                      {priceInfo ? `$${priceInfo.usdPrice.toFixed(2)}` : "..."}
+                      {livePrice ? `$${livePrice.toFixed(2)}` : "..."}
                     </span>
+                    {isPrivate && preData && (
+                      <span className="text-[9px] font-mono text-[#8D8AFF] block">
+                        Mark: ${preData.markPrice.toFixed(0)}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -528,7 +803,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 3. Segmented Navigation Tabs & Search Controls */}
+      {/* 4. Segmented Navigation Tabs & Search Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
         {/* Navigation Tabs */}
         <div className="inline-flex items-center gap-1.5 p-1 rounded-2xl bg-[#161B26] border border-[#262D3D] self-start">
@@ -541,7 +816,11 @@ export default function DashboardPage() {
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Curated Theme Pies ({CURATED_BASKETS.length})</span>
+            <span>
+              {marketFilter === "public"
+                ? `Curated Theme Pies (${curatedBasketsList.length})`
+                : `Curated Pre-IPO Pies (${curatedBasketsList.length})`}
+            </span>
           </button>
 
           <button
@@ -553,7 +832,11 @@ export default function DashboardPage() {
             }`}
           >
             <Briefcase className="w-3.5 h-3.5" />
-            <span>All Verified Stocks (10)</span>
+            <span>
+              {marketFilter === "public"
+                ? "All Verified xStocks (10)"
+                : "PreStocks Directory (8)"}
+            </span>
           </button>
 
           <button
@@ -576,19 +859,24 @@ export default function DashboardPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search stocks or themes..."
+            placeholder={
+              marketFilter === "public"
+                ? "Search stocks or themes..."
+                : "Search PreStocks or Frontier..."
+            }
             className="w-full pl-10 pr-4 py-2 bg-[#161B26] border border-[#262D3D] rounded-xl text-xs text-white placeholder-[#8F9CAE] focus:outline-none focus:border-[#CDE06A] transition-colors"
           />
         </div>
       </div>
 
-      {/* 4. Tab 1: Curated Theme Pies */}
+      {/* 5. Tab 1: Curated Theme Pies */}
       {activeTab === "curated" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {curatedBasketsList.map((basket) => {
               const isSelected = basket.id === selectedThemeId;
-              const cardAmt = cardAmounts[basket.id] ?? 50;
+              const defaultMin = basket.market === "private" ? 5 : 50;
+              const cardAmt = cardAmounts[basket.id] ?? defaultMin;
               const cardErr = cardErrors[basket.id];
 
               return (
@@ -597,24 +885,38 @@ export default function DashboardPage() {
                   onClick={() => setSelectedThemeId(basket.id)}
                   className={`bento-card flex flex-col justify-between transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? "border-[#CDE06A] ring-1 ring-[#CDE06A]/40 shadow-xl shadow-[#CDE06A]/5"
+                      ? basket.market === "private"
+                        ? "border-[#8D8AFF] ring-1 ring-[#8D8AFF]/40 shadow-xl shadow-[#8D8AFF]/5"
+                        : "border-[#CDE06A] ring-1 ring-[#CDE06A]/40 shadow-xl shadow-[#CDE06A]/5"
                       : "hover:border-[#8D8AFF]/40"
                   }`}
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-full bg-[#1D2332] text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          basket.market === "private"
+                            ? "bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30"
+                            : "bg-[#1D2332] text-[#8F9CAE]"
+                        }`}
+                      >
                         {basket.category}
                       </span>
                       {isSelected ? (
-                        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#CDE06A]/20 text-[#CDE06A]">
+                        <span
+                          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            basket.market === "private"
+                              ? "bg-[#8D8AFF]/20 text-[#8D8AFF]"
+                              : "bg-[#CDE06A]/20 text-[#CDE06A]"
+                          }`}
+                        >
                           <CheckCircle2 className="w-3 h-3" />
-                          <span>Active in Chart</span>
+                          <span>Active in Spotlight</span>
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-[10px] font-bold text-[#8F9CAE] group-hover:text-white transition-colors">
                           <TrendingUp className="w-3 h-3 text-[#CDE06A]" />
-                          <span>Click to View in Chart</span>
+                          <span>Click to Select</span>
                         </span>
                       )}
                     </div>
@@ -630,7 +932,11 @@ export default function DashboardPage() {
                     <div className="space-y-2 pt-2 border-t border-[#262D3D]">
                       {basket.components.map((c) => {
                         const asset = VERIFIED_STOCKS[c.symbol];
-                        const priceInfo = asset ? prices[asset.mint] : undefined;
+                        const isPrivate = isPreStock(c.symbol);
+                        const livePrice = getAssetPrice(c.symbol);
+                        const preData = isPrivate
+                          ? preStocksLive[c.symbol] || PRESTOCKS_FALLBACK[c.symbol]
+                          : null;
                         return (
                           <div
                             key={c.symbol}
@@ -644,14 +950,24 @@ export default function DashboardPage() {
                                   width={18}
                                   height={18}
                                   className="rounded-full bg-white/10"
+                                  unoptimized
                                 />
                               ) : (
                                 <div className="w-4 h-4 rounded-full bg-white/10" />
                               )}
-                              <span className="font-bold text-white">{asset?.underlying || c.symbol}</span>
-                              <span className="text-[10px] text-[#8F9CAE]">
-                                {priceInfo ? `$${priceInfo.usdPrice.toFixed(2)}` : "..."}
-                              </span>
+                              <div>
+                                <span className="font-bold text-white block">
+                                  {asset?.underlying || c.symbol}
+                                </span>
+                                <span className="text-[10px] text-[#8F9CAE]">
+                                  {livePrice ? `$${livePrice.toFixed(2)}` : "..."}
+                                  {isPrivate && preData && (
+                                    <span className="text-[#8D8AFF] ml-1">
+                                      (Mark: ${preData.markPrice.toFixed(0)})
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
                             </div>
                             <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#1D2332] text-[#8D8AFF]">
                               {c.targetWeight}%
@@ -675,8 +991,8 @@ export default function DashboardPage() {
                         <DollarSign className="w-3.5 h-3.5 text-[#8F9CAE] absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                           type="number"
-                          min={5}
-                          placeholder="50"
+                          min={basket.market === "private" ? 5 : 5}
+                          placeholder={basket.market === "private" ? "5" : "50"}
                           value={cardAmt || ""}
                           onChange={(e) => {
                             const val = Number(e.target.value);
@@ -734,18 +1050,28 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 5. Tab 2: Available Stocks Catalog (All 10 Verified xStocks) */}
+      {/* 6. Tab 2: Available Equities or PreStocks Directory */}
       {activeTab === "catalog" && (
         <div className="bento-card overflow-hidden !p-0">
           <div className="p-6 border-b border-[#262D3D] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-white">All Verified xStock Equities</h2>
+              <h2 className="text-xl font-bold text-white">
+                {marketFilter === "public"
+                  ? "All Verified xStock Equities"
+                  : "Official PreStocks Pre-IPO Directory"}
+              </h2>
               <p className="text-xs text-[#8F9CAE] mt-0.5">
-                Token-2022 US equities trading 24/7 on Solana with Jupiter routing.
+                {marketFilter === "public"
+                  ? "Token-2022 US equities trading 24/7 on Solana with Jupiter routing."
+                  : "Tokenized pre-IPO economic exposure verified via https://prestocks.com/api/prestocks."}
               </p>
             </div>
-            <span className="pill-badge pill-badge-lime self-start sm:self-auto">
-              10 Verified Mints
+            <span
+              className={`pill-badge self-start sm:self-auto ${
+                marketFilter === "public" ? "pill-badge-lime" : "pill-badge-purple"
+              }`}
+            >
+              {marketFilter === "public" ? "10 Verified xStocks" : "8 Verified PreStocks"}
             </span>
           </div>
 
@@ -755,32 +1081,77 @@ export default function DashboardPage() {
                 <tr>
                   <th className="px-6 py-3.5">Asset</th>
                   <th className="px-6 py-3.5">Underlying</th>
-                  <th className="px-6 py-3.5">Live Price</th>
+                  <th className="px-6 py-3.5">
+                    {marketFilter === "public" ? "Live Price" : "Token vs Mark Price"}
+                  </th>
                   <th className="px-6 py-3.5">Mint Address</th>
+                  <th className="px-6 py-3.5">
+                    {marketFilter === "public" ? "Decimals" : "Liquidity & Execution"}
+                  </th>
                   <th className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#262D3D] text-white font-medium">
                 {verifiedStocksList.map((stock) => {
-                  const price = prices[stock.mint]?.usdPrice;
+                  const isPrivate = stock.market === "private";
+                  const preData = isPrivate
+                    ? preStocksLive[stock.symbol] || PRESTOCKS_FALLBACK[stock.symbol]
+                    : null;
+                  const price = isPrivate
+                    ? preData?.tokenPrice
+                    : prices[stock.mint]?.usdPrice;
+                  const isExecutable =
+                    !isPrivate ||
+                    EXECUTABLE_PRIVATE_SYMBOLS.includes(stock.symbol as any);
+
                   return (
                     <tr key={stock.symbol} className="hover:bg-[#1D2332]/40 transition-colors">
                       <td className="px-6 py-4 flex items-center gap-3">
-                        <Image
-                          src={stock.logo}
-                          alt={stock.symbol}
-                          width={28}
-                          height={28}
-                          className="rounded-full bg-white/10"
-                        />
+                        {stock.logo ? (
+                          <Image
+                            src={stock.logo}
+                            alt={stock.symbol}
+                            width={28}
+                            height={28}
+                            className="rounded-full bg-white/10"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-white/10" />
+                        )}
                         <div>
                           <span className="font-extrabold text-sm block">{stock.symbol}</span>
-                          <span className="text-[10px] text-[#8F9CAE] block">xStock Token-2022</span>
+                          <span className="text-[10px] text-[#8F9CAE] block">
+                            {isPrivate ? "PreStocks Token-2022" : "xStock Token-2022"}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[#8F9CAE] font-semibold">{stock.underlying}</td>
-                      <td className="px-6 py-4 font-mono font-bold text-sm text-[#CDE06A]">
-                        {price ? `$${price.toFixed(2)}` : "Loading..."}
+                      <td className="px-6 py-4 font-mono font-bold text-sm">
+                        {isPrivate && preData ? (
+                          <div>
+                            <span className="text-[#CDE06A] block">
+                              ${preData.tokenPrice.toFixed(2)}
+                            </span>
+                            <span className="text-[10px] text-[#8F9CAE] block font-normal">
+                              Mark: ${preData.markPrice.toFixed(2)}
+                              <span
+                                className={
+                                  preData.premiumPct >= 0
+                                    ? " text-emerald-400 ml-1 font-semibold"
+                                    : " text-rose-400 ml-1 font-semibold"
+                                }
+                              >
+                                ({preData.premiumPct >= 0 ? "+" : ""}
+                                {preData.premiumPct.toFixed(1)}%)
+                              </span>
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[#CDE06A]">
+                            {price ? `$${price.toFixed(2)}` : "Loading..."}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 font-mono text-[11px] text-[#8F9CAE]">
                         <div className="flex items-center gap-2">
@@ -798,16 +1169,60 @@ export default function DashboardPage() {
                               <Copy className="w-3.5 h-3.5 text-[#8F9CAE]" />
                             )}
                           </button>
+                          <a
+                            href={`https://solscan.io/token/${stock.mint}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded hover:bg-[#262D3D] text-[#8F9CAE] hover:text-white transition-colors"
+                            title="View on Solscan"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
                         </div>
                       </td>
+                      <td className="px-6 py-4">
+                        {isPrivate ? (
+                          isExecutable ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              &lt; 5% Impact • Live in Frontier
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#1D2332] text-[#8F9CAE] border border-[#262D3D]">
+                              <Lock className="w-3 h-3 text-[#8F9CAE]" />
+                              Directory Mode (Liquidity Gated)
+                            </span>
+                          )
+                        ) : (
+                          <span className="font-mono text-xs text-[#8F9CAE]">
+                            {stock.decimals} Decimals
+                          </span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => addStockToCustomStudio(stock.symbol)}
-                          className="btn-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 ml-auto hover:border-[#CDE06A] hover:text-[#CDE06A]"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Add to Custom Pie</span>
-                        </button>
+                        {isPrivate ? (
+                          isExecutable ? (
+                            <Link
+                              href="/invest/frontier"
+                              className="btn-primary !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 ml-auto"
+                            >
+                              <span>Invest in Frontier</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
+                          ) : (
+                            <span className="text-[11px] text-[#8F9CAE] italic">
+                              Awaiting Pool Depth
+                            </span>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => addStockToCustomStudio(stock.symbol)}
+                            className="btn-secondary !py-1.5 !px-3 text-xs flex items-center gap-1.5 ml-auto hover:border-[#CDE06A] hover:text-[#CDE06A]"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add to Custom Pie</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -815,11 +1230,44 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+          {marketFilter === "private" && (
+            <div className="p-4 bg-[#0B0E14] border-t border-[#262D3D] text-xs text-[#8F9CAE] flex items-center gap-2">
+              <Info className="w-4 h-4 text-[#8D8AFF] shrink-0" />
+              <span>
+                <strong>Slyz Liquidity Protection Protocol:</strong> Only PreStocks mints with confirmed &lt; 5% price impact on Jupiter Lite AMM pools are active for automated multi-leg execution in v1. Remaining assets will unlock as decentralized pool depth expands beyond $10k USDC.
+              </span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 6. Tab 3: Custom Slyz Studio */}
-      {activeTab === "custom" && (
+      {/* 7. Tab 3: Custom Slyz Studio */}
+      {activeTab === "custom" && marketFilter === "private" && (
+        <div className="bento-card text-center py-16 px-6 max-w-xl mx-auto space-y-4">
+          <div className="w-12 h-12 rounded-full bg-[#8D8AFF]/20 border border-[#8D8AFF]/30 text-[#8D8AFF] mx-auto flex items-center justify-center">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <h3 className="text-xl font-bold text-white">Custom Studio is Configured for Public Equities</h3>
+          <p className="text-xs text-[#8F9CAE] leading-relaxed">
+            In v1, the Custom Pie Builder supports all 10 verified Public xStocks. For private pre-IPO exposure, invest directly in the curated <strong>Frontier</strong> basket (OpenAI, Anthropic, SpaceX).
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => handleSwitchMarket("public")}
+              className="btn-primary text-xs flex items-center gap-1.5"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Switch to Public xStocks</span>
+            </button>
+            <Link href="/invest/frontier" className="btn-secondary text-xs flex items-center gap-1.5">
+              <span>View Frontier Basket</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "custom" && marketFilter === "public" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: Custom Sliders & Numeric Inputs */}
           <div className="lg:col-span-7 bento-card space-y-6">
@@ -1095,7 +1543,11 @@ export default function DashboardPage() {
             <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
               {editingTheme.components.map((c, index) => {
                 const asset = VERIFIED_STOCKS[c.symbol];
-                const price = asset ? prices[asset.mint]?.usdPrice : undefined;
+                const isPrivate = isPreStock(c.symbol);
+                const price = getAssetPrice(c.symbol);
+                const preData = isPrivate
+                  ? preStocksLive[c.symbol] || PRESTOCKS_FALLBACK[c.symbol]
+                  : null;
                 const legDollar = (c.targetWeight / 100) * editingTheme.depositUsd;
                 return (
                   <div
@@ -1111,12 +1563,18 @@ export default function DashboardPage() {
                             width={20}
                             height={20}
                             className="rounded-full bg-white/10"
+                            unoptimized
                           />
                         )}
                         <div>
                           <span className="font-bold text-xs text-white block">{asset?.underlying || c.symbol}</span>
                           <span className="text-[10px] text-[#8F9CAE]">
                             {price ? `$${price.toFixed(2)}` : "..."} • ${legDollar.toFixed(2)} USDC
+                            {isPrivate && preData && (
+                              <span className="text-[#8D8AFF] ml-1">
+                                (Mark: ${preData.markPrice.toFixed(0)})
+                              </span>
+                            )}
                           </span>
                         </div>
                       </div>
