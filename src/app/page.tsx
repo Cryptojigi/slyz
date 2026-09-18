@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Zap,
@@ -34,10 +33,9 @@ export default function LandingPage() {
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
           {/* Left Column: Headline, Value Proposition & CTAs */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1D2332] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE]">
-              <Sparkles className="w-3.5 h-3.5 text-[#CDE06A]" />
-              <span>Non-Custodial Thematic Stock Baskets on Solana</span>
-            </div>
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#CDE06A]">
+              Non-Custodial Thematic Stock Baskets on Solana
+            </p>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
               Slice the Market.
