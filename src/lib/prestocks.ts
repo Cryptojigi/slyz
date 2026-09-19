@@ -4,8 +4,18 @@
  * Provides live mark prices, token prices, valuations, and premium calculations.
  */
 
-export const PRESTOCKS_API =
-  process.env.NEXT_PUBLIC_PRESTOCKS_API_URL || "https://prestocks.com/api/prestocks";
+/**
+ * Client-side fetch target: our OWN same-origin proxy route.
+ *
+ * The upstream API (prestocks.com/api/prestocks) returns valid JSON but sends
+ * NO CORS headers, so browsers block it ("TypeError: Failed to fetch"). It can
+ * only be fetched server-side — see src/app/api/prestocks/route.ts.
+ *
+ * This is deliberately NOT configurable from the client: a NEXT_PUBLIC_ override
+ * here lets the app point straight back at the CORS-blocked upstream. Configure
+ * the upstream server-side with PRESTOCKS_API_URL instead.
+ */
+export const PRESTOCKS_API = "/api/prestocks";
 
 export interface PreStockAssetLive {
   symbol: string;

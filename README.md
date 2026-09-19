@@ -156,8 +156,8 @@ NEXT_PUBLIC_JUPITER_API_URL=https://lite-api.jup.ag
 # WalletConnect / Reown Cloud Project ID (Optional - for mobile QR/deep links)
 NEXT_PUBLIC_WC_PROJECT_ID=YOUR_REOWN_PROJECT_ID
 
-# PreStocks Public REST API (Optional override, defaults to https://prestocks.com/api/prestocks)
-NEXT_PUBLIC_PRESTOCKS_API_URL=https://prestocks.com/api/prestocks
+# PreStocks Server-Side Proxy Upstream (Optional override, defaults to https://prestocks.com/api/prestocks)
+PRESTOCKS_API_URL=https://prestocks.com/api/prestocks
 ```
 
 ### 5. Run the Development Server
