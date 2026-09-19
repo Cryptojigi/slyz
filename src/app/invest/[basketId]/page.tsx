@@ -373,7 +373,7 @@ export default function InvestPage() {
                 step="1"
                 value={amountUsd}
                 onChange={(e) => setAmountUsd(Math.max(1, Number(e.target.value)))}
-                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-[#0B0E14] border border-[#262D3D] text-2xl font-extrabold font-mono text-white focus:outline-none focus:border-[#CDE06A] transition-colors"
+                className="w-full pl-11 pr-4 py-4 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-2xl font-extrabold font-mono text-white focus:outline-none focus:border-[#CDE06A] transition-colors"
                 placeholder={isPrivateMarket ? "5.00" : "50.00"}
               />
             </div>
@@ -396,7 +396,7 @@ export default function InvestPage() {
                   key={preset}
                   type="button"
                   onClick={() => setAmountUsd(preset)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
                     amountUsd === preset
                       ? "bg-[#CDE06A] text-[#0B0E14]"
                       : "bg-[#161B26] border border-[#262D3D] text-[#8F9CAE] hover:text-white"
@@ -414,7 +414,7 @@ export default function InvestPage() {
                       : Math.floor(balances.usdcBalance);
                     setAmountUsd(maxVal);
                   }}
-                  className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-[#161B26] border border-[#8D8AFF] text-[#8D8AFF] hover:bg-[#8D8AFF] hover:text-[#0B0E14] transition-all"
+                  className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-[#161B26] border border-[#8D8AFF] text-[#8D8AFF] hover:bg-[#8D8AFF] hover:text-[#0B0E14] transition-all"
                 >
                   {isPrivateMarket
                     ? `Max Safe ($${Math.min(25, Math.floor(balances.usdcBalance))})`

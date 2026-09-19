@@ -248,7 +248,7 @@ export function LiquidationModal({
           {!isRunning && (
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-sm"
+              className="w-8 h-8 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-sm"
             >
               ✕
             </button>

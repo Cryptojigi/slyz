@@ -442,8 +442,8 @@ export default function DashboardPage() {
 
         {/* Quick Stat Metric Badges */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="px-4 py-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A] font-black text-xs">
+          <div className="px-4 py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A] font-black text-xs">
               {marketFilter === "public" ? "10" : "8"}
             </div>
             <div>
@@ -456,8 +456,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="px-4 py-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF] font-black text-xs">
+          <div className="px-4 py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF] font-black text-xs">
               {marketFilter === "public" ? "5" : "1"}
             </div>
             <div>
@@ -470,8 +470,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="px-4 py-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-black text-xs">
+          <div className="px-4 py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white font-black text-xs">
               {marketFilter === "public" ? "8 Dec" : "9 Dec"}
             </div>
             <div>
@@ -485,7 +485,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 2. Public vs Private Shelf Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-2 rounded-2xl bg-[#161B26] border border-[#262D3D]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-2 rounded-xl bg-[#161B26] border border-[#262D3D]">
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleSwitchMarket("public")}
@@ -550,7 +550,7 @@ export default function DashboardPage() {
             <div className="space-y-4 relative z-10">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#262D3D]">
                 <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-1 rounded-full bg-[#8D8AFF]/15 border border-[#8D8AFF]/30 text-[#8D8AFF] text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#8D8AFF]/15 border border-[#8D8AFF]/30 text-[#8D8AFF] text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" />
                     PreStocks™ Verified Pipeline
                   </span>
@@ -682,7 +682,7 @@ export default function DashboardPage() {
         )}
 
         {/* Right: Featured Theme Spotlight Card (Synced with Selected Theme) */}
-        <div className="lg:col-span-4 rounded-[22px] bg-gradient-to-br from-[#1E2536] via-[#161B26] to-[#0F131D] border border-[#262D3D] p-6 flex flex-col justify-between shadow-xl relative overflow-hidden">
+        <div className="lg:col-span-4 rounded-xl bg-gradient-to-br from-[#1E2536] via-[#161B26] to-[#0F131D] border border-[#262D3D] p-6 flex flex-col justify-between shadow-xl relative overflow-hidden">
           <div
             className={`absolute top-0 right-0 w-36 h-36 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10 ${
               marketFilter === "private" ? "bg-[#8D8AFF]/10" : "bg-[#CDE06A]/10"
@@ -692,7 +692,7 @@ export default function DashboardPage() {
           <div className="space-y-3 relative z-10">
             <div className="flex items-center justify-between">
               <span
-                className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                   marketFilter === "private"
                     ? "bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30"
                     : "bg-[#CDE06A]/15 text-[#CDE06A]"
@@ -701,7 +701,7 @@ export default function DashboardPage() {
                 <Sparkles className="w-3 h-3" />
                 {marketFilter === "private" ? "Featured Pre-IPO Pie" : "Featured Theme"}
               </span>
-              <div className="w-7 h-7 rounded-full bg-[#262D3D] flex items-center justify-center text-white">
+              <div className="w-7 h-7 rounded-lg bg-[#262D3D] flex items-center justify-center text-white">
                 <ArrowUpRight className="w-4 h-4" />
               </div>
             </div>
@@ -816,7 +816,7 @@ export default function DashboardPage() {
       {/* 4. Segmented Navigation Tabs & Search Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
         {/* Navigation Tabs */}
-        <div className="inline-flex items-center gap-1.5 p-1 rounded-2xl bg-[#161B26] border border-[#262D3D] self-start">
+        <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-[#161B26] border border-[#262D3D] self-start">
           <button
             onClick={() => setActiveTab("curated")}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -904,7 +904,7 @@ export default function DashboardPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
                           basket.market === "private"
                             ? "bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30"
                             : "bg-[#1D2332] text-[#8F9CAE]"
@@ -914,7 +914,7 @@ export default function DashboardPage() {
                       </span>
                       {isSelected ? (
                         <span
-                          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg ${
                             basket.market === "private"
                               ? "bg-[#8D8AFF]/20 text-[#8D8AFF]"
                               : "bg-[#CDE06A]/20 text-[#CDE06A]"
@@ -1196,12 +1196,12 @@ export default function DashboardPage() {
                       <td className="px-6 py-4">
                         {isPrivate ? (
                           isExecutable ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                               &lt; 5% Impact • Live in Frontier
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#1D2332] text-[#8F9CAE] border border-[#262D3D]">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1D2332] text-[#8F9CAE] border border-[#262D3D]">
                               <Lock className="w-3 h-3 text-[#8F9CAE]" />
                               Directory Mode (Liquidity Gated)
                             </span>
@@ -1257,7 +1257,7 @@ export default function DashboardPage() {
       {/* 7. Tab 3: Custom Slyz Studio */}
       {activeTab === "custom" && marketFilter === "private" && (
         <div className="bento-card text-center py-16 px-6 max-w-xl mx-auto space-y-4">
-          <div className="w-12 h-12 rounded-full bg-[#8D8AFF]/20 border border-[#8D8AFF]/30 text-[#8D8AFF] mx-auto flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-[#8D8AFF]/20 border border-[#8D8AFF]/30 text-[#8D8AFF] mx-auto flex items-center justify-center">
             <Sparkles className="w-6 h-6" />
           </div>
           <h3 className="text-xl font-bold text-white">Custom Studio is Configured for Public Equities</h3>
@@ -1470,7 +1470,7 @@ export default function DashboardPage() {
       )}
 
       {/* 7. Bottom Bento Row: Terminal Quick Assistant (Resq.io Style) */}
-      <div className="rounded-[24px] bg-[#161B26] border border-[#262D3D] p-6 lg:p-8 space-y-4">
+      <div className="rounded-xl bg-[#161B26] border border-[#262D3D] p-6 lg:p-8 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#262D3D] pb-4">
           <div>
             <h3 className="text-lg font-black text-white flex items-center gap-2">

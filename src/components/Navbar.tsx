@@ -88,10 +88,10 @@ export const Navbar = () => {
               </a>
             </nav>
           ) : (
-            <nav className="hidden md:flex items-center gap-1 ml-4 bg-[#161B26]/80 p-1 rounded-full border border-[#262D3D]">
+            <nav className="hidden md:flex items-center gap-1 ml-4 bg-[#161B26]/80 p-1 rounded-xl border border-[#262D3D]">
               <Link
                 href="/dashboard"
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                   pathname === "/dashboard"
                     ? "bg-[#CDE06A] text-[#0B0E14]"
                     : "text-[#8F9CAE] hover:text-white"
@@ -102,7 +102,7 @@ export const Navbar = () => {
               </Link>
               <Link
                 href="/portfolio"
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                   pathname === "/portfolio"
                     ? "bg-[#CDE06A] text-[#0B0E14]"
                     : "text-[#8F9CAE] hover:text-white"
@@ -119,7 +119,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-3">
           {/* Market Status (App Viewports) */}
           {!isLandingPage && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161B26] border border-[#262D3D] text-[11px] font-medium text-[#8F9CAE]">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#161B26] border border-[#262D3D] text-[11px] font-medium text-[#8F9CAE]">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#CDE06A] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#CDE06A]"></span>

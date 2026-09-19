@@ -28,7 +28,7 @@ export default function LandingPage() {
   return (
     <div className="space-y-24 pb-12">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden rounded-[28px] bg-[#161B26] border border-[#262D3D] p-6 sm:p-10 lg:p-14 shadow-2xl">
+      <section className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] p-6 sm:p-10 lg:p-14 shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#CDE06A]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8D8AFF]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
@@ -79,13 +79,13 @@ export default function LandingPage() {
       </section>
 
       {/* 2. How It Works Section (White Background with Dark Tiles) */}
-      <section id="how-it-works" className="scroll-mt-24 rounded-[32px] bg-white border border-slate-200 p-8 sm:p-12 lg:p-14 shadow-2xl shadow-slate-950/20 space-y-10 relative overflow-hidden">
+      <section id="how-it-works" className="scroll-mt-24 rounded-2xl bg-white border border-slate-200 p-8 sm:p-12 lg:p-14 shadow-2xl shadow-slate-950/20 space-y-10 relative overflow-hidden">
         {/* Subtle decorative background blur for depth */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
         <div className="text-center max-w-2xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0B0E14] text-[#CDE06A] text-[10px] font-black uppercase tracking-wider shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-black uppercase tracking-wider shadow-sm">
             Streamlined Workflow
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0E14] tracking-tight">
@@ -100,7 +100,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
           {/* Step 1 - Dark Tile */}
           <div className="bento-card relative overflow-hidden group shadow-xl">
-            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center font-black text-sm text-[#CDE06A] mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center font-black text-sm text-[#CDE06A] mb-4">
               01
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Pick or Build a Theme</h3>
@@ -115,7 +115,7 @@ export default function LandingPage() {
 
           {/* Step 2 - Dark Tile */}
           <div className="bento-card relative overflow-hidden group shadow-xl">
-            <div className="w-10 h-10 rounded-2xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center font-black text-sm text-[#8D8AFF] mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center font-black text-sm text-[#8D8AFF] mb-4">
               02
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Customize Weights & Amount</h3>
@@ -130,7 +130,7 @@ export default function LandingPage() {
 
           {/* Step 3 - Dark Tile */}
           <div className="bento-card relative overflow-hidden group shadow-xl">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-white mb-4">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-white mb-4">
               03
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Three Signatures, One Theme</h3>
@@ -174,7 +174,7 @@ export default function LandingPage() {
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-full bg-[#1D2332] text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#1D2332] text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
                     {basket.category}
                   </span>
                   <span className="flex items-center gap-1 text-xs font-bold text-[#CDE06A]">
@@ -253,7 +253,7 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bento-card space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
+            <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
               <Zap className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white">Dust-Free Raw Math</h3>
@@ -263,7 +263,7 @@ export default function LandingPage() {
           </div>
 
           <div className="bento-card space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
+            <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
               <Lock className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white">Non-Custodial Architecture</h3>
@@ -273,7 +273,7 @@ export default function LandingPage() {
           </div>
 
           <div className="bento-card space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
               <TrendingUp className="w-5 h-5 text-[#CDE06A]" />
             </div>
             <h3 className="text-lg font-bold text-white">Automated Drift Rebalancing</h3>
@@ -283,7 +283,7 @@ export default function LandingPage() {
           </div>
 
           <div className="bento-card space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
+            <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white">Decimal Price Impact Guards</h3>
@@ -335,12 +335,12 @@ export default function LandingPage() {
       </section>
 
       {/* 6. Bottom Call to Action Banner (White Theme) */}
-      <section className="relative overflow-hidden rounded-[32px] bg-white border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xl shadow-slate-950/20 text-[#0B0E14]">
+      <section className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xl shadow-slate-950/20 text-[#0B0E14]">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-100/50 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none -ml-16 -mb-16" />
 
         <div className="max-w-xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0B0E14] text-[#CDE06A] text-[10px] font-black uppercase tracking-wider shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-black uppercase tracking-wider shadow-sm">
             Launch Platform
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0E14] tracking-tight">
@@ -354,7 +354,7 @@ export default function LandingPage() {
         <div className="flex justify-center pt-2 relative z-10">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm px-8 py-4 font-black rounded-full bg-[#0B0E14] hover:bg-[#161B26] text-[#CDE06A] shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 text-sm px-8 py-4 font-black rounded-xl bg-[#0B0E14] hover:bg-[#161B26] text-[#CDE06A] shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
           >
             <span>Launch Dashboard Terminal</span>
             <ArrowRight className="w-4 h-4" />

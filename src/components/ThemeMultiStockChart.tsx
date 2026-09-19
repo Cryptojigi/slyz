@@ -105,19 +105,19 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
           </div>
           <h2 className="text-lg font-black text-white flex items-center gap-2 mt-0.5">
             <span>{basket.name}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#CDE06A]/15 text-[#CDE06A] font-bold">
+            <span className="text-xs px-2 py-0.5 rounded-lg bg-[#CDE06A]/15 text-[#CDE06A] font-bold">
               3-Stock Composite
             </span>
           </h2>
         </div>
 
         {/* Timeframe Toggles */}
-        <div className="flex items-center gap-1 bg-[#1D2332] p-1 rounded-full border border-[#262D3D] self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-[#1D2332] p-1 rounded-xl border border-[#262D3D] self-start sm:self-auto">
           {(["24H", "7D", "30D", "1Y"] as const).map((tf) => (
             <button
               key={tf}
               onClick={() => onTimeframeChange(tf)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 timeframe === tf
                   ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
                   : "text-[#8F9CAE] hover:text-white"

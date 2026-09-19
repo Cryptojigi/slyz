@@ -1,0 +1,25 @@
+<svg viewBox="0 0 460 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <!-- Backed Geometric Ribbon Icon -->
+    <path d="M0.098 60.361c0.535-9.59 3.244-19.2 8.323-28.094.051-.089.102-.178.153-.266.051-.089.102-.177.154-.265 6.667-11.424 16.346-20.021 27.45-25.366 11.95-5.752 25.551-7.738 38.826-5.428 7.199 1.253 14.303 3.769 20.995 7.633 1.052.607 2.079 1.24 3.083 1.896-13.024-6.121-28.809-1.334-36.135 11.354l-37.008 64.1c-13.713-.999-24.698-11.892-25.841-25.564z" fill="url(#xstock-lin1)"/>
+    <path d="M99.102 10.48c8.038 5.258 15.006 12.409 20.169 21.255.051.088.103.177.154.265.051.089.102.177.152.266 6.56 11.486 9.166 24.167 8.243 36.456-.994 13.225-6.074 25.996-14.713 36.338-4.684 5.608-10.415 10.502-17.108 14.366-1.051.607-2.113 1.18-3.183 1.721 11.813-8.219 15.56-24.282 8.235-36.97l-37.009-64.101c7.722-11.375 22.648-15.442 35.06-9.596z" fill="url(#xstock-lin2)"/>
+    <path d="M92.798 121.161c-8.572 4.331-18.249 6.79-28.492 6.838-.102.001-.204.001-.306.001-.102 0-.204 0-.307-.001-13.227-.062-25.512-4.145-35.693-11.089-10.956-7.473-19.476-18.259-24.113-30.911-2.514-6.861-3.887-14.271-3.887-21.999 0-1.214.034-2.42.101-3.617 1.211 14.34 13.249 25.616 27.899 25.616l74.017 0c5.991 12.375 2.05 27.335-9.219 35.162z" fill="url(#xstock-lin3)"/>
+  </g>
+  <!-- xSTOCKS Typography -->
+  <text x="145" y="80" fill="#CDE06A" font-family="'Aeonik', 'Montserrat', -apple-system, sans-serif" font-weight="900" font-size="52" letter-spacing="-1">x</text>
+  <text x="175" y="80" fill="#FFFFFF" font-family="'Aeonik', 'Montserrat', -apple-system, sans-serif" font-weight="900" font-size="52" letter-spacing="1">STOCKS</text>
+  <defs>
+    <linearGradient id="xstock-lin1" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(38.1039 -65.8481 65.8481 38.1039 25.9389 85.9253)">
+      <stop offset="0" stop-color="#CDE06A" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#CDE06A"/>
+    </linearGradient>
+    <linearGradient id="xstock-lin2" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(37.9738 65.9222 -65.9222 37.9738 64.0427 20.0772)">
+      <stop offset="0" stop-color="#8D8AFF" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#8D8AFF"/>
+    </linearGradient>
+    <linearGradient id="xstock-lin3" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(76.0772 0.0748611 -0.0748611 76.0772 25.9393 85.9246)">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#CDE06A" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+</svg>

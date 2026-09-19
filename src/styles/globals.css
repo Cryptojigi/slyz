@@ -22,7 +22,7 @@
 
 /* EventBeds-style high-contrast pill styling */
 .pill-badge {
-  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase;
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold tracking-wide uppercase;
 }
 
 .pill-badge-lime {
@@ -43,7 +43,7 @@
 
 /* Tactile button classes */
 .btn-primary {
-  @apply inline-flex items-center justify-center font-bold px-6 py-3.5 rounded-full transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
+  @apply inline-flex items-center justify-center font-bold px-6 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
   background-color: #CDE06A;
   color: #0B0E14;
 }
@@ -53,7 +53,7 @@
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center font-semibold px-5 py-3 rounded-full transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center font-semibold px-5 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   background-color: #161B26;
   color: #FFFFFF;
   border: 1px solid #262D3D;
@@ -66,7 +66,7 @@
 
 /* Bento card styling */
 .bento-card {
-  @apply bg-[#161B26] border border-[#262D3D] rounded-[18px] p-6 transition-all duration-200;
+  @apply bg-[#161B26] border border-[#262D3D] rounded-xl p-6 transition-all duration-200;
 }
 
 .bento-card:hover {
@@ -92,7 +92,7 @@
 /* Solana wallet button styling (scoped to trigger in navbar) */
 .slyz-wallet-btn .wallet-adapter-button {
   font-family: inherit !important;
-  border-radius: 9999px !important;
+  border-radius: 12px !important;
   background-color: #CDE06A !important;
   color: #0B0E14 !important;
   font-weight: 700 !important;
@@ -111,7 +111,7 @@
 .wallet-adapter-modal-wrapper {
   background: #161B26 !important;
   border: 1px solid #262D3D !important;
-  border-radius: 24px !important;
+  border-radius: 16px !important;
   font-family: inherit !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
   padding: 32px 28px !important;

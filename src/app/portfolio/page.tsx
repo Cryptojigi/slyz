@@ -238,8 +238,8 @@ export default function PortfolioPage() {
 
       {/* Disconnected Notice */}
       {!wallet.connected && (
-        <div className="p-8 rounded-2xl bg-[#161B26] border border-[#262D3D] text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-[#1D2332] text-[#CDE06A] mx-auto flex items-center justify-center">
+        <div className="p-8 rounded-xl bg-[#161B26] border border-[#262D3D] text-center space-y-4">
+          <div className="w-14 h-14 rounded-xl bg-[#1D2332] text-[#CDE06A] mx-auto flex items-center justify-center">
             <Wallet className="w-7 h-7" />
           </div>
           <div className="space-y-1">
@@ -255,7 +255,7 @@ export default function PortfolioPage() {
       {/* Connected but Empty Wallet (Zero holdings and no saved baskets) */}
       {wallet.connected && !loading && !hasInvestedBaskets && !hasOnChainPositions && (
         <div className="bento-card text-center py-16 px-8 max-w-2xl mx-auto space-y-6">
-          <div className="w-16 h-16 rounded-full bg-[#161B26] border border-[#262D3D] text-[#8D8AFF] mx-auto flex items-center justify-center">
+          <div className="w-16 h-16 rounded-xl bg-[#161B26] border border-[#262D3D] text-[#8D8AFF] mx-auto flex items-center justify-center">
             <PieIcon className="w-8 h-8" />
           </div>
           <div className="space-y-2">
@@ -521,7 +521,7 @@ export default function PortfolioPage() {
               </div>
               <button
                 onClick={() => setIsTopUpOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#0B0E14] text-[#8F9CAE] hover:text-white flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-[#0B0E14] text-[#8F9CAE] hover:text-white flex items-center justify-center"
               >
                 ✕
               </button>
@@ -538,7 +538,7 @@ export default function PortfolioPage() {
                     key={amt}
                     type="button"
                     onClick={() => setTopUpAmountUsd(amt)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold ${
                       topUpAmountUsd === amt
                         ? "bg-[#CDE06A] text-[#0B0E14]"
                         : "bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE]"

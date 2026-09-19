@@ -36,7 +36,7 @@ export const BasketCard: React.FC<Props> = ({ basket, prices }) => {
             {basket.category}
           </span>
           <div
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold font-mono ${
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold font-mono ${
               isPositive
                 ? "bg-[#CDE06A]/15 text-[#CDE06A] border border-[#CDE06A]/30"
                 : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
@@ -116,7 +116,7 @@ export const BasketCard: React.FC<Props> = ({ basket, prices }) => {
         </span>
         <Link
           href={`/invest/${basket.id}`}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-[#CDE06A] text-[#0B0E14] hover:bg-[#B5C856] active:scale-95 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#CDE06A] text-[#0B0E14] hover:bg-[#B5C856] active:scale-95 transition-all shadow-sm"
         >
           <span>Slyz In</span>
           <ArrowUpRight className="w-3.5 h-3.5" />

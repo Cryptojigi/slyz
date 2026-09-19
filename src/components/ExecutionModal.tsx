@@ -95,8 +95,8 @@ export const ExecutionModal: React.FC<Props> = ({
   if (steps.length === 0) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-        <div className="bg-[#161B26] border border-[#262D3D] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center mx-auto text-[#CDE06A]">
+        <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center mx-auto text-[#CDE06A]">
             <AlertCircle className="w-6 h-6" />
           </div>
           <h3 className="text-xl font-bold text-white">No Eligible Legs to Swap</h3>
@@ -296,7 +296,7 @@ export const ExecutionModal: React.FC<Props> = ({
           {!isRunning && (
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-sm"
+              className="w-8 h-8 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-sm"
             >
               ✕
             </button>
