@@ -183,7 +183,9 @@ export default function PortfolioPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="pill-badge pill-badge-lime mb-2">Non-Custodial</span>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#CDE06A] mb-2">
+            Non-Custodial
+          </p>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Portfolio & Drift Tracker
           </h1>

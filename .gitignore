@@ -42,5 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 # local scratch & docs
-scratch/
-docs/
+/scratch/
+/docs/
+!src/app/docs/

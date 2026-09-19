@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   ShieldCheck,
   Zap,
+  BookOpen,
 } from "lucide-react";
 
 // Dynamic import with SSR disabled to prevent hydration mismatch with browser wallet extensions
@@ -86,6 +87,9 @@ export const Navbar = () => {
               <a href="#faq" className="hover:text-white transition-colors">
                 FAQ
               </a>
+              <Link href="/docs" className="hover:text-white transition-colors flex items-center gap-1">
+                <span>Docs</span>
+              </Link>
             </nav>
           ) : (
             <nav className="hidden md:flex items-center gap-1 ml-4 bg-[#161B26]/80 p-1 rounded-xl border border-[#262D3D]">
@@ -110,6 +114,17 @@ export const Navbar = () => {
               >
                 <PieChart className="w-3.5 h-3.5" />
                 My Portfolio
+              </Link>
+              <Link
+                href="/docs"
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  pathname === "/docs"
+                    ? "bg-[#CDE06A] text-[#0B0E14]"
+                    : "text-[#8F9CAE] hover:text-white"
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Docs
               </Link>
             </nav>
           )}
@@ -192,6 +207,25 @@ export const Navbar = () => {
                 FAQ
               </a>
               <Link
+                href="/docs"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white flex items-center justify-between"
+              >
+                <span>Documentation</span>
+                <span className="text-[10px] font-bold text-[#CDE06A] tracking-wider">
+                  NEW
+                </span>
+              </Link>
+              <div className="pt-2 border-t border-[#262D3D] flex items-center gap-4 text-xs text-[#8F9CAE] px-3">
+                <Link href="/terms" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">
+                  Terms
+                </Link>
+                <span>•</span>
+                <Link href="/privacy" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">
+                  Privacy
+                </Link>
+              </div>
+              <Link
                 href="/dashboard"
                 className="btn-primary flex items-center justify-center gap-2 text-xs py-3 mt-2"
               >
@@ -223,6 +257,26 @@ export const Navbar = () => {
                 <PieChart className="w-4 h-4" />
                 My Portfolio & Drift
               </Link>
+              <Link
+                href="/docs"
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold ${
+                  pathname === "/docs"
+                    ? "bg-[#CDE06A] text-[#0B0E14]"
+                    : "bg-[#161B26] text-white"
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                Documentation Hub
+              </Link>
+              <div className="flex items-center gap-4 text-xs text-[#8F9CAE] px-4 py-1">
+                <Link href="/terms" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">
+                  Terms
+                </Link>
+                <span>•</span>
+                <Link href="/privacy" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">
+                  Privacy
+                </Link>
+              </div>
               <div className="pt-2">
                 <div className="slyz-wallet-btn w-full">
                   <WalletMultiButton />
