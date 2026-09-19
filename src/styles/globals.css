@@ -202,3 +202,26 @@
   }
 }
 
+/* Infinite Sliding Marquee with Pause on Hover */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 28s linear infinite;
+  will-change: transform;
+}
+
+.marquee-wrapper:hover .animate-marquee-track,
+.animate-marquee-track:hover {
+  animation-play-state: paused !important;
+}
+
+

@@ -20,6 +20,7 @@ import {
 import { CURATED_BASKETS, VERIFIED_STOCKS } from "@/lib/constants";
 import { LiveSlyzSculpture } from "@/components/LiveSlyzSculpture";
 import { Footer } from "@/components/Footer";
+import { TechLogosMarquee } from "@/components/TechLogosMarquee";
 
 export default function LandingPage() {
   const previewBaskets = CURATED_BASKETS.slice(0, 3); // The Mag 3, The Index, AI Frontier
@@ -73,33 +74,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Live Metrics / Highlights Bar */}
-        <div className="relative z-10 mt-12 pt-8 border-t border-[#262D3D]/70 grid grid-cols-2 sm:grid-cols-4 gap-6">
-          <div>
-            <span className="text-xs text-[#8F9CAE] font-medium block">Verified Equities & Pre-IPO</span>
-            <span className="text-base font-extrabold text-white font-mono mt-0.5 block">
-              10 xStocks + 8 PreStocks
-            </span>
-          </div>
-          <div>
-            <span className="text-xs text-[#8F9CAE] font-medium block">Trade Speed</span>
-            <span className="text-base font-extrabold text-white font-mono mt-0.5 block">
-              ~3.2s Swaps
-            </span>
-          </div>
-          <div>
-            <span className="text-xs text-[#8F9CAE] font-medium block">Market Access</span>
-            <span className="text-base font-extrabold text-[#CDE06A] font-mono mt-0.5 block">
-              24/7 On-Chain
-            </span>
-          </div>
-          <div>
-            <span className="text-xs text-[#8F9CAE] font-medium block">Curated Pies</span>
-            <span className="text-base font-extrabold text-[#8D8AFF] font-mono mt-0.5 block">
-              6 Themes (Public & Private)
-            </span>
-          </div>
-        </div>
+        {/* Sliding Tech & Infrastructure Showcase */}
+        <TechLogosMarquee />
       </section>
 
       {/* 2. How It Works Section (White Background with Dark Tiles) */}
