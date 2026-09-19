@@ -39,7 +39,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-[#0B0E14] text-white selection:bg-[#CDE06A] selection:text-[#0B0E14]">
         <WalletContextProvider>
           <Navbar />
-          <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-3 pb-8 sm:pt-4 sm:pb-8">
+          <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-3 pb-8 sm:pt-4 sm:pb-8 overflow-x-hidden">
             {children}
           </main>
         </WalletContextProvider>
