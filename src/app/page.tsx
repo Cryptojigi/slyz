@@ -28,24 +28,24 @@ export default function LandingPage() {
   return (
     <div className="space-y-24 pb-12">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] p-6 sm:p-10 lg:p-14 shadow-2xl">
+      <section className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] px-4 py-7 sm:p-10 lg:p-14 shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#CDE06A]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8D8AFF]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
           {/* Left Column: Headline, Value Proposition & CTAs */}
-          <div className="lg:col-span-7 space-y-6">
-            <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#CDE06A]">
+          <div className="lg:col-span-7 space-y-4 sm:space-y-6">
+            <p className="text-[11px] sm:text-xs md:text-sm font-bold uppercase tracking-wider text-[#CDE06A]">
               Non-Custodial Thematic Stock Baskets on Solana
             </p>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
               Slice the Market.
               <br />
               <span className="text-[#CDE06A]">Own the Theme.</span>
             </h1>
 
-            <p className="text-base sm:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
+            <p className="text-sm sm:text-base lg:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
               Invest in curated baskets of tokenized US equities and pre-IPO venture companies on Solana — three signatures, one theme.
               Non-custodial, fractional shares powered by Jupiter, xStocks Token-2022, and PreStocks.
             </p>
