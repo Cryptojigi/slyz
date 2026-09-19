@@ -500,12 +500,12 @@ export default function InvestPage() {
                 {isPrivateMarket ? "Token-2022 • 9 Decimals (PreStocks)" : "Token-2022 • 8 Decimals (xStocks)"}
               </span>
             </div>
-            <div className="flex items-center justify-between font-mono">
-              <span>Liquidity Safeguard:</span>
-              <span className="text-[#8D8AFF]">
-                {isPrivateMarket ? "< 5% Impact Protection on AMM" : "Multi-DEX Deep Routing"}
-              </span>
-            </div>
+            {!isPrivateMarket && (
+              <div className="flex items-center justify-between font-mono">
+                <span>Liquidity Safeguard:</span>
+                <span className="text-[#8D8AFF]">Multi-DEX Deep Routing</span>
+              </div>
+            )}
           </div>
 
           {/* PreStocks Regulatory & Jurisdiction Disclaimer Box */}

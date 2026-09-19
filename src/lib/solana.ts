@@ -2,24 +2,34 @@ import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { USDC_MINT, TOKEN_2022_PROGRAM_ID, MIN_SOL_BALANCE } from "./constants";
 
-const PRIMARY_RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || "https://api.mainnet-beta.solana.com";
-const FALLBACK_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_FALLBACK_RPC || PRIMARY_RPC_URL;
+/**
+ * Single-RPC configuration — by design, there is NO fallback provider.
+ *
+ * A public-mainnet fallback used to exist here. It was removed because that host
+ * rate-limits (HTTP 429), and a silent failover to a throttled RPC produced fake
+ * $0.00 balances with no visible error — a worse failure mode than an honest one.
+ *
+ * The Alchemy app MUST allowlist the deployed origin (e.g. https://useslyz.vercel.app),
+ * otherwise both balance reads and transaction sends fail.
+ */
+const PRIMARY_RPC_URL =
+  process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || "https://api.mainnet-beta.solana.com";
+
+if (!process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL) {
+  // Loud, not silent. Without this the app would quietly use a rate-limited public
+  // RPC and report $0 balances as though they were real.
+  console.warn(
+    "[Slyz] NEXT_PUBLIC_ALCHEMY_RPC_URL is not set — falling back to rate-limited public mainnet. Balances may be inaccurate.",
+  );
+}
 
 let primaryConn: Connection | null = null;
-let fallbackConn: Connection | null = null;
 
 export function getSolanaConnection(): Connection {
   if (!primaryConn) {
     primaryConn = new Connection(PRIMARY_RPC_URL, "confirmed");
   }
   return primaryConn;
-}
-
-export function getFallbackConnection(): Connection {
-  if (!fallbackConn) {
-    fallbackConn = new Connection(FALLBACK_RPC_URL, "confirmed");
-  }
-  return fallbackConn;
 }
 
 export interface UserBalances {
@@ -33,30 +43,24 @@ export interface UserBalances {
 
 /**
  * Fetch all relevant balances (SOL, USDC, and all held Token-2022 xStock assets).
- * Automatically fails over to fallback RPC if primary RPC is blocked by whitelist or CORS.
+ *
+ * Single-RPC by design: there is NO fallback failover. If the RPC fails, this
+ * returns `rpcError: true` so the UI can surface a real error rather than
+ * silently reporting zero balances.
  */
 export async function fetchUserBalances(walletPublicKey: PublicKey): Promise<UserBalances> {
-  const primary = getSolanaConnection();
-
   try {
-    return await queryBalances(primary, walletPublicKey);
+    return await queryBalances(getSolanaConnection(), walletPublicKey);
   } catch (error: any) {
-    // If blocked by Alchemy origin whitelist or network error, failover to backup RPC
-    console.warn("Primary RPC failed, failing over to backup RPC:", error?.message);
-    try {
-      const fallback = getFallbackConnection();
-      return await queryBalances(fallback, walletPublicKey);
-    } catch (fallbackError: any) {
-      console.error("Both primary and fallback RPC failed:", fallbackError);
-      return {
-        solBalance: 0,
-        usdcBalance: 0,
-        token2022Balances: {},
-        token2022RawAmounts: {},
-        hasSufficientGas: false,
-        rpcError: true,
-      };
-    }
+    console.error("[Slyz] RPC balance fetch failed:", error?.message);
+    return {
+      solBalance: 0,
+      usdcBalance: 0,
+      token2022Balances: {},
+      token2022RawAmounts: {},
+      hasSufficientGas: false,
+      rpcError: true,
+    };
   }
 }
 

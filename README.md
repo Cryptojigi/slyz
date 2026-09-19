@@ -69,7 +69,7 @@ graph TD
   - **SpaceX PreStocks** (25%)
 - **Impact Guard (<5%)**: Live Jupiter pool gating ensures orders only execute when liquidity depth has less than 5% price impact. Presets are capped at $25 to ensure optimal execution.
 - **3-Tier Failover Resilience**:
-  1. *Live Feed*: Directly queries `https://prestocks.com/api/prestocks` every 30s.
+  1. *Live Feed*: The browser polls our own same-origin proxy route `/api/prestocks` every 30s. That route server-side fetches `https://prestocks.com/api/prestocks` and caches the payload for 60s. (The upstream sends no CORS headers, so a direct browser call to it is blocked — the proxy is required.)
   2. *Local Storage Cache*: Automatically preserves the last successful payload in `localStorage` (`slyz_prestocks_last_payload`) if the API is unreachable.
   3. *Authentic Snapshot*: Static fallback strictly matches official marks and valuations.
 
@@ -139,10 +139,10 @@ cp .env.example .env.local
 Configure your environment variables:
 ```env
 # Primary Dedicated Solana RPC (e.g., Alchemy Solana Mainnet)
+# NOTE: Slyz uses a SINGLE RPC — there is no fallback provider. The Alchemy app
+# MUST allowlist the deployed origin (e.g. https://useslyz.vercel.app), otherwise
+# both balance reads and transaction sends will fail.
 NEXT_PUBLIC_ALCHEMY_RPC_URL=https://solana-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_KEY
-
-# Fallback Solana RPC
-NEXT_PUBLIC_SOLANA_FALLBACK_RPC=https://api.mainnet-beta.solana.com
 
 # Public Site URL (used for metadata and wallet origin verification)
 NEXT_PUBLIC_APP_URL=https://useslyz.vercel.app

@@ -633,11 +633,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-[#262D3D]/60 flex items-center justify-between text-[10px] font-mono text-[#8F9CAE]">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>&lt; 5% Impact Verified</span>
-                        </div>
+                      <div className="pt-2 border-t border-[#262D3D]/60 flex items-center justify-end text-[10px] font-mono text-[#8F9CAE]">
                         <button
                           onClick={() => copyToClipboard(stock?.mint || "")}
                           className="hover:text-white flex items-center gap-1 transition-colors"
