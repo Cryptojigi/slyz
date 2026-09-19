@@ -66,14 +66,8 @@ export const TechLogosMarquee: React.FC = () => {
 
   return (
     <div className="relative z-10 mt-6 sm:mt-10 pt-4 sm:pt-6 border-t border-[#262D3D]/60 overflow-hidden select-none">
-      {/* Marquee Track with Left/Right Gradient Fade Masks */}
-      <div className="marquee-wrapper relative overflow-hidden py-2 sm:py-3 group">
-        {/* Left Fade */}
-        <div className="absolute left-0 inset-y-0 w-10 sm:w-28 bg-gradient-to-r from-[#161B26] via-[#161B26]/85 to-transparent z-10 pointer-events-none" />
-
-        {/* Right Fade */}
-        <div className="absolute right-0 inset-y-0 w-10 sm:w-28 bg-gradient-to-l from-[#161B26] via-[#161B26]/85 to-transparent z-10 pointer-events-none" />
-
+      {/* Marquee Track with Natural CSS Alpha Mask Fade (Zero Shadow / Zero Color Box) */}
+      <div className="marquee-wrapper marquee-mask relative overflow-hidden py-2 sm:py-3 group">
         {/* Continuous Animated Track (stops on hover) */}
         <div className="animate-marquee-track flex items-center gap-8 sm:gap-20">
           {marqueeList.map((company, index) => (

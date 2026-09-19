@@ -317,4 +317,17 @@
   animation-play-state: paused !important;
 }
 
+/* Natural Edge Fade via Alpha Mask (zero overlapping color boxes or shadows) */
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent 0%, black 48px, black calc(100% - 48px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 48px, black calc(100% - 48px), transparent 100%);
+}
+
+@media (min-width: 640px) {
+  .marquee-mask {
+    mask-image: linear-gradient(to right, transparent 0%, black 96px, black calc(100% - 96px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 96px, black calc(100% - 96px), transparent 100%);
+  }
+}
+
 
