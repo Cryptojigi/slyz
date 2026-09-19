@@ -50,20 +50,21 @@ export default function LandingPage() {
               Non-custodial, fractional shares powered by Jupiter, xStocks Token-2022, and PreStocks.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-4 pt-2">
               <Link
                 href="/dashboard"
-                className="btn-primary flex items-center gap-2 text-sm shadow-lg hover:shadow-xl transition-all"
+                className="btn-primary flex items-center justify-center gap-1.5 !px-3 sm:!px-6 !py-2.5 sm:!py-3 text-xs sm:text-sm font-extrabold shadow-lg hover:shadow-xl transition-all"
               >
-                <span>Explore Thematic Pies</span>
-                <ArrowRight className="w-4 h-4" />
+                <span className="sm:hidden">Explore Pies</span>
+                <span className="hidden sm:inline">Explore Thematic Pies</span>
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               </Link>
               <a
                 href="#how-it-works"
-                className="btn-secondary flex items-center gap-2 text-sm hover:border-[#8D8AFF] hover:text-white"
+                className="btn-secondary flex items-center justify-center gap-1.5 !px-3 sm:!px-6 !py-2.5 sm:!py-3 text-xs sm:text-sm font-semibold hover:border-[#8D8AFF] hover:text-white text-center"
               >
                 <span>How It Works</span>
-                <ChevronRight className="w-4 h-4 text-[#8F9CAE]" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8F9CAE] shrink-0" />
               </a>
             </div>
           </div>

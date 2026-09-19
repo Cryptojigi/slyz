@@ -38,7 +38,8 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       const asset = VERIFIED_STOCKS[c.symbol];
       const priceInfo = asset ? prices[asset.mint] : undefined;
       const currentPrice = priceInfo?.usdPrice || 150;
-      const change24hPct = priceInfo ? (priceInfo.priceChange24h || 0) * 100 : 0;
+      // Jupiter API priceChange24h is already expressed as percentage (e.g. 1.42 for 1.42%)
+      const change24hPct = priceInfo ? (priceInfo.priceChange24h || 0) : 0;
       const color = STOCK_LINE_COLORS[idx % STOCK_LINE_COLORS.length];
 
       return {
@@ -95,7 +96,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
   return (
     <div className="space-y-4">
       {/* Chart Controls Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-wider text-[#8F9CAE]">
@@ -103,9 +104,9 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#CDE06A] animate-pulse" />
           </div>
-          <h2 className="text-lg font-black text-white flex items-center gap-2 mt-0.5">
+          <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2 mt-0.5">
             <span>{basket.name}</span>
-            <span className="text-xs px-2 py-0.5 rounded-lg bg-[#CDE06A]/15 text-[#CDE06A] font-bold">
+            <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded-lg bg-[#CDE06A]/15 text-[#CDE06A] font-bold">
               3-Stock Composite
             </span>
           </h2>
@@ -117,7 +118,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
             <button
               key={tf}
               onClick={() => onTimeframeChange(tf)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${
                 timeframe === tf
                   ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
                   : "text-[#8F9CAE] hover:text-white"
@@ -130,30 +131,30 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       </div>
 
       {/* Real-time 3-Stock Quote Badges */}
-      <div className="grid grid-cols-3 gap-2 pt-1">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1">
         {stocks.map((stock) => (
           <div
             key={stock.symbol}
-            className="p-2.5 rounded-xl bg-[#0B0E14]/70 border border-[#262D3D] flex flex-col justify-between"
+            className="p-2 sm:p-2.5 rounded-xl bg-[#0B0E14]/70 border border-[#262D3D] flex flex-col justify-between overflow-hidden"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: stock.color }}
                 />
-                <span className="text-xs font-black text-white">{stock.underlying}</span>
+                <span className="text-[11px] sm:text-xs font-black text-white truncate">{stock.underlying}</span>
               </div>
-              <span className="text-[10px] font-mono font-bold text-[#8F9CAE]">
+              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#8F9CAE] shrink-0">
                 {stock.weight}%
               </span>
             </div>
-            <div className="flex items-center justify-between mt-1 pt-1 border-t border-[#262D3D]/60">
-              <span className="font-mono font-bold text-xs text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-1 pt-1 border-t border-[#262D3D]/60 gap-0.5">
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-white truncate">
                 ${stock.currentPrice.toFixed(2)}
               </span>
               <span
-                className={`text-[10px] font-bold font-mono ${
+                className={`text-[9px] sm:text-[10px] font-bold font-mono shrink-0 ${
                   stock.change24hPct >= 0 ? "text-[#CDE06A]" : "text-rose-400"
                 }`}
               >

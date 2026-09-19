@@ -424,60 +424,63 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
       {/* 1. Terminal Investor Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-[#262D3D]">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 pb-6 border-b border-[#262D3D]">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="pill-badge pill-badge-lime">Terminal v1.0</span>
+            <span className="pill-badge pill-badge-lime text-[10px] sm:text-xs">Terminal v1.0</span>
             <span className="text-xs text-[#8F9CAE] font-medium">Solana Mainnet</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight break-words">
             {wallet.connected && wallet.publicKey
               ? `Welcome back, ${wallet.publicKey.toBase58().slice(0, 4)}..${wallet.publicKey.toBase58().slice(-4)}`
               : "Welcome to Slyz Terminal"}
           </h1>
           <p className="text-xs text-[#8F9CAE]">
-            Curated equity baskets, on-chain fractional shares, and dynamic weight customization.
+            <span className="hidden sm:inline">Curated equity baskets, on-chain fractional shares, and dynamic weight customization.</span>
+            <span className="sm:hidden">Invest in curated stock pies with fractional shares on Solana.</span>
           </p>
         </div>
 
         {/* Quick Stat Metric Badges */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="px-4 py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-lg bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A] font-black text-xs">
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
+          <div className="px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-2 sm:gap-3 shadow-sm min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A] font-black text-xs shrink-0">
               {marketFilter === "public" ? "10" : "8"}
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">
-                {marketFilter === "public" ? "Verified Equities" : "Pre-IPO Assets"}
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#8F9CAE] block truncate">
+                {marketFilter === "public" ? "Equities" : "Pre-IPO"}
               </span>
-              <span className="text-xs font-black text-white font-mono block">
-                {marketFilter === "public" ? "24/7 xStocks" : "PreStocks Mints"}
+              <span className="text-[11px] sm:text-xs font-black text-white font-mono block truncate">
+                {marketFilter === "public" ? "xStocks" : "PreStocks"}
               </span>
             </div>
           </div>
 
-          <div className="px-4 py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-lg bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF] font-black text-xs">
+          <div className="px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-2 sm:gap-3 shadow-sm min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF] font-black text-xs shrink-0">
               {marketFilter === "public" ? "5" : "1"}
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">
-                {marketFilter === "public" ? "Curated Themes" : "Frontier Basket"}
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#8F9CAE] block truncate">
+                {marketFilter === "public" ? "Themes" : "Frontier"}
               </span>
-              <span className="text-xs font-black text-white font-mono block">
-                {marketFilter === "public" ? "Multi-Asset Pies" : "AI & Space Venture"}
+              <span className="text-[11px] sm:text-xs font-black text-white font-mono block truncate">
+                {marketFilter === "public" ? "Pies" : "Venture"}
               </span>
             </div>
           </div>
 
-          <div className="px-4 py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white font-black text-xs">
-              {marketFilter === "public" ? "8 Dec" : "9 Dec"}
+          <div className="px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-2 sm:gap-3 shadow-sm min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white font-black text-xs shrink-0">
+              {marketFilter === "public" ? "8D" : "9D"}
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-[#8F9CAE] block">Token Standard</span>
-              <span className="text-xs font-black text-[#CDE06A] font-mono block">
-                {marketFilter === "public" ? "Token-2022" : "Token-2022"}
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#8F9CAE] block truncate">
+                Standard
+              </span>
+              <span className="text-[11px] sm:text-xs font-black text-[#CDE06A] font-mono block truncate">
+                Token-2022
               </span>
             </div>
           </div>
@@ -485,46 +488,46 @@ export default function DashboardPage() {
       </div>
 
       {/* 2. Public vs Private Shelf Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-2 rounded-xl bg-[#161B26] border border-[#262D3D]">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-1.5 sm:p-2 rounded-xl bg-[#161B26] border border-[#262D3D]">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => handleSwitchMarket("public")}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-extrabold transition-all text-center ${
               marketFilter === "public"
                 ? "bg-[#CDE06A] text-[#0B0E14] shadow-md shadow-[#CDE06A]/20"
                 : "text-[#8F9CAE] hover:text-white hover:bg-[#1D2332]"
             }`}
           >
-            <Globe className="w-3.5 h-3.5" />
-            <span>Public Equities (xStocks)</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/20">
+            <Globe className="w-3.5 h-3.5 shrink-0" />
+            <span>Public (xStocks)</span>
+            <span className="hidden md:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/20">
               5 Themes • 10 Assets
             </span>
           </button>
 
           <button
             onClick={() => handleSwitchMarket("private")}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-extrabold transition-all text-center ${
               marketFilter === "private"
                 ? "bg-gradient-to-r from-[#8D8AFF] to-[#B48AFF] text-white shadow-md shadow-[#8D8AFF]/20"
                 : "text-[#8F9CAE] hover:text-white hover:bg-[#1D2332]"
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Private Pre-IPO (PreStocks)</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/20">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span>Private (PreStocks)</span>
+            <span className="hidden md:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/20">
               Frontier • 8 Assets
             </span>
           </button>
         </div>
 
-        <div className="text-xs text-[#8F9CAE] px-3 font-mono flex items-center gap-2">
+        <div className="text-[11px] sm:text-xs text-[#8F9CAE] px-2 sm:px-3 font-mono flex items-center gap-2">
           {marketFilter === "public" ? (
-            <span>24/7 xStocks Equities • 8 Decimals • Jupiter Routing</span>
+            <span>24/7 xStocks • Jupiter Routing</span>
           ) : (
             <span className="text-[#8D8AFF] font-bold flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#8D8AFF]" />
-              Official PreStocks Pipeline • 9 Decimals • Economic Exposure
+              <ShieldCheck className="w-3.5 h-3.5 text-[#8D8AFF] shrink-0" />
+              PreStocks Pipeline • 9 Decimals
             </span>
           )}
         </div>
@@ -814,19 +817,20 @@ export default function DashboardPage() {
       </div>
 
       {/* 4. Segmented Navigation Tabs & Search Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pt-2 sm:pt-4">
         {/* Navigation Tabs */}
-        <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-[#161B26] border border-[#262D3D] self-start">
+        <div className="grid grid-cols-3 sm:inline-flex items-center gap-1 p-1 rounded-xl bg-[#161B26] border border-[#262D3D] w-full sm:w-auto">
           <button
             onClick={() => setActiveTab("curated")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center ${
               activeTab === "curated"
                 ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
                 : "text-[#8F9CAE] hover:text-white"
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>
+            <Layers className="w-3.5 h-3.5 shrink-0 hidden xs:block" />
+            <span className="sm:hidden">Themes ({curatedBasketsList.length})</span>
+            <span className="hidden sm:inline">
               {marketFilter === "public"
                 ? `Curated Theme Pies (${curatedBasketsList.length})`
                 : `Curated Pre-IPO Pies (${curatedBasketsList.length})`}
@@ -835,14 +839,15 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setActiveTab("catalog")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center ${
               activeTab === "catalog"
                 ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
                 : "text-[#8F9CAE] hover:text-white"
             }`}
           >
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>
+            <Briefcase className="w-3.5 h-3.5 shrink-0 hidden xs:block" />
+            <span className="sm:hidden">Directory ({marketFilter === "public" ? "10" : "8"})</span>
+            <span className="hidden sm:inline">
               {marketFilter === "public"
                 ? "All Verified xStocks (10)"
                 : "PreStocks Directory (8)"}
@@ -851,14 +856,15 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setActiveTab("custom")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center ${
               activeTab === "custom"
                 ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
                 : "text-[#8F9CAE] hover:text-white"
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Custom Slyz Studio</span>
+            <Sliders className="w-3.5 h-3.5 shrink-0 hidden xs:block" />
+            <span className="sm:hidden">Custom</span>
+            <span className="hidden sm:inline">Custom Slyz Studio</span>
           </button>
         </div>
 
