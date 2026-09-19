@@ -4,7 +4,8 @@
  * Provides live mark prices, token prices, valuations, and premium calculations.
  */
 
-export const PRESTOCKS_API = "https://prestocks.com/api/prestocks";
+export const PRESTOCKS_API =
+  process.env.NEXT_PUBLIC_PRESTOCKS_API_URL || "https://prestocks.com/api/prestocks";
 
 export interface PreStockAssetLive {
   symbol: string;
