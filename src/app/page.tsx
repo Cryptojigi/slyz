@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { CURATED_BASKETS, VERIFIED_STOCKS } from "@/lib/constants";
 import { LiveSlyzSculpture } from "@/components/LiveSlyzSculpture";
+import { Footer } from "@/components/Footer";
 
 export default function LandingPage() {
   const previewBaskets = CURATED_BASKETS.slice(0, 3); // The Mag 3, The Index, AI Frontier
@@ -384,6 +385,9 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+
+      {/* 7. Footer - Exclusively rendered on Landing Page */}
+      <Footer />
     </div>
   );
 }

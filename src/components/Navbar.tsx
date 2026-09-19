@@ -52,29 +52,23 @@ export const Navbar = () => {
           : "bg-transparent border-b border-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo & Name */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
               <Image
                 src="/slyzlogo.png"
                 alt="Slyz Logo"
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 className="object-contain"
                 priority
               />
             </div>
-            <div>
-              <span className="text-xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                SLYZ
-                <span className="w-1.5 h-1.5 rounded-full bg-[#CDE06A]"></span>
-              </span>
-              <p className="text-[10px] uppercase font-semibold text-[#8F9CAE] tracking-widest hidden sm:block">
-                Slice the Market
-              </p>
-            </div>
+            <span className="text-xl font-extrabold tracking-tight text-white">
+              Slyz
+            </span>
           </Link>
 
           {/* Navigation Links (Desktop) */}
