@@ -16,7 +16,9 @@ const nextConfig = {
       os: false,
       path: false,
       crypto: false,
+      "pino-pretty": false,
     };
+    config.externals = [...(config.externals || []), "pino-pretty", "lokijs", "encoding"];
     return config;
   },
 };

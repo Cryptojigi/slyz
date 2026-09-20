@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
 import {
@@ -238,8 +239,18 @@ export function LiquidationModal({
         <div className="p-6 border-b border-[#262D3D] flex items-center justify-between">
           <div>
             <span className="pill-badge pill-badge-purple mb-2">Sequential Exit</span>
-            <h3 className="text-lg font-extrabold text-white">
-              Liquidate Pie to USDC
+            <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
+              <span>Liquidate Pie to</span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[#2775CA]/15 border border-[#2775CA]/30 text-white text-xs">
+                <Image
+                  src="/usdc-logo.svg"
+                  alt="USDC"
+                  width={14}
+                  height={14}
+                  className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                />
+                <span>USDC</span>
+              </span>
             </h3>
             <p className="text-xs text-[#8F9CAE]">
               Selling {activeHoldings.length} tokenized positions back to USDC
@@ -267,8 +278,15 @@ export function LiquidationModal({
           {/* Holdings summary */}
           <div className="p-4 rounded-xl bg-[#0B0E14] border border-[#262D3D] flex items-center justify-between text-xs">
             <span className="text-[#8F9CAE]">Estimated Total Proceeds:</span>
-            <span className="font-mono font-extrabold text-white text-sm">
-              ~${totalUsdEstimated.toFixed(2)} USDC
+            <span className="font-mono font-extrabold text-white text-sm flex items-center gap-1.5">
+              <Image
+                src="/usdc-logo.svg"
+                alt="USDC"
+                width={16}
+                height={16}
+                className="w-4 h-4 rounded-full object-contain shrink-0"
+              />
+              <span>~${totalUsdEstimated.toFixed(2)} USDC</span>
             </span>
           </div>
 

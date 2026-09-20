@@ -15,7 +15,9 @@ import {
   AlertTriangle,
   AlertCircle,
   Info,
+  ArrowUpDown,
 } from "lucide-react";
+import { useWalletBalances } from "@/context/WalletBalanceContext";
 import {
   CURATED_BASKETS,
   VERIFIED_STOCKS,
@@ -34,10 +36,11 @@ import {
 import { DonutChart, DONUT_COLORS } from "@/components/DonutChart";
 import { ExecutionModal } from "@/components/ExecutionModal";
 
-export default function InvestPage() {
+function InvestPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const wallet = useWallet();
+  const { openQuickSwap } = useWalletBalances();
 
   const basketId = params.basketId as string;
 
@@ -239,23 +242,51 @@ export default function InvestPage() {
           {/* Quick Wallet Balance Pill */}
           {wallet.connected && (
             <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] text-xs font-mono">
-              <div>
-                <span className="text-[10px] text-[#8F9CAE] uppercase block">USDC Available</span>
-                <span className="font-extrabold text-white">
-                  ${balances.usdcBalance.toFixed(2)}
-                </span>
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/usdc-logo.svg"
+                  alt="USDC"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5 rounded-full object-contain shrink-0"
+                />
+                <div>
+                  <span className="text-[10px] text-[#8F9CAE] uppercase block">USDC Available</span>
+                  <span className="font-extrabold text-white">
+                    ${balances.usdcBalance.toFixed(2)}
+                  </span>
+                </div>
               </div>
               <div className="h-6 w-[1px] bg-[#262D3D]"></div>
-              <div>
-                <span className="text-[10px] text-[#8F9CAE] uppercase block">SOL Gas</span>
-                <span
-                  className={`font-bold ${
-                    balances.hasSufficientGas ? "text-[#CDE06A]" : "text-amber-400"
-                  }`}
-                >
-                  {balances.solBalance.toFixed(3)}
-                </span>
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/sol-logo.svg"
+                  alt="SOL"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5 rounded-full object-contain shrink-0"
+                />
+                <div>
+                  <span className="text-[10px] text-[#8F9CAE] uppercase block">SOL Gas</span>
+                  <span
+                    className={`font-bold ${
+                      balances.hasSufficientGas ? "text-[#CDE06A]" : "text-amber-400"
+                    }`}
+                  >
+                    {balances.solBalance.toFixed(3)}
+                  </span>
+                </div>
               </div>
+              <div className="h-6 w-[1px] bg-[#262D3D]"></div>
+              <button
+                type="button"
+                onClick={() => openQuickSwap("SOL_TO_USDC")}
+                className="px-2.5 py-1 rounded-lg bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[#CDE06A] text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95"
+                title="Swap SOL ↔ USDC"
+              >
+                <ArrowUpDown className="w-3 h-3" />
+                <span>Swap</span>
+              </button>
             </div>
           )}
         </div>
@@ -558,5 +589,20 @@ export default function InvestPage() {
         usdcBalance={balances.usdcBalance}
       />
     </div>
+  );
+}
+
+export default function InvestPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-[#0B0E14] flex flex-col items-center justify-center p-4">
+          <div className="w-8 h-8 rounded-full border-2 border-[#CDE06A] border-t-transparent animate-spin mb-4" />
+          <p className="text-sm font-bold text-white">Loading Investment Terminal...</p>
+        </div>
+      }
+    >
+      <InvestPageContent />
+    </React.Suspense>
   );
 }

@@ -29,7 +29,9 @@ import {
   Globe,
   Lock,
   Info,
+  ArrowUpDown,
 } from "lucide-react";
+import { useWalletBalances } from "@/context/WalletBalanceContext";
 import {
   CURATED_BASKETS,
   VERIFIED_STOCKS,
@@ -53,6 +55,7 @@ import { ThemeMultiStockChart } from "@/components/ThemeMultiStockChart";
 
 export default function DashboardPage() {
   const wallet = useWallet();
+  const { openQuickSwap } = useWalletBalances();
 
   // Active Tab: 'curated' | 'catalog' | 'custom'
   const [activeTab, setActiveTab] = useState<"curated" | "catalog" | "custom">("curated");
@@ -424,67 +427,16 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
       {/* 1. Terminal Investor Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 pb-6 border-b border-[#262D3D]">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="pill-badge pill-badge-lime text-[10px] sm:text-xs">Terminal v1.0</span>
-            <span className="text-xs text-[#8F9CAE] font-medium">Solana Mainnet</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight break-words">
-            {wallet.connected && wallet.publicKey
-              ? `Welcome back, ${wallet.publicKey.toBase58().slice(0, 4)}..${wallet.publicKey.toBase58().slice(-4)}`
-              : "Welcome to Slyz Terminal"}
-          </h1>
-          <p className="text-xs text-[#8F9CAE]">
-            <span className="hidden sm:inline">Curated equity baskets, on-chain fractional shares, and dynamic weight customization.</span>
-            <span className="sm:hidden">Invest in curated stock pies with fractional shares on Solana.</span>
-          </p>
-        </div>
-
-        {/* Quick Stat Metric Badges */}
-        <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
-          <div className="px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-2 sm:gap-3 shadow-sm min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A] font-black text-xs shrink-0">
-              {marketFilter === "public" ? "10" : "8"}
-            </div>
-            <div className="min-w-0">
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#8F9CAE] block truncate">
-                {marketFilter === "public" ? "Equities" : "Pre-IPO"}
-              </span>
-              <span className="text-[11px] sm:text-xs font-black text-white font-mono block truncate">
-                {marketFilter === "public" ? "xStocks" : "PreStocks"}
-              </span>
-            </div>
-          </div>
-
-          <div className="px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-2 sm:gap-3 shadow-sm min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF] font-black text-xs shrink-0">
-              {marketFilter === "public" ? "5" : "1"}
-            </div>
-            <div className="min-w-0">
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#8F9CAE] block truncate">
-                {marketFilter === "public" ? "Themes" : "Frontier"}
-              </span>
-              <span className="text-[11px] sm:text-xs font-black text-white font-mono block truncate">
-                {marketFilter === "public" ? "Pies" : "Venture"}
-              </span>
-            </div>
-          </div>
-
-          <div className="px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center gap-2 sm:gap-3 shadow-sm min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white font-black text-xs shrink-0">
-              {marketFilter === "public" ? "8D" : "9D"}
-            </div>
-            <div className="min-w-0">
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#8F9CAE] block truncate">
-                Standard
-              </span>
-              <span className="text-[11px] sm:text-xs font-black text-[#CDE06A] font-mono block truncate">
-                Token-2022
-              </span>
-            </div>
-          </div>
-        </div>
+      <div className="pb-6 border-b border-[#262D3D]">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight break-words">
+          {wallet.connected && wallet.publicKey
+            ? `Welcome back, ${wallet.publicKey.toBase58().slice(0, 4)}..${wallet.publicKey.toBase58().slice(-4)}`
+            : "Welcome to Slyz Terminal"}
+        </h1>
+        <p className="text-xs text-[#8F9CAE] mt-2">
+          <span className="hidden sm:inline">Curated equity baskets, on-chain fractional shares, and dynamic weight customization.</span>
+          <span className="sm:hidden">Invest in curated stock pies with fractional shares on Solana.</span>
+        </p>
       </div>
 
       {/* 2. Public vs Private Shelf Switcher */}
@@ -747,8 +699,15 @@ export default function DashboardPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <label className="text-[11px] font-semibold text-[#8F9CAE]">Investment Amount</label>
-                <span className="text-[11px] font-mono text-[#8F9CAE]">
-                  Wallet: ${balances.usdcBalance.toFixed(2)} USDC
+                <span className="text-[11px] font-mono text-[#8F9CAE] flex items-center gap-1.5">
+                  <Image
+                    src="/usdc-logo.svg"
+                    alt="USDC"
+                    width={13}
+                    height={13}
+                    className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                  />
+                  <span>Wallet: ${balances.usdcBalance.toFixed(2)} USDC</span>
                 </span>
               </div>
               <div className="relative">
@@ -791,6 +750,26 @@ export default function DashboardPage() {
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{featuredError}</span>
                 </div>
+              )}
+
+              {balances.usdcBalance < featuredAmount && balances.solBalance >= 0.02 && (
+                <button
+                  type="button"
+                  onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(featuredAmount - balances.usdcBalance))}
+                  className="w-full p-2 rounded-xl bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[11px] text-[#CDE06A] flex items-center justify-between font-bold transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Image
+                      src="/sol-logo.svg"
+                      alt="SOL"
+                      width={14}
+                      height={14}
+                      className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                    />
+                    <span>Need USDC? You have {balances.solBalance.toFixed(3)} SOL available</span>
+                  </span>
+                  <span className="underline">Convert Now ➔</span>
+                </button>
               )}
             </div>
 
@@ -995,8 +974,15 @@ export default function DashboardPage() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="text-[#8F9CAE]">USDC Amount</span>
-                        <span className="font-mono text-[#8F9CAE]">
-                          Wallet: ${balances.usdcBalance.toFixed(2)}
+                        <span className="font-mono text-[#8F9CAE] flex items-center gap-1.5">
+                          <Image
+                            src="/usdc-logo.svg"
+                            alt="USDC"
+                            width={13}
+                            height={13}
+                            className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                          />
+                          <span>Wallet: ${balances.usdcBalance.toFixed(2)}</span>
                         </span>
                       </div>
                       <div className="relative">
@@ -1040,6 +1026,26 @@ export default function DashboardPage() {
                           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                           <span>{cardErr}</span>
                         </div>
+                      )}
+
+                      {cardAmt && balances.usdcBalance < cardAmt && balances.solBalance >= 0.02 && (
+                        <button
+                          type="button"
+                          onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(cardAmt - balances.usdcBalance))}
+                          className="w-full p-2 rounded-xl bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[11px] text-[#CDE06A] flex items-center justify-between font-bold transition-colors"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Image
+                              src="/sol-logo.svg"
+                              alt="SOL"
+                              width={14}
+                              height={14}
+                              className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                            />
+                            <span>Swap SOL ➔ USDC</span>
+                          </span>
+                          <span className="underline">Convert ➔</span>
+                        </button>
                       )}
                     </div>
 
@@ -1530,6 +1536,13 @@ export default function DashboardPage() {
             </p>
           </Link>
         </div>
+      </div>
+
+      {/* Bottom Corner Version Tag */}
+      <div className="flex justify-end pt-2 pb-4">
+        <span className="pill-badge pill-badge-lime text-[10px] sm:text-xs">
+          Terminal v1.0
+        </span>
       </div>
 
       {/* 8. Dynamic Weight Customization Modal for any Curated Theme */}

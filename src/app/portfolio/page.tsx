@@ -16,7 +16,9 @@ import {
   ArrowDownLeft,
   Layers,
   Sliders,
+  ArrowUpDown,
 } from "lucide-react";
+import { useWalletBalances } from "@/context/WalletBalanceContext";
 import {
   VERIFIED_STOCKS,
   CURATED_BASKETS,
@@ -42,6 +44,7 @@ import { LiquidationModal } from "@/components/LiquidationModal";
 
 export default function PortfolioPage() {
   const wallet = useWallet();
+  const { openQuickSwap } = useWalletBalances();
 
   const [storedBaskets, setStoredBaskets] = useState<StoredBasket[]>([]);
   const [selectedBasketIndex, setSelectedBasketIndex] = useState<number>(0);
@@ -349,16 +352,47 @@ export default function PortfolioPage() {
               <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
                 Available Wallet Capital
               </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-white font-mono">
-                  ${balances.usdcBalance.toFixed(2)}
-                </span>
-                <span className="text-xs text-[#8F9CAE] font-mono">USDC</span>
+              <div className="flex items-center gap-2.5">
+                <Image
+                  src="/usdc-logo.svg"
+                  alt="USDC"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7 rounded-full object-contain shrink-0"
+                />
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-extrabold text-white font-mono">
+                    ${balances.usdcBalance.toFixed(2)}
+                  </span>
+                  <span className="text-xs text-[#8F9CAE] font-mono font-bold">USDC</span>
+                </div>
               </div>
-              <span className="text-[11px] text-[#8F9CAE] mt-2 block font-mono">
-                Gas: {balances.solBalance.toFixed(3)} SOL{" "}
-                {balances.hasSufficientGas ? "✓" : "(Low Gas)"}
-              </span>
+              <div className="mt-3 pt-2 border-t border-[#262D3D] flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[11px] text-[#8F9CAE] font-mono">
+                  <Image
+                    src="/sol-logo.svg"
+                    alt="SOL"
+                    width={14}
+                    height={14}
+                    className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                  />
+                  <span>
+                    Gas: {balances.solBalance.toFixed(3)} SOL{" "}
+                    <span className={balances.hasSufficientGas ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
+                      {balances.hasSufficientGas ? "✓" : "(Low Gas)"}
+                    </span>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openQuickSwap("SOL_TO_USDC")}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[#CDE06A] text-[10px] font-bold transition-all active:scale-95"
+                  title="Swap SOL ↔ USDC"
+                >
+                  <ArrowUpDown className="w-3 h-3" />
+                  <span>Swap</span>
+                </button>
+              </div>
             </div>
           </div>
 

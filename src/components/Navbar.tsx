@@ -15,7 +15,10 @@ import {
   ShieldCheck,
   Zap,
   BookOpen,
+  ArrowUpDown,
 } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletBalances } from "@/context/WalletBalanceContext";
 
 // Dynamic import with SSR disabled to prevent hydration mismatch with browser wallet extensions
 const WalletMultiButton = dynamic(
@@ -27,6 +30,8 @@ import { MobileWalletLink } from "./MobileWalletLink";
 
 export const Navbar = () => {
   const pathname = usePathname();
+  const wallet = useWallet();
+  const { solBalance, usdcBalance, hasSufficientGas, openQuickSwap } = useWalletBalances();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -147,7 +152,7 @@ export const Navbar = () => {
             </div>
           )}
 
-          {/* Conditional Action: Landing Page shows 'Launch App', Dashboard shows Wallet Button */}
+          {/* Conditional Action: Landing Page shows 'Launch App', Dashboard shows Wallet Button + Balance Capsule */}
           {isLandingPage ? (
             <Link
               href="/dashboard"
@@ -157,8 +162,62 @@ export const Navbar = () => {
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : (
-            <div className="slyz-wallet-btn">
-              <WalletMultiButton />
+            <div className="flex items-center gap-2">
+              {/* Wallet Balance Capsule (Desktop) */}
+              {wallet.connected && (
+                <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl bg-[#161B26] border border-[#262D3D] text-xs">
+                  <div
+                    className="flex items-center gap-2 px-2.5 py-1 text-slate-300 font-mono text-[11px]"
+                    title={`Gas Reserve: ${solBalance.toFixed(4)} SOL | Investable Capital: $${usdcBalance.toFixed(2)} USDC`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Image
+                        src="/sol-logo.svg"
+                        alt="SOL"
+                        width={14}
+                        height={14}
+                        className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                      />
+                      <span className="font-bold text-white">{solBalance.toFixed(3)}</span>
+                    </div>
+
+                    <span className="text-[#262D3D]">|</span>
+
+                    <div className="flex items-center gap-1.5">
+                      <Image
+                        src="/usdc-logo.svg"
+                        alt="USDC"
+                        width={14}
+                        height={14}
+                        className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                      />
+                      <span className="font-bold text-white">{usdcBalance.toFixed(2)}</span>
+                    </div>
+
+                    {/* Gas Health Indicator */}
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        hasSufficientGas ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-amber-400 animate-ping"
+                      }`}
+                      title={hasSufficientGas ? "Gas healthy (> 0.015 SOL)" : "Low SOL gas warning (< 0.015 SOL)"}
+                    />
+                  </div>
+
+                  {/* 1-Click Quick Swap Button */}
+                  <button
+                    onClick={() => openQuickSwap("SOL_TO_USDC")}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[#CDE06A] text-[11px] font-bold transition-all active:scale-95"
+                    title="Quick Swap SOL ↔ USDC"
+                  >
+                    <ArrowUpDown className="w-3 h-3" />
+                    <span>Swap</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="slyz-wallet-btn">
+                <WalletMultiButton />
+              </div>
             </div>
           )}
 
@@ -234,7 +293,65 @@ export const Navbar = () => {
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-3">
+              {/* Mobile Wallet Balances Card */}
+              {wallet.connected && (
+                <div className="p-3 rounded-xl bg-[#161B26] border border-[#262D3D] space-y-2.5">
+                  <div className="flex items-center justify-between text-xs text-[#8F9CAE]">
+                    <span className="font-bold text-slate-300">Wallet Balances</span>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          hasSufficientGas ? "bg-emerald-400" : "bg-amber-400 animate-ping"
+                        }`}
+                      />
+                      <span>{hasSufficientGas ? "Gas Reserve OK" : "Low SOL Gas"}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-center font-mono">
+                    <div className="p-2 rounded-lg bg-[#0B0E14] border border-[#262D3D]">
+                      <span className="text-[10px] text-[#8F9CAE] block mb-1">Gas (SOL)</span>
+                      <span className="text-xs font-bold text-white flex items-center justify-center gap-1.5">
+                        <Image
+                          src="/sol-logo.svg"
+                          alt="SOL"
+                          width={14}
+                          height={14}
+                          className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                        />
+                        <span>{solBalance.toFixed(3)}</span>
+                      </span>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-[#0B0E14] border border-[#262D3D]">
+                      <span className="text-[10px] text-[#8F9CAE] block mb-1">Capital (USDC)</span>
+                      <span className="text-xs font-bold text-white flex items-center justify-center gap-1.5">
+                        <Image
+                          src="/usdc-logo.svg"
+                          alt="USDC"
+                          width={14}
+                          height={14}
+                          className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                        />
+                        <span>{usdcBalance.toFixed(2)}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      openQuickSwap("SOL_TO_USDC");
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[#CDE06A] text-xs font-bold transition-all"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5" />
+                    <span>Swap SOL ↔ USDC</span>
+                  </button>
+                </div>
+              )}
+
               <Link
                 href="/dashboard"
                 className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold ${

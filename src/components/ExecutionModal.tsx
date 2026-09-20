@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
@@ -289,9 +290,19 @@ export const ExecutionModal: React.FC<Props> = ({
             <h3 className="text-lg font-extrabold text-white">
               Investing in {basketName}
             </h3>
-            <p className="text-xs text-[#8F9CAE]">
-              Total Investment: ${totalUsdAmount.toFixed(2)} USDC
-            </p>
+            <div className="flex items-center gap-1.5 text-xs text-[#8F9CAE]">
+              <span>Total Investment:</span>
+              <span className="font-mono font-bold text-white flex items-center gap-1">
+                <Image
+                  src="/usdc-logo.svg"
+                  alt="USDC"
+                  width={14}
+                  height={14}
+                  className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                />
+                <span>${totalUsdAmount.toFixed(2)} USDC</span>
+              </span>
+            </div>
           </div>
           {!isRunning && (
             <button
@@ -305,6 +316,36 @@ export const ExecutionModal: React.FC<Props> = ({
 
         {/* Content Body */}
         <div className="p-6 space-y-4">
+          {/* Live Wallet Balances Indicator */}
+          <div className="p-3 rounded-xl bg-[#0B0E14] border border-[#262D3D] flex items-center justify-between text-xs font-mono">
+            <div className="flex items-center gap-1.5">
+              <Image
+                src="/usdc-logo.svg"
+                alt="USDC"
+                width={15}
+                height={15}
+                className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+              />
+              <span className="text-[#8F9CAE]">Capital:</span>
+              <span className={`font-bold ${hasEnoughUsdc ? "text-white" : "text-rose-400"}`}>
+                ${usdcBalance.toFixed(2)} USDC
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Image
+                src="/sol-logo.svg"
+                alt="SOL"
+                width={15}
+                height={15}
+                className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+              />
+              <span className="text-[#8F9CAE]">Gas:</span>
+              <span className={`font-bold ${hasEnoughSol ? "text-white" : "text-amber-400"}`}>
+                {solBalance.toFixed(3)} SOL
+              </span>
+            </div>
+          </div>
+
           {/* Gas / Balance Alert */}
           {gasError && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">

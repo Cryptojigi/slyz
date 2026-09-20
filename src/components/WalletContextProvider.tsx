@@ -8,6 +8,8 @@ import {
   type WalletAdapter,
 } from "@solana/wallet-adapter-base";
 import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
+import { WalletBalanceProvider } from "@/context/WalletBalanceContext";
+import { QuickSwapModal } from "@/components/QuickSwapModal";
 
 interface Props {
   children: ReactNode;
@@ -60,7 +62,12 @@ export const WalletContextProvider: FC<Props> = ({ children }) => {
   return (
     <ConnectionProvider endpoint={endpoint} config={{ commitment: "confirmed" }}>
       <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
+        <WalletModalProvider>
+          <WalletBalanceProvider>
+            {children}
+            <QuickSwapModal />
+          </WalletBalanceProvider>
+        </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
   );
