@@ -79,7 +79,7 @@ function InvestPageContent() {
   const [components, setComponents] = useState<BasketComponent[]>(
     basket?.components || []
   );
-  const [amountUsd, setAmountUsd] = useState<number>(isPrivateMarket ? 5 : 50);
+  const [amountUsd, setAmountUsd] = useState<number | string>("");
   const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
   const [preStocksLive, setPreStocksLive] = useState<Record<string, PreStockAssetLive>>(PRESTOCKS_FALLBACK);
   const [balances, setBalances] = useState<UserBalances>({
@@ -91,11 +91,10 @@ function InvestPageContent() {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Sync components and default amount if basket changes
+  // Sync components if basket changes
   useEffect(() => {
     if (basket) {
       setComponents(basket.components);
-      setAmountUsd(basket.market === "private" ? 5 : 50);
     }
   }, [basket]);
 
@@ -202,10 +201,11 @@ function InvestPageContent() {
   };
 
   const totalWeight = components.reduce((acc, c) => acc + c.targetWeight, 0);
+  const parsedAmount = typeof amountUsd === "number" ? amountUsd : parseFloat(amountUsd) || 0;
 
   // Donut chart slices
   const donutData = components.map((c, i) => {
-    const dollarSlice = (c.targetWeight / 100) * amountUsd;
+    const dollarSlice = (c.targetWeight / 100) * parsedAmount;
     return {
       name: VERIFIED_STOCKS[c.symbol]?.underlying || c.symbol,
       value: c.targetWeight,
@@ -267,7 +267,7 @@ function InvestPageContent() {
                   className="w-5 h-5 rounded-full object-contain shrink-0"
                 />
                 <div>
-                  <span className="text-[10px] text-[#8F9CAE] uppercase block">SOL Gas</span>
+                  <span className="text-[10px] text-[#8F9CAE] uppercase block">SOL</span>
                   <span
                     className={`font-bold ${
                       balances.hasSufficientGas ? "text-[#CDE06A]" : "text-amber-400"
@@ -318,7 +318,7 @@ function InvestPageContent() {
                 ? preData?.tokenPrice || 0
                 : prices[asset?.mint || ""]?.usdPrice || 0;
 
-              const dollarSlice = (c.targetWeight / 100) * amountUsd;
+              const dollarSlice = (c.targetWeight / 100) * parsedAmount;
               const estimatedUnits = livePrice > 0 ? dollarSlice / livePrice : 0;
 
               return (
@@ -401,16 +401,16 @@ function InvestPageContent() {
               <input
                 type="number"
                 min={5}
-                step="1"
+                step="any"
                 value={amountUsd}
-                onChange={(e) => setAmountUsd(Math.max(1, Number(e.target.value)))}
+                onChange={(e) => setAmountUsd(e.target.value)}
                 className="w-full pl-11 pr-4 py-4 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-2xl font-extrabold font-mono text-white focus:outline-none focus:border-[#CDE06A] transition-colors"
-                placeholder={isPrivateMarket ? "5.00" : "50.00"}
+                placeholder="0.00"
               />
             </div>
 
             {/* Private Market Liquidity Warning if user enters > $25 */}
-            {isPrivateMarket && amountUsd > 25 && (
+            {isPrivateMarket && Number(amountUsd) > 25 && (
               <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/40 text-xs text-amber-200 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
@@ -522,7 +522,7 @@ function InvestPageContent() {
               <span className="text-white">1.0% max slippage</span>
             </div>
             <div className="flex items-center justify-between font-mono">
-              <span>Estimated Solana Network Gas:</span>
+              <span>Estimated Solana Network Fee:</span>
               <span className="text-white">~0.003 SOL ($0.45)</span>
             </div>
             <div className="flex items-center justify-between font-mono">
@@ -557,7 +557,7 @@ function InvestPageContent() {
           {/* Action CTA Button */}
           <button
             onClick={() => setIsModalOpen(true)}
-            disabled={!wallet.connected || totalWeight !== 100 || amountUsd < 5}
+            disabled={!wallet.connected || totalWeight !== 100 || parsedAmount < 5}
             className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2 shadow-lg"
           >
             {!wallet.connected ? (
@@ -566,7 +566,7 @@ function InvestPageContent() {
               <span>Adjust Weights to Equal 100%</span>
             ) : (
               <>
-                <span>Slyz In: Invest ${amountUsd} in {basket.name}</span>
+                <span>Slyz In: Invest ${parsedAmount > 0 ? parsedAmount : "..."} in {basket.name}</span>
                 <ArrowRight className="w-5 h-5" />
               </>
             )}
@@ -580,10 +580,10 @@ function InvestPageContent() {
         onClose={() => setIsModalOpen(false)}
         basketId={basket.id}
         basketName={basket.name}
-        totalUsdAmount={amountUsd}
+        totalUsdAmount={parsedAmount}
         legs={components.map((c) => ({
           symbol: c.symbol,
-          amountUsd: (c.targetWeight / 100) * amountUsd,
+          amountUsd: (c.targetWeight / 100) * parsedAmount,
         }))}
         solBalance={balances.solBalance}
         usdcBalance={balances.usdcBalance}

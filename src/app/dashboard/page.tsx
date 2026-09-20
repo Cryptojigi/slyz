@@ -69,18 +69,11 @@ export default function DashboardPage() {
   const selectedTheme =
     CURATED_BASKETS.find((b) => b.id === selectedThemeId) || CURATED_BASKETS[0];
 
-  // Custom Investment Amounts & Clear Validation Errors (No fixed $100)
-  const [featuredAmount, setFeaturedAmount] = useState<number>(50);
+  // Custom Investment Amounts & Clear Validation Errors (Input-driven, no pre-filled numbers)
+  const [featuredAmount, setFeaturedAmount] = useState<number | string>("");
   const [featuredError, setFeaturedError] = useState<string | null>(null);
 
-  const [cardAmounts, setCardAmounts] = useState<Record<string, number>>({
-    "mag-3": 50,
-    "the-index": 50,
-    "ai-frontier": 50,
-    "high-beta": 50,
-    "big-commerce": 50,
-    frontier: 5,
-  });
+  const [cardAmounts, setCardAmounts] = useState<Record<string, number | string>>({});
   const [cardErrors, setCardErrors] = useState<Record<string, string | null>>({});
 
   // Prices & Balances
@@ -179,10 +172,10 @@ export default function DashboardPage() {
     setMarketFilter(market);
     if (market === "private") {
       setSelectedThemeId("frontier");
-      setFeaturedAmount(5);
+      setFeaturedAmount("");
     } else {
       setSelectedThemeId("mag-3");
-      setFeaturedAmount(50);
+      setFeaturedAmount("");
     }
   };
 
@@ -287,7 +280,8 @@ export default function DashboardPage() {
   };
 
   // Launch validated investment for a curated theme
-  const handleInvestWithValidation = (basket: Basket, amount: number, isFeatured: boolean = false) => {
+  const handleInvestWithValidation = (basket: Basket, rawAmount: number | string, isFeatured: boolean = false) => {
+    const amount = typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;
     const setError = (msg: string | null) => {
       if (isFeatured) {
         setFeaturedError(msg);
@@ -305,8 +299,8 @@ export default function DashboardPage() {
     }
 
     // 2. Validate amount number
-    if (isNaN(amount) || amount <= 0) {
-      setError("Please enter an investment amount greater than $0.");
+    if (!rawAmount || isNaN(amount) || amount <= 0) {
+      setError("Please enter the amount you wish to invest.");
       return;
     }
 
@@ -324,10 +318,10 @@ export default function DashboardPage() {
       return;
     }
 
-    // 5. SOL gas balance check
+    // 5. SOL balance check
     if (balances.solBalance < MIN_SOL_BALANCE) {
       setError(
-        `Low SOL balance for fees. You have ${balances.solBalance.toFixed(4)} SOL (at least ${MIN_SOL_BALANCE} SOL is required for network gas & Token-2022 account rent).`
+        `Low SOL balance for fees. You have ${balances.solBalance.toFixed(4)} SOL (at least ${MIN_SOL_BALANCE} SOL is required for network fees & Token-2022 account rent).`
       );
       return;
     }
@@ -715,10 +709,11 @@ export default function DashboardPage() {
                 <input
                   type="number"
                   min={5}
-                  placeholder={selectedTheme.market === "private" ? "20" : "50"}
-                  value={featuredAmount || ""}
+                  step="any"
+                  placeholder="0.00"
+                  value={featuredAmount}
                   onChange={(e) => {
-                    setFeaturedAmount(Number(e.target.value));
+                    setFeaturedAmount(e.target.value);
                     if (featuredError) setFeaturedError(null);
                   }}
                   className="w-full pl-8 pr-14 py-2.5 bg-[#0B0E14] border border-[#262D3D] rounded-xl text-xs font-mono font-bold text-white focus:outline-none focus:border-[#CDE06A]"
@@ -729,7 +724,7 @@ export default function DashboardPage() {
                     const maxVal = selectedTheme.market === "private"
                       ? Math.min(25, Math.floor(balances.usdcBalance))
                       : Math.floor(balances.usdcBalance);
-                    setFeaturedAmount(maxVal);
+                    setFeaturedAmount(maxVal > 0 ? maxVal.toString() : "");
                     if (featuredError) setFeaturedError(null);
                   }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#CDE06A] px-2 py-0.5 rounded bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20"
@@ -738,7 +733,7 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              {selectedTheme.market === "private" && featuredAmount > 25 && (
+              {selectedTheme.market === "private" && Number(featuredAmount) > 25 && (
                 <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-500/40 text-[11px] text-amber-200 flex items-center gap-1.5">
                   <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>Pool liquidity advisory: orders over $25 risk &gt;5% price impact.</span>
@@ -752,10 +747,10 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {balances.usdcBalance < featuredAmount && balances.solBalance >= 0.02 && (
+              {featuredAmount !== "" && Number(featuredAmount) > 0 && balances.usdcBalance < Number(featuredAmount) && balances.solBalance >= 0.02 && (
                 <button
                   type="button"
-                  onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(featuredAmount - balances.usdcBalance))}
+                  onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(Number(featuredAmount) - balances.usdcBalance))}
                   className="w-full p-2 rounded-xl bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[11px] text-[#CDE06A] flex items-center justify-between font-bold transition-colors"
                 >
                   <span className="flex items-center gap-1.5">
@@ -866,8 +861,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {curatedBasketsList.map((basket) => {
               const isSelected = basket.id === selectedThemeId;
-              const defaultMin = basket.market === "private" ? 5 : 50;
-              const cardAmt = cardAmounts[basket.id] ?? defaultMin;
+              const cardAmt = cardAmounts[basket.id] ?? "";
               const cardErr = cardErrors[basket.id];
 
               return (
@@ -989,11 +983,12 @@ export default function DashboardPage() {
                         <DollarSign className="w-3.5 h-3.5 text-[#8F9CAE] absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                           type="number"
-                          min={basket.market === "private" ? 5 : 5}
-                          placeholder={basket.market === "private" ? "5" : "50"}
-                          value={cardAmt || ""}
+                          min="1"
+                          step="any"
+                          placeholder="0.00"
+                          value={cardAmt}
                           onChange={(e) => {
-                            const val = Number(e.target.value);
+                            const val = e.target.value;
                             setCardAmounts((prev) => ({ ...prev, [basket.id]: val }));
                             if (cardErrors[basket.id]) {
                               setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
@@ -1009,7 +1004,7 @@ export default function DashboardPage() {
                               : Math.floor(balances.usdcBalance);
                             setCardAmounts((prev) => ({
                               ...prev,
-                              [basket.id]: maxVal,
+                              [basket.id]: maxVal > 0 ? maxVal.toString() : "",
                             }));
                             if (cardErrors[basket.id]) {
                               setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
@@ -1028,10 +1023,10 @@ export default function DashboardPage() {
                         </div>
                       )}
 
-                      {cardAmt && balances.usdcBalance < cardAmt && balances.solBalance >= 0.02 && (
+                      {cardAmt !== "" && Number(cardAmt) > 0 && balances.usdcBalance < Number(cardAmt) && balances.solBalance >= 0.02 && (
                         <button
                           type="button"
-                          onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(cardAmt - balances.usdcBalance))}
+                          onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(Number(cardAmt) - balances.usdcBalance))}
                           className="w-full p-2 rounded-xl bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[11px] text-[#CDE06A] flex items-center justify-between font-bold transition-colors"
                         >
                           <span className="flex items-center gap-1.5">

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
@@ -69,6 +70,11 @@ export function LiquidationModal({
   const [activeStepIndex, setActiveStepIndex] = useState<number>(-1);
   const [completed, setCompleted] = useState(false);
   const [gasError, setGasError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Synchronize steps whenever modal opens or positions update
   useEffect(() => {
@@ -90,7 +96,7 @@ export function LiquidationModal({
     }
   }, [isOpen, positions]);
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
   const totalUsdEstimated = activeHoldings.reduce((acc, p) => acc + p.currentValueUsd, 0);
   const hasEnoughSol = solBalance >= MIN_SOL_BALANCE;
@@ -232,34 +238,34 @@ export function LiquidationModal({
 
   const completedCount = steps.filter((s) => s.status === "success").length;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-[430px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-[#262D3D] flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-[#262D3D] flex items-center justify-between shrink-0">
           <div>
-            <span className="pill-badge pill-badge-purple mb-2">Sequential Exit</span>
-            <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
+            <span className="pill-badge pill-badge-purple mb-1 text-[10px]">Sequential Exit</span>
+            <h3 className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
               <span>Liquidate Pie to</span>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[#2775CA]/15 border border-[#2775CA]/30 text-white text-xs">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-[#2775CA]/15 border border-[#2775CA]/30 text-white text-[11px]">
                 <Image
                   src="/usdc-logo.svg"
                   alt="USDC"
-                  width={14}
-                  height={14}
+                  width={13}
+                  height={13}
                   className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
                 />
                 <span>USDC</span>
               </span>
             </h3>
-            <p className="text-xs text-[#8F9CAE]">
+            <p className="text-[11px] text-[#8F9CAE]">
               Selling {activeHoldings.length} tokenized positions back to USDC
             </p>
           </div>
           {!isRunning && (
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-sm"
+              className="w-7 h-7 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-xs transition-colors"
             >
               ✕
             </button>
@@ -267,7 +273,7 @@ export function LiquidationModal({
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1">
           {gasError && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
               <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -408,11 +414,11 @@ export function LiquidationModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t border-[#262D3D] bg-[#0B0E14] flex items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 border-t border-[#262D3D] bg-[#0B0E14]/80 flex items-center justify-between gap-3 shrink-0">
           {completed ? (
             <button
               onClick={onClose}
-              className="w-full btn-primary flex items-center justify-center gap-2"
+              className="w-full btn-primary flex items-center justify-center gap-2 !py-2.5 sm:!py-3 text-xs sm:text-sm font-bold shadow-lg"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Liquidation Complete — Return to Portfolio</span>
@@ -423,7 +429,7 @@ export function LiquidationModal({
                 type="button"
                 onClick={onClose}
                 disabled={isRunning}
-                className="btn-secondary text-xs"
+                className="btn-secondary text-xs !py-2.5 px-3.5"
               >
                 Cancel
               </button>
@@ -432,7 +438,7 @@ export function LiquidationModal({
                 type="button"
                 onClick={startSequentialLiquidation}
                 disabled={isRunning || !hasEnoughSol || activeHoldings.length === 0}
-                className="btn-primary flex items-center gap-2 text-xs flex-1 justify-center disabled:opacity-50"
+                className="btn-primary flex items-center gap-2 text-xs sm:text-sm flex-1 justify-center !py-2.5 disabled:opacity-50"
               >
                 {isRunning ? (
                   <>
@@ -450,6 +456,7 @@ export function LiquidationModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

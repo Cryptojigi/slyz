@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useId } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
@@ -49,6 +50,11 @@ export const QuickSwapModal: React.FC = () => {
   const [status, setStatus] = useState<"idle" | "signing" | "confirming" | "success" | "error">("idle");
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Sync modal props when opened
   useEffect(() => {
@@ -210,16 +216,16 @@ export const QuickSwapModal: React.FC = () => {
     }
   };
 
-  if (!isQuickSwapOpen) return null;
+  if (!mounted || !isQuickSwapOpen) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby={modalTitleId}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-md bg-[#161B26] border border-[#262D3D] rounded-2xl p-5 sm:p-6 shadow-2xl space-y-5">
+      <div className="relative w-full max-w-[430px] bg-[#161B26] border border-[#262D3D] rounded-2xl p-4 sm:p-5 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[#262D3D]">
           <div className="flex items-center gap-3">
@@ -357,7 +363,7 @@ export const QuickSwapModal: React.FC = () => {
 
               {isSolToUsdc && (
                 <span className="text-[10px] text-[#8F9CAE] font-medium hidden sm:inline">
-                  Reserves 0.02 SOL for gas
+                  Reserves 0.02 SOL for network fees
                 </span>
               )}
             </div>
@@ -584,6 +590,7 @@ export const QuickSwapModal: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

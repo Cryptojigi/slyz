@@ -119,7 +119,7 @@ export default function TermsPage() {
               { id: "sanctions", label: "4. Sanctions & Restricted Regions" },
               { id: "safe-harbor", label: "5. Safe Harbor & Financial Disclaimers" },
               { id: "risks", label: "6. Protocol & Market Risks" },
-              { id: "fees", label: "7. Fees, Gas & Execution" },
+              { id: "fees", label: "7. Fees, Transaction Costs & Execution" },
               { id: "prohibited", label: "8. Prohibited Conduct" },
               { id: "liability", label: "9. Limitation of Liability" },
               { id: "amendments", label: "10. Modifications & Contact" },
@@ -322,10 +322,10 @@ export default function TermsPage() {
             </div>
           </section>
 
-          {/* 7. Fees, Gas & Execution */}
+          {/* 7. Fees, Transaction Costs & Execution */}
           <section id="fees" className="scroll-mt-24 space-y-3 border-b border-[#262D3D] pb-8">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-[#CDE06A]">07.</span> Fees, Gas Costs & Execution Mechanics
+              <span className="text-[#CDE06A]">07.</span> Fees, Transaction Costs & Execution Mechanics
             </h2>
             <p>
               <strong className="text-white">Protocol Fees:</strong> Slyz does not charge a platform commission or deposit
@@ -333,7 +333,7 @@ export default function TermsPage() {
             </p>
             <p>
               <strong className="text-white">Network & DEX Fees:</strong> Each sequential swap transaction incurs standard
-              Solana network gas fees (paid in native SOL) and underlying liquidity provider fees charged by decentralized
+              Solana network transaction fees (paid in native SOL) and underlying liquidity provider fees charged by decentralized
               exchanges (e.g., Raydium, Orca, Whirlpools) routed via Jupiter.
             </p>
             <p>

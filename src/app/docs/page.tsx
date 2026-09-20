@@ -151,10 +151,10 @@ export default function DocsPage() {
               <div className="w-8 h-8 rounded-lg bg-[#8D8AFF]/10 text-[#8D8AFF] font-black text-sm flex items-center justify-center">
                 2
               </div>
-              <h3 className="text-base font-bold text-white">Fund USDC & SOL Gas</h3>
+              <h3 className="text-base font-bold text-white">Fund USDC & SOL</h3>
               <p className="text-xs leading-relaxed">
                 Ensure your wallet has <strong className="text-white">USDC</strong> (the base quote currency for all swaps)
-                and at least <strong className="text-white">0.015 SOL</strong> to pay for Solana gas and rent-exempt
+                and at least <strong className="text-white">0.015 SOL</strong> to pay for Solana transaction fees and rent-exempt
                 Token-2022 account allocations.
               </p>
             </div>

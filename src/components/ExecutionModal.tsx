@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -71,6 +72,11 @@ export const ExecutionModal: React.FC<Props> = ({
   const [completed, setCompleted] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [gasError, setGasError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Re-sync steps whenever modal opens or legs change
   useEffect(() => {
@@ -94,21 +100,23 @@ export const ExecutionModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   if (steps.length === 0) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-        <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
+    if (!mounted) return null;
+    return createPortal(
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl p-5 sm:p-6 max-w-[430px] w-full shadow-2xl text-center space-y-4">
           <div className="w-12 h-12 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center mx-auto text-[#CDE06A]">
             <AlertCircle className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-white">No Eligible Legs to Swap</h3>
+          <h3 className="text-base sm:text-lg font-bold text-white">No Eligible Legs to Swap</h3>
           <p className="text-xs text-[#8F9CAE] leading-relaxed">
             Every stock leg requires at least $1.00 USDC for Jupiter routing. Please increase your investment amount.
           </p>
-          <button onClick={onClose} className="btn-secondary w-full text-sm">
+          <button onClick={onClose} className="btn-secondary w-full text-xs sm:text-sm !py-2.5">
             Close
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -278,26 +286,30 @@ export const ExecutionModal: React.FC<Props> = ({
 
   const completedCount = steps.filter((s) => s.status === "success").length;
 
-  if (!isOpen || steps.length === 0) return null;
+  if (!mounted || !isOpen || steps.length === 0) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200"
+    >
+      <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-[430px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-[#262D3D] flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-[#262D3D] flex items-center justify-between shrink-0">
           <div>
-            <span className="pill-badge pill-badge-lime mb-2">Sequential Execution</span>
-            <h3 className="text-lg font-extrabold text-white">
+            <span className="pill-badge pill-badge-lime mb-1 text-[10px]">Sequential Execution</span>
+            <h3 className="text-base sm:text-lg font-extrabold text-white">
               Investing in {basketName}
             </h3>
-            <div className="flex items-center gap-1.5 text-xs text-[#8F9CAE]">
+            <div className="flex items-center gap-1.5 text-[11px] text-[#8F9CAE]">
               <span>Total Investment:</span>
               <span className="font-mono font-bold text-white flex items-center gap-1">
                 <Image
                   src="/usdc-logo.svg"
                   alt="USDC"
-                  width={14}
-                  height={14}
+                  width={13}
+                  height={13}
                   className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
                 />
                 <span>${totalUsdAmount.toFixed(2)} USDC</span>
@@ -307,7 +319,7 @@ export const ExecutionModal: React.FC<Props> = ({
           {!isRunning && (
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-sm"
+              className="w-7 h-7 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-xs transition-colors"
             >
               ✕
             </button>
@@ -315,15 +327,15 @@ export const ExecutionModal: React.FC<Props> = ({
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1">
           {/* Live Wallet Balances Indicator */}
-          <div className="p-3 rounded-xl bg-[#0B0E14] border border-[#262D3D] flex items-center justify-between text-xs font-mono">
+          <div className="p-2.5 rounded-xl bg-[#0B0E14] border border-[#262D3D] flex items-center justify-between text-[11px] font-mono">
             <div className="flex items-center gap-1.5">
               <Image
                 src="/usdc-logo.svg"
                 alt="USDC"
-                width={15}
-                height={15}
+                width={14}
+                height={14}
                 className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
               />
               <span className="text-[#8F9CAE]">Capital:</span>
@@ -335,11 +347,11 @@ export const ExecutionModal: React.FC<Props> = ({
               <Image
                 src="/sol-logo.svg"
                 alt="SOL"
-                width={15}
-                height={15}
+                width={14}
+                height={14}
                 className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
               />
-              <span className="text-[#8F9CAE]">Gas:</span>
+              <span className="text-[#8F9CAE]">SOL:</span>
               <span className={`font-bold ${hasEnoughSol ? "text-white" : "text-amber-400"}`}>
                 {solBalance.toFixed(3)} SOL
               </span>
@@ -348,20 +360,20 @@ export const ExecutionModal: React.FC<Props> = ({
 
           {/* Gas / Balance Alert */}
           {gasError && (
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+            <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
               <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>{gasError}</span>
             </div>
           )}
 
           {/* Stepper Progress List */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {steps.map((step, idx) => {
               const asset = VERIFIED_STOCKS[step.symbol];
               return (
                 <div
                   key={step.symbol}
-                  className={`p-3.5 rounded-xl border transition-all ${
+                  className={`p-2.5 sm:p-3 rounded-xl border transition-all ${
                     step.status === "success"
                       ? "bg-[#0B0E14]/70 border-[#CDE06A]/40"
                       : step.status === "failed"
@@ -372,41 +384,41 @@ export const ExecutionModal: React.FC<Props> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-mono">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold font-mono shrink-0">
                         {step.status === "success" ? (
-                          <CheckCircle2 className="w-5 h-5 text-[#CDE06A]" />
+                          <CheckCircle2 className="w-4 h-4 text-[#CDE06A]" />
                         ) : step.status === "failed" ? (
-                          <AlertCircle className="w-5 h-5 text-rose-400" />
+                          <AlertCircle className="w-4 h-4 text-rose-400" />
                         ) : idx === activeStepIndex && isRunning ? (
-                          <Loader2 className="w-5 h-5 text-[#8D8AFF] animate-spin" />
+                          <Loader2 className="w-4 h-4 text-[#8D8AFF] animate-spin" />
                         ) : (
-                          <span className="text-[#8F9CAE]">{idx + 1}</span>
+                          <span className="text-[#8F9CAE] text-[11px]">{idx + 1}</span>
                         )}
                       </div>
                       <div>
-                        <span className="font-bold text-sm text-white">
+                        <span className="font-bold text-xs sm:text-sm text-white">
                           {asset?.underlying || step.symbol}
                         </span>
-                        <span className="text-xs text-[#8F9CAE] ml-2">
+                        <span className="text-[11px] text-[#8F9CAE] ml-1.5 font-mono">
                           (${step.dollarAmount.toFixed(2)})
                         </span>
                       </div>
                     </div>
 
                     {/* Step Status Text */}
-                    <div className="text-xs font-mono">
+                    <div className="text-[11px] font-mono">
                       {step.status === "success" && (
                         <span className="text-[#CDE06A] font-bold">Filled ✓</span>
                       )}
                       {step.status === "signing" && (
-                        <span className="text-[#8D8AFF] animate-pulse">Confirm in wallet...</span>
+                        <span className="text-[#8D8AFF] animate-pulse">Confirming...</span>
                       )}
                       {step.status === "confirming" && (
                         <span className="text-[#8D8AFF]">Confirming on-chain...</span>
                       )}
                       {step.status === "quoting" && (
-                        <span className="text-[#8F9CAE]">Fetching route...</span>
+                        <span className="text-[#8F9CAE]">Routing...</span>
                       )}
                       {step.status === "pending" && (
                         <span className="text-[#8F9CAE]">Queued</span>
@@ -419,22 +431,22 @@ export const ExecutionModal: React.FC<Props> = ({
 
                   {/* Transaction Link if successful */}
                   {step.txSignature && (
-                    <div className="mt-2 pl-9">
+                    <div className="mt-1.5 pl-7.5">
                       <a
                         href={`https://solscan.io/tx/${step.txSignature}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] text-[#8F9CAE] hover:text-[#CDE06A] transition-colors"
+                        className="inline-flex items-center gap-1 text-[10px] text-[#8F9CAE] hover:text-[#CDE06A] transition-colors"
                       >
-                        <span>View signature: {step.txSignature.slice(0, 8)}...{step.txSignature.slice(-6)}</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <span>Sig: {step.txSignature.slice(0, 6)}...{step.txSignature.slice(-4)}</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     </div>
                   )}
 
                   {/* Error Message if failed */}
                   {step.errorMessage && (
-                    <p className="mt-2 pl-9 text-[11px] text-rose-400">
+                    <p className="mt-1.5 pl-7.5 text-[10px] text-rose-400">
                       {step.errorMessage}
                     </p>
                   )}
@@ -444,8 +456,8 @@ export const ExecutionModal: React.FC<Props> = ({
           </div>
 
           {/* Progress Indicator */}
-          <div className="pt-2">
-            <div className="flex items-center justify-between text-xs text-[#8F9CAE] mb-1.5 font-mono">
+          <div className="pt-1">
+            <div className="flex items-center justify-between text-[11px] text-[#8F9CAE] mb-1 font-mono">
               <span>Progress</span>
               <span>
                 {completedCount} of {steps.length} Swaps Completed
@@ -461,12 +473,12 @@ export const ExecutionModal: React.FC<Props> = ({
         </div>
 
         {/* Modal Footer / Action Buttons */}
-        <div className="p-6 bg-[#0B0E14]/80 border-t border-[#262D3D]">
+        <div className="p-4 sm:p-5 bg-[#0B0E14]/80 border-t border-[#262D3D] shrink-0">
           {!completed ? (
             <button
               onClick={startSequentialExecution}
               disabled={isRunning || !wallet.connected}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-primary w-full flex items-center justify-center gap-2 !py-2.5 sm:!py-3 text-xs sm:text-sm font-bold shadow-lg"
             >
               {isRunning ? (
                 <>
@@ -486,25 +498,25 @@ export const ExecutionModal: React.FC<Props> = ({
               )}
             </button>
           ) : (
-            <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/30 text-center">
-                <p className="text-sm font-bold text-[#CDE06A]">
+            <div className="space-y-2.5">
+              <div className="p-2.5 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/30 text-center">
+                <p className="text-xs sm:text-sm font-bold text-[#CDE06A]">
                   🎉 All {steps.length} swaps confirmed!
                 </p>
-                <p className="text-xs text-[#8F9CAE] mt-0.5">
+                <p className="text-[11px] text-[#8F9CAE] mt-0.5">
                   Your tokenized equity holdings are now active on Solana.
                 </p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 <Link
                   href="/portfolio"
                   onClick={onClose}
-                  className="btn-primary flex-1 flex items-center justify-center gap-2 text-center"
+                  className="btn-primary flex-1 flex items-center justify-center gap-1.5 text-center text-xs !py-2.5"
                 >
                   <span>Go to Portfolio</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
-                <button onClick={onClose} className="btn-secondary px-5">
+                <button onClick={onClose} className="btn-secondary px-4 text-xs !py-2.5">
                   Close
                 </button>
               </div>
@@ -512,6 +524,7 @@ export const ExecutionModal: React.FC<Props> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

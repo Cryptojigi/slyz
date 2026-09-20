@@ -52,7 +52,7 @@ export const Navbar = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-200 ${
+      className={`sticky top-0 z-40 transition-all duration-200 ${
         isScrolled
           ? "bg-[#0B0E14]/90 backdrop-blur-md border-b border-[#262D3D]"
           : "bg-transparent border-b border-transparent"
@@ -168,7 +168,7 @@ export const Navbar = () => {
                 <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl bg-[#161B26] border border-[#262D3D] text-xs">
                   <div
                     className="flex items-center gap-2 px-2.5 py-1 text-slate-300 font-mono text-[11px]"
-                    title={`Gas Reserve: ${solBalance.toFixed(4)} SOL | Investable Capital: $${usdcBalance.toFixed(2)} USDC`}
+                    title={`SOL: ${solBalance.toFixed(4)} SOL | USDC: $${usdcBalance.toFixed(2)} USDC`}
                   >
                     <div className="flex items-center gap-1.5">
                       <Image
@@ -194,12 +194,12 @@ export const Navbar = () => {
                       <span className="font-bold text-white">{usdcBalance.toFixed(2)}</span>
                     </div>
 
-                    {/* Gas Health Indicator */}
+                    {/* SOL Status Indicator */}
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
                         hasSufficientGas ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-amber-400 animate-ping"
                       }`}
-                      title={hasSufficientGas ? "Gas healthy (> 0.015 SOL)" : "Low SOL gas warning (< 0.015 SOL)"}
+                      title={hasSufficientGas ? "SOL healthy (> 0.015 SOL)" : "Low SOL balance (< 0.015 SOL)"}
                     />
                   </div>
 
@@ -305,13 +305,13 @@ export const Navbar = () => {
                           hasSufficientGas ? "bg-emerald-400" : "bg-amber-400 animate-ping"
                         }`}
                       />
-                      <span>{hasSufficientGas ? "Gas Reserve OK" : "Low SOL Gas"}</span>
+                      <span>{hasSufficientGas ? "SOL Healthy" : "Low SOL Balance"}</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-center font-mono">
                     <div className="p-2 rounded-lg bg-[#0B0E14] border border-[#262D3D]">
-                      <span className="text-[10px] text-[#8F9CAE] block mb-1">Gas (SOL)</span>
+                      <span className="text-[10px] text-[#8F9CAE] block mb-1">SOL</span>
                       <span className="text-xs font-bold text-white flex items-center justify-center gap-1.5">
                         <Image
                           src="/sol-logo.svg"
@@ -325,7 +325,7 @@ export const Navbar = () => {
                     </div>
 
                     <div className="p-2 rounded-lg bg-[#0B0E14] border border-[#262D3D]">
-                      <span className="text-[10px] text-[#8F9CAE] block mb-1">Capital (USDC)</span>
+                      <span className="text-[10px] text-[#8F9CAE] block mb-1">USDC</span>
                       <span className="text-xs font-bold text-white flex items-center justify-center gap-1.5">
                         <Image
                           src="/usdc-logo.svg"

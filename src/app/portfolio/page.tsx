@@ -377,9 +377,9 @@ export default function PortfolioPage() {
                     className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
                   />
                   <span>
-                    Gas: {balances.solBalance.toFixed(3)} SOL{" "}
+                    SOL: {balances.solBalance.toFixed(3)} SOL{" "}
                     <span className={balances.hasSufficientGas ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
-                      {balances.hasSufficientGas ? "✓" : "(Low Gas)"}
+                      {balances.hasSufficientGas ? "✓" : "(Low SOL)"}
                     </span>
                   </span>
                 </div>
