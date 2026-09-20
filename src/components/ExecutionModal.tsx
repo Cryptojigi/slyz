@@ -25,6 +25,10 @@ import {
 } from "@/lib/jupiter";
 import { VERIFIED_STOCKS, BasketComponent, MIN_SOL_BALANCE } from "@/lib/constants";
 import { saveBasketInvestment } from "@/lib/portfolio";
+import {
+  waitForTransactionConfirmation,
+  isSignatureConfirmedOnChain,
+} from "@/lib/confirmTransaction";
 
 export type StepStatus =
   | "pending"
@@ -151,15 +155,39 @@ export const ExecutionModal: React.FC<Props> = ({
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
 
-      // Skip already completed steps if retrying
+      // 1. Skip already completed steps if retrying
       if (step.status === "success" && step.txSignature) {
-        executedSignatures.push(step.txSignature);
+        if (!executedSignatures.includes(step.txSignature)) {
+          executedSignatures.push(step.txSignature);
+        }
         continue;
+      }
+
+      // 2. Skip steps that already have a landed signature on-chain (prevents double-buys on retry)
+      const candidateSig =
+        step.txSignature ||
+        step.errorMessage?.match(/Signature\s+([1-9A-HJ-NP-Za-km-z]{64,88})/)?.[1] ||
+        step.errorMessage?.match(/([1-9A-HJ-NP-Za-km-z]{80,88})/)?.[1];
+
+      if (candidateSig) {
+        updateStep(i, { status: "confirming", txSignature: candidateSig, errorMessage: undefined });
+        const alreadyConfirmed = await isSignatureConfirmedOnChain(connection, candidateSig);
+        if (alreadyConfirmed) {
+          updateStep(i, {
+            status: "success",
+            txSignature: candidateSig,
+            errorMessage: undefined,
+          });
+          if (!executedSignatures.includes(candidateSig)) {
+            executedSignatures.push(candidateSig);
+          }
+          continue;
+        }
       }
 
       setActiveStepIndex(i);
 
-      // 1. Quoting
+      // 3. Quoting
       updateStep(i, { status: "quoting", errorMessage: undefined });
       const asset = VERIFIED_STOCKS[step.symbol];
       if (!asset) {
@@ -167,6 +195,8 @@ export const ExecutionModal: React.FC<Props> = ({
         setIsRunning(false);
         return;
       }
+
+      let currentSignature: string | null = null;
 
       try {
         const baseUnits = toUsdcBaseUnits(step.dollarAmount);
@@ -195,7 +225,7 @@ export const ExecutionModal: React.FC<Props> = ({
           });
         }
 
-        // 2. Build Swap Transaction
+        // 4. Build Swap Transaction immediately before signing to guarantee fresh blockhash
         updateStep(i, { status: "signing" });
         const swapRes = await buildSwapTransaction({
           quoteResponse: quote,
@@ -217,34 +247,65 @@ export const ExecutionModal: React.FC<Props> = ({
           skipPreflight: false,
           maxRetries: 3,
         });
+        currentSignature = signature;
 
-        // Await confirmation using transaction's recentBlockhash and swapRes.lastValidBlockHeight
-        const blockhash = transaction.message.recentBlockhash;
-        const lastValidBlockHeight =
-          swapRes.lastValidBlockHeight ??
-          (await connection.getLatestBlockhash("confirmed")).lastValidBlockHeight;
+        // Immediately persist signature on step so we never lose it
+        updateStep(i, { txSignature: signature, status: "confirming" });
 
-        await connection.confirmTransaction(
-          {
-            signature,
-            blockhash,
-            lastValidBlockHeight,
-          },
-          "confirmed"
-        );
+        // 5. Robust on-chain confirmation (verifies getSignatureStatus; ignores false-negative block height timeouts)
+        const confirmResult = await waitForTransactionConfirmation({
+          connection,
+          signature,
+          blockhash: transaction.message.recentBlockhash,
+          lastValidBlockHeight: swapRes.lastValidBlockHeight,
+        });
+
+        if (!confirmResult.confirmed) {
+          throw confirmResult.err || new Error(confirmResult.errorReason || "Confirmation failed");
+        }
 
         executedSignatures.push(signature);
         updateStep(i, {
           status: "success",
           txSignature: signature,
           outAmount: quote.outAmount,
+          errorMessage: undefined,
         });
       } catch (err: any) {
         console.error(`Error swapping for ${step.symbol}:`, err);
-        const msg = err?.message?.includes("User rejected")
-          ? "Transaction rejected in wallet."
-          : err?.message || "Swap execution failed.";
-        updateStep(i, { status: "failed", errorMessage: msg });
+        const sigToCheck = currentSignature || step.txSignature;
+
+        // Final safety net: check if transaction actually landed on-chain before declaring failure
+        if (sigToCheck) {
+          const landed = await isSignatureConfirmedOnChain(connection, sigToCheck);
+          if (landed) {
+            if (!executedSignatures.includes(sigToCheck)) {
+              executedSignatures.push(sigToCheck);
+            }
+            updateStep(i, {
+              status: "success",
+              txSignature: sigToCheck,
+              errorMessage: undefined,
+            });
+            continue;
+          }
+        }
+
+        const rawMsg = err?.message || "";
+        let cleanMsg = "Swap execution failed.";
+        if (rawMsg.includes("User rejected")) {
+          cleanMsg = "Transaction rejected in wallet.";
+        } else if (rawMsg.includes("block height exceeded") || rawMsg.includes("has expired")) {
+          cleanMsg = "Transaction confirmation timed out. Check Solscan before retrying.";
+        } else if (rawMsg.length > 0) {
+          cleanMsg = rawMsg;
+        }
+
+        updateStep(i, {
+          status: "failed",
+          txSignature: sigToCheck,
+          errorMessage: cleanMsg,
+        });
         setIsRunning(false);
         return;
       }
@@ -430,25 +491,61 @@ export const ExecutionModal: React.FC<Props> = ({
                   </div>
 
                   {/* Transaction Link if successful */}
-                  {step.txSignature && (
-                    <div className="mt-1.5 pl-7.5">
+                  {step.status === "success" && step.txSignature && (
+                    <div className="mt-2 ml-7 flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-[#8F9CAE]">Transaction:</span>
                       <a
                         href={`https://solscan.io/tx/${step.txSignature}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] text-[#8F9CAE] hover:text-[#CDE06A] transition-colors"
+                        className="inline-flex items-center gap-1 text-[#CDE06A] hover:underline"
                       >
-                        <span>Sig: {step.txSignature.slice(0, 6)}...{step.txSignature.slice(-4)}</span>
+                        <span>{step.txSignature.slice(0, 6)}...{step.txSignature.slice(-4)}</span>
                         <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     </div>
                   )}
 
-                  {/* Error Message if failed */}
+                  {/* Transaction Link if actively confirming */}
+                  {step.status === "confirming" && step.txSignature && (
+                    <div className="mt-1.5 ml-7 flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-[#8F9CAE]">Broadcasted:</span>
+                      <a
+                        href={`https://solscan.io/tx/${step.txSignature}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[#8D8AFF] hover:underline"
+                      >
+                        <span>{step.txSignature.slice(0, 6)}...{step.txSignature.slice(-4)}</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Error Message if failed — bounded, formatted, with clean Solscan fallback */}
                   {step.errorMessage && (
-                    <p className="mt-1.5 pl-7.5 text-[10px] text-rose-400">
-                      {step.errorMessage}
-                    </p>
+                    <div className="mt-2 ml-7 p-2.5 rounded-xl bg-rose-950/40 border border-rose-900/50 text-[11px] text-rose-300 space-y-1.5 overflow-hidden">
+                      <div className="flex items-start gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                        <span className="break-words break-all leading-tight font-medium">
+                          {step.errorMessage}
+                        </span>
+                      </div>
+                      {step.txSignature && (
+                        <div className="pt-1.5 border-t border-rose-900/40 flex items-center justify-between text-[10px] font-mono">
+                          <span className="text-[#8F9CAE]">Broadcasted Sig:</span>
+                          <a
+                            href={`https://solscan.io/tx/${step.txSignature}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[#CDE06A] hover:underline"
+                          >
+                            <span>{step.txSignature.slice(0, 6)}...{step.txSignature.slice(-6)}</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               );

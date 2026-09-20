@@ -97,6 +97,16 @@ graph TD
 | **Big Commerce** | Public (xStocks) | AMZN (40%), META (30%), GOOGL (30%) | Dominant digital ad monopolies and global logistics platforms. |
 | **Frontier** | Private (PreStocks) | OpenAI (40%), Anthropic (35%), SpaceX (25%) | Direct economic exposure to the world's most valuable private technology companies. |
 
+### 🔗 Verified Mainnet Execution Proof (The Mag 3 Live Basket)
+
+Live on-chain settlement proof for sequential thematic basket acquisition on Solana Mainnet:
+
+| Leg | Asset | Allocation | Status | Solscan Mainnet Transaction |
+|---|---|---|---|---|
+| **Leg 1** | `NVDAx` | $2.60 (40%) | ✅ Finalized | [`2QuNtCUm...txnkKbX`](https://solscan.io/tx/2QuNtCUm5mV1WiUnhBfpJwt2kkkB4Xnz3Z325pjNCyrxtXTnADWfabK6keuRCe7fY3BJov29a8XJwXzeMtxnkKbX) |
+| **Leg 2** | `AAPLx` | $1.95 (30%) | ⏳ In Progress | *Pending execution* |
+| **Leg 3** | `MSFTx` | $1.95 (30%) | ⏳ In Progress | *Pending execution* |
+
 ---
 
 ## 🛠️ Technology Stack
