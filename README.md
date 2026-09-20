@@ -103,9 +103,9 @@ Live on-chain settlement proof for sequential thematic basket acquisition on Sol
 
 | Leg | Asset | Allocation | Status | Solscan Mainnet Transaction |
 |---|---|---|---|---|
-| **Leg 1** | `NVDAx` | $2.60 (40%) | ✅ Finalized | [`2QuNtCUm...txnkKbX`](https://solscan.io/tx/2QuNtCUm5mV1WiUnhBfpJwt2kkkB4Xnz3Z325pjNCyrxtXTnADWfabK6keuRCe7fY3BJov29a8XJwXzeMtxnkKbX) |
-| **Leg 2** | `AAPLx` | $1.95 (30%) | ⏳ In Progress | *Pending execution* |
-| **Leg 3** | `MSFTx` | $1.95 (30%) | ⏳ In Progress | *Pending execution* |
+| **Leg 1** | `NVDAx` | $2.60 (40%) | ✅ Finalized | [`38mKMuae...4fJXX6d1`](https://solscan.io/tx/38mKMuaeCuPEhfx7ykvd9r33wET5pkd76XNxBCUzCsg7Fn2fcBjeDEbA4QCuY5dZwkFsXWEPTELRQXf44fJXX6d1) |
+| **Leg 2** | `AAPLx` | $1.95 (30%) | ✅ Finalized | [`2sQuCfa8...2Hn31qbrft`](https://solscan.io/tx/2sQuCfa8MnrwpdC8NnRbkDFz1kqbqnigVVKy6m9WcdzGeh1mf2pVaH87gxPzB4RNyPCosoPc4hxZQz2Hn31qbrft) |
+| **Leg 3** | `MSFTx` | $1.95 (30%) | ✅ Finalized | [`4uwcwtC7...USdh1K8n`](https://solscan.io/tx/4uwcwtC7asRqGw8CGMR9vptnHDHXge6n6Zy7sUioLxRqpXpVRnyna4Tv6vEW8eRbZzqkiJaHEXJF5VCPUSdh1K8n) |
 
 ---
 
