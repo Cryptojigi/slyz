@@ -107,6 +107,13 @@ Live on-chain settlement proof for sequential thematic basket acquisition on Sol
 | **Leg 2** | `AAPLx` | $1.95 (30%) | ✅ Finalized | [`2sQuCfa8...2Hn31qbrft`](https://solscan.io/tx/2sQuCfa8MnrwpdC8NnRbkDFz1kqbqnigVVKy6m9WcdzGeh1mf2pVaH87gxPzB4RNyPCosoPc4hxZQz2Hn31qbrft) |
 | **Leg 3** | `MSFTx` | $1.95 (30%) | ✅ Finalized | [`4uwcwtC7...USdh1K8n`](https://solscan.io/tx/4uwcwtC7asRqGw8CGMR9vptnHDHXge6n6Zy7sUioLxRqpXpVRnyna4Tv6vEW8eRbZzqkiJaHEXJF5VCPUSdh1K8n) |
 
+<br/>
+
+<div align="center">
+  <img src="./public/portfolio-preview.png" alt="Slyz Non-Custodial Portfolio & Drift Tracker on Solana Mainnet" width="100%" style="border-radius: 16px; border: 1px solid #262D3D; box-shadow: 0 20px 50px rgba(0,0,0,0.6);" />
+  <p><em>Real-Time Portfolio & Drift Tracker on Solana Mainnet: Showing active Token-2022 holdings, 0.2% drift precision, and live Jupiter oracle valuations following The Mag 3 acquisition.</em></p>
+</div>
+
 ---
 
 ## 🛠️ Technology Stack
