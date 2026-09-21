@@ -360,7 +360,7 @@ export const ExecutionModal: React.FC<Props> = ({
         <div className="p-4 sm:p-5 border-b border-[#262D3D] flex items-center justify-between shrink-0">
           <div>
             <span className="pill-badge pill-badge-lime mb-1 text-[10px]">Sequential Execution</span>
-            <h3 className="text-base sm:text-lg font-extrabold text-white">
+            <h3 className="text-base sm:text-lg font-bold text-white">
               Investing in {basketName}
             </h3>
             <div className="flex items-center gap-1.5 text-[11px] text-[#8F9CAE]">

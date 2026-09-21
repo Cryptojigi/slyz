@@ -88,6 +88,33 @@ export async function buildSwapTransaction(params: {
   return await res.json();
 }
 
+const JUPITER_PRICES_STORAGE_KEY = "slyz_jupiter_prices_cache";
+
+/**
+ * SSR-safe helper to synchronously retrieve the last known Jupiter price snapshot from localStorage.
+ */
+export function getCachedJupiterPrices(): Record<string, TokenPriceInfo> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(JUPITER_PRICES_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+/**
+ * Persist the latest price snapshot to localStorage.
+ */
+export function saveCachedJupiterPrices(prices: Record<string, TokenPriceInfo>): void {
+  if (typeof window === "undefined" || !prices || Object.keys(prices).length === 0) return;
+  try {
+    localStorage.setItem(JUPITER_PRICES_STORAGE_KEY, JSON.stringify(prices));
+  } catch (_) {}
+}
+
 /**
  * Fetch live USD prices, 24h changes, and Token-2022 scaled-ui-amount multipliers in a single roundtrip.
  */
@@ -107,32 +134,41 @@ export async function getJupiterPrices(mintAddresses?: string[]): Promise<Record
           .map((s) => s.mint);
 
   const mints = candidateMints.filter((m) => !prestocksMints.has(m));
-  if (!mints.length) return {};
+  if (!mints.length) return getCachedJupiterPrices();
   const ids = mints.join(",");
   const url = `${JUPITER_API_URL}/price/v3?ids=${ids}`;
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.warn(`Price fetch failed with status: ${res.status}`);
-    return {};
-  }
-
-  const data = await res.json();
-  const prices: Record<string, TokenPriceInfo> = {};
-
-  for (const [mint, info] of Object.entries<any>(data)) {
-    if (info && typeof info.usdPrice === "number") {
-      prices[mint] = {
-        usdPrice: info.usdPrice,
-        priceChange24h: info.priceChange24h || 0,
-        decimals: info.decimals || 8,
-        liquidity: info.liquidity || 0,
-        scaledUiConfig: info.scaledUiConfig,
-      };
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`Price fetch failed with status: ${res.status}`);
+      return getCachedJupiterPrices();
     }
+
+    const data = await res.json();
+    const prices: Record<string, TokenPriceInfo> = {};
+
+    for (const [mint, info] of Object.entries<any>(data)) {
+      if (info && typeof info.usdPrice === "number") {
+        prices[mint] = {
+          usdPrice: info.usdPrice,
+          priceChange24h: info.priceChange24h || 0,
+          decimals: info.decimals || 8,
+          liquidity: info.liquidity || 0,
+          scaledUiConfig: info.scaledUiConfig,
+        };
+      }
+    }
+
+    if (Object.keys(prices).length > 0) {
+      saveCachedJupiterPrices(prices);
+      return prices;
+    }
+  } catch (err) {
+    console.warn("Error fetching Jupiter prices, using cached fallback:", err);
   }
 
-  return prices;
+  return getCachedJupiterPrices();
 }
 
 /**

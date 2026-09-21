@@ -233,7 +233,7 @@ function InvestPageContent() {
                 {components.length} Asset Pie
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-1">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mt-1">
               {basket.name}
             </h1>
             <p className="text-xs text-[#8F9CAE] mt-0.5">{basket.description}</p>
@@ -252,7 +252,7 @@ function InvestPageContent() {
                 />
                 <div>
                   <span className="text-[10px] text-[#8F9CAE] uppercase block">USDC Available</span>
-                  <span className="font-extrabold text-white">
+                  <span className="font-bold text-white">
                     ${balances.usdcBalance.toFixed(2)}
                   </span>
                 </div>
@@ -386,7 +386,7 @@ function InvestPageContent() {
           {/* Amount Input Box */}
           <div className="bento-card space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-extrabold uppercase text-[#8F9CAE] tracking-wider">
+              <label className="text-xs font-semibold uppercase text-[#8F9CAE] tracking-wider">
                 Investment Amount (USDC)
               </label>
               <span className="text-xs text-[#8F9CAE]">
@@ -404,7 +404,7 @@ function InvestPageContent() {
                 step="any"
                 value={amountUsd}
                 onChange={(e) => setAmountUsd(e.target.value)}
-                className="w-full pl-11 pr-4 py-4 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-2xl font-extrabold font-mono text-white focus:outline-none focus:border-[#CDE06A] transition-colors"
+                className="w-full pl-11 pr-4 py-4 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-2xl font-bold font-mono text-white focus:outline-none focus:border-[#CDE06A] transition-colors"
                 placeholder="0.00"
               />
             </div>
@@ -459,7 +459,7 @@ function InvestPageContent() {
           <div className="bento-card space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-extrabold uppercase text-[#8F9CAE] tracking-wider">
+                <span className="text-xs font-semibold uppercase text-[#8F9CAE] tracking-wider">
                   Fine-Tune Weights
                 </span>
                 <button

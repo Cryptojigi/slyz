@@ -72,7 +72,7 @@ export const Navbar = () => {
                 priority
               />
             </div>
-            <span className="text-xl font-extrabold tracking-tight text-white">
+            <span className="text-xl font-bold tracking-tight text-white">
               Slyz
             </span>
           </Link>
@@ -156,7 +156,7 @@ export const Navbar = () => {
           {isLandingPage ? (
             <Link
               href="/dashboard"
-              className="btn-primary !py-2.5 !px-5 text-xs flex items-center gap-1.5 font-extrabold shadow-md"
+              className="btn-primary !py-2.5 !px-5 text-xs flex items-center gap-1.5 font-semibold shadow-md"
             >
               <span>Launch App</span>
               <ArrowRight className="w-3.5 h-3.5" />

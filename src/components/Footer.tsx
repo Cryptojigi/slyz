@@ -19,7 +19,7 @@ export const Footer = () => {
                 className="object-contain"
               />
             </div>
-            <span className="font-extrabold text-base text-white tracking-wider">SLYZ</span>
+            <span className="font-bold text-base text-white tracking-wider">SLYZ</span>
           </div>
           <p className="text-xs leading-relaxed max-w-sm text-[#8F9CAE]">
             Non-custodial, fractional thematic stock basket investing on Solana.

@@ -42,7 +42,7 @@ import {
   isPreStock,
   EXECUTABLE_PRIVATE_SYMBOLS,
 } from "@/lib/constants";
-import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
+import { getJupiterPrices, TokenPriceInfo, getCachedJupiterPrices } from "@/lib/jupiter";
 import { fetchUserBalances, UserBalances } from "@/lib/solana";
 import {
   fetchPreStocksLive,
@@ -76,9 +76,9 @@ export default function DashboardPage() {
   const [cardAmounts, setCardAmounts] = useState<Record<string, number | string>>({});
   const [cardErrors, setCardErrors] = useState<Record<string, string | null>>({});
 
-  // Prices & Balances
-  const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
-  const [loadingPrices, setLoadingPrices] = useState(true);
+  // Prices & Balances: Initialize with synchronous cached snapshot to eliminate cold-start empty state
+  const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>(() => getCachedJupiterPrices());
+  const [loadingPrices, setLoadingPrices] = useState(() => Object.keys(getCachedJupiterPrices()).length === 0);
   const [balances, setBalances] = useState<UserBalances>({
     solBalance: 0,
     usdcBalance: 0,
@@ -86,6 +86,27 @@ export default function DashboardPage() {
     token2022RawAmounts: {},
     hasSufficientGas: false,
   });
+
+  // Track whether wallet adapter is actively re-establishing a saved connection from localStorage
+  const [isReconnecting, setIsReconnecting] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("slyz_last_connected_wallet");
+  });
+
+  useEffect(() => {
+    if (wallet.connected) {
+      setIsReconnecting(false);
+    } else {
+      const saved = typeof window !== "undefined" ? localStorage.getItem("slyz_last_connected_wallet") : null;
+      if (saved) {
+        setIsReconnecting(true);
+        const timer = setTimeout(() => setIsReconnecting(false), 1200);
+        return () => clearTimeout(timer);
+      } else {
+        setIsReconnecting(false);
+      }
+    }
+  }, [wallet.connected]);
 
   // Search filter for stocks & themes
   const [searchQuery, setSearchQuery] = useState("");
@@ -419,15 +440,19 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
       {/* 1. Terminal Investor Header */}
-      <div className="pb-6 border-b border-[#262D3D]">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight break-words">
-          {wallet.connected && wallet.publicKey
-            ? `Welcome back, ${wallet.publicKey.toBase58().slice(0, 4)}..${wallet.publicKey.toBase58().slice(-4)}`
-            : "Welcome to Slyz Terminal"}
+      <div className="pb-4 sm:pb-6 border-b border-[#262D3D]">
+        <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-tight break-words">
+          {wallet.connected && wallet.publicKey ? (
+            `Welcome back, ${wallet.publicKey.toBase58().slice(0, 4)}..${wallet.publicKey.toBase58().slice(-4)}`
+          ) : isReconnecting ? (
+            <span className="inline-block h-7 sm:h-9 w-60 bg-[#161B26] border border-[#262D3D] rounded-xl animate-pulse align-middle" />
+          ) : (
+            "Welcome to Slyz Terminal"
+          )}
         </h1>
-        <p className="text-xs text-[#8F9CAE] mt-2">
+        <p className="text-sm sm:text-xs text-[#8F9CAE] mt-2">
           <span className="hidden sm:inline">Curated equity baskets, on-chain fractional shares, and dynamic weight customization.</span>
           <span className="sm:hidden">Invest in curated stock pies with fractional shares on Solana.</span>
         </p>
@@ -438,7 +463,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => handleSwitchMarket("public")}
-            className={`flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-extrabold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-semibold transition-all text-center ${
               marketFilter === "public"
                 ? "bg-[#CDE06A] text-[#0B0E14] shadow-md shadow-[#CDE06A]/20"
                 : "text-[#8F9CAE] hover:text-white hover:bg-[#1D2332]"
@@ -453,7 +478,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => handleSwitchMarket("private")}
-            className={`flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-extrabold transition-all text-center ${
+            className={`flex items-center justify-center gap-1.5 sm:gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-semibold transition-all text-center ${
               marketFilter === "private"
                 ? "bg-gradient-to-r from-[#8D8AFF] to-[#B48AFF] text-white shadow-md shadow-[#8D8AFF]/20"
                 : "text-[#8F9CAE] hover:text-white hover:bg-[#1D2332]"
@@ -489,6 +514,7 @@ export default function DashboardPage() {
               prices={prices}
               timeframe={chartTimeframe}
               onTimeframeChange={setChartTimeframe}
+              loading={loadingPrices}
             />
           </div>
         ) : (
@@ -499,7 +525,7 @@ export default function DashboardPage() {
             <div className="space-y-4 relative z-10">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#262D3D]">
                 <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-1 rounded-lg bg-[#8D8AFF]/15 border border-[#8D8AFF]/30 text-[#8D8AFF] text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#8D8AFF]/15 border border-[#8D8AFF]/30 text-[#8D8AFF] text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" />
                     PreStocks™ Verified Pipeline
                   </span>
@@ -513,7 +539,7 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl font-bold text-white tracking-tight">
                   Private Venture Pre-IPO Valuation Radar
                 </h2>
                 <p className="text-xs text-[#8F9CAE] mt-1 leading-relaxed">
@@ -546,7 +572,7 @@ export default function DashboardPage() {
                             />
                           )}
                           <div>
-                            <span className="font-extrabold text-white text-sm block">{sym}</span>
+                            <span className="font-semibold text-white text-sm block">{sym}</span>
                             <span className="text-[10px] text-[#8F9CAE] block">
                               {stock?.underlying || sym}
                             </span>
@@ -567,7 +593,7 @@ export default function DashboardPage() {
                       <div className="space-y-1 pt-1 border-t border-[#262D3D]/60 text-xs">
                         <div className="flex items-center justify-between">
                           <span className="text-[#8F9CAE] text-[11px]">Live Token Price:</span>
-                          <span className="font-mono font-extrabold text-white text-sm">
+                          <span className="font-mono font-semibold text-white text-sm">
                             ${live?.tokenPrice.toFixed(2) || "---"}
                           </span>
                         </div>
@@ -637,7 +663,7 @@ export default function DashboardPage() {
           <div className="space-y-3 relative z-10">
             <div className="flex items-center justify-between">
               <span
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                   marketFilter === "private"
                     ? "bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30"
                     : "bg-[#CDE06A]/15 text-[#CDE06A]"
@@ -651,7 +677,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <h3 className="text-xl font-extrabold text-white">{selectedTheme.name}</h3>
+            <h3 className="text-xl font-bold text-white">{selectedTheme.name}</h3>
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               {selectedTheme.description}
             </p>
@@ -673,9 +699,9 @@ export default function DashboardPage() {
                     <span className="text-[10px] text-[#8F9CAE] block font-bold">
                       {asset?.underlying || c.symbol}
                     </span>
-                    <span className="text-xs font-black text-white block">{c.targetWeight}%</span>
-                    <span className="text-[10px] font-mono text-[#CDE06A] block mt-0.5">
-                      {livePrice ? `$${livePrice.toFixed(2)}` : "..."}
+                    <span className="text-xs font-semibold text-white block">{c.targetWeight}%</span>
+                    <span className="text-[10px] font-mono text-[#CDE06A] block mt-0.5 min-h-[14px]">
+                      {livePrice ? `$${livePrice.toFixed(2)}` : <span className="h-2.5 w-8 bg-[#262D3D] rounded animate-pulse inline-block" />}
                     </span>
                     {isPrivate && preData && (
                       <span className="text-[9px] font-mono text-[#8D8AFF] block">
@@ -701,7 +727,13 @@ export default function DashboardPage() {
                     height={13}
                     className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
                   />
-                  <span>Wallet: ${balances.usdcBalance.toFixed(2)} USDC</span>
+                  {wallet.connected ? (
+                    <span>Wallet: ${balances.usdcBalance.toFixed(2)} USDC</span>
+                  ) : isReconnecting ? (
+                    <span className="h-3 w-16 bg-[#262D3D] rounded animate-pulse inline-block" />
+                  ) : (
+                    <span>Wallet: $0.00 USDC</span>
+                  )}
                 </span>
               </div>
               <div className="relative">
@@ -907,7 +939,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-xl font-black text-white">{basket.name}</h3>
+                      <h3 className="text-xl font-bold text-white">{basket.name}</h3>
                       <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">
                         {basket.description}
                       </p>
@@ -1136,7 +1168,7 @@ export default function DashboardPage() {
                           <div className="w-7 h-7 rounded-full bg-white/10" />
                         )}
                         <div>
-                          <span className="font-extrabold text-sm block">{stock.symbol}</span>
+                          <span className="font-semibold text-sm block">{stock.symbol}</span>
                           <span className="text-[10px] text-[#8F9CAE] block">
                             {isPrivate ? "PreStocks Token-2022" : "xStock Token-2022"}
                           </span>
@@ -1476,7 +1508,7 @@ export default function DashboardPage() {
       <div className="rounded-xl bg-[#161B26] border border-[#262D3D] p-6 lg:p-8 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#262D3D] pb-4">
           <div>
-            <h3 className="text-lg font-black text-white flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <span>Slyz Quick Actions & Assistant</span>
               <span className="w-2 h-2 rounded-full bg-[#CDE06A]" />
             </h3>

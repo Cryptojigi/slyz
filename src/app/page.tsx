@@ -39,7 +39,7 @@ export default function LandingPage() {
               Non-Custodial Thematic Stock Baskets on Solana
             </p>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.12]">
               Slice the Market.
               <br />
               <span className="text-[#CDE06A]">Own the Theme.</span>
@@ -53,7 +53,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-4 pt-2">
               <Link
                 href="/dashboard"
-                className="btn-primary flex items-center justify-center gap-1.5 !px-3 sm:!px-6 !py-2.5 sm:!py-3 text-xs sm:text-sm font-extrabold shadow-lg hover:shadow-xl transition-all"
+                className="btn-primary flex items-center justify-center gap-1.5 !px-3 sm:!px-6 !py-2.5 sm:!py-3 text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
               >
                 <span className="sm:hidden">Explore Pies</span>
                 <span className="hidden sm:inline">Explore Thematic Pies</span>
@@ -86,10 +86,10 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
         <div className="text-center max-w-2xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-black uppercase tracking-wider shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider shadow-sm">
             Streamlined Workflow
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0E14] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#0B0E14] tracking-tight">
             How Slyz Works
           </h2>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium">
@@ -101,7 +101,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
           {/* Step 1 - Dark Tile */}
           <div className="bento-card relative overflow-hidden group shadow-xl">
-            <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center font-black text-sm text-[#CDE06A] mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center font-semibold text-sm text-[#CDE06A] mb-4">
               01
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Pick or Build a Theme</h3>
@@ -116,7 +116,7 @@ export default function LandingPage() {
 
           {/* Step 2 - Dark Tile */}
           <div className="bento-card relative overflow-hidden group shadow-xl">
-            <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center font-black text-sm text-[#8D8AFF] mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center font-semibold text-sm text-[#8D8AFF] mb-4">
               02
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Customize Weights & Amount</h3>
@@ -131,7 +131,7 @@ export default function LandingPage() {
 
           {/* Step 3 - Dark Tile */}
           <div className="bento-card relative overflow-hidden group shadow-xl">
-            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-sm text-white mb-4">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-semibold text-sm text-white mb-4">
               03
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Three Signatures, One Theme</h3>
@@ -151,7 +151,7 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-2">
             <span className="pill-badge pill-badge-periwinkle">Thematic Strategies</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
               Flagship Curated Pies
             </h2>
             <p className="text-xs sm:text-sm text-[#8F9CAE] max-w-xl">
@@ -185,7 +185,7 @@ export default function LandingPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-black text-white">{basket.name}</h3>
+                  <h3 className="text-xl font-bold text-white">{basket.name}</h3>
                   <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">
                     {basket.description}
                   </p>
@@ -244,7 +244,7 @@ export default function LandingPage() {
       <section id="security" className="scroll-mt-24 space-y-10">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="pill-badge pill-badge-lime">Solana Native</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Built with Institutional Rigor
           </h2>
           <p className="text-sm sm:text-base text-[#8F9CAE]">
@@ -299,7 +299,7 @@ export default function LandingPage() {
       <section id="faq" className="scroll-mt-24 space-y-8 max-w-3xl mx-auto">
         <div className="text-center space-y-2">
           <span className="pill-badge pill-badge-periwinkle">Transparency</span>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl font-bold text-white tracking-tight">
             Frequently Asked Questions
           </h2>
         </div>
@@ -341,10 +341,10 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none -ml-16 -mb-16" />
 
         <div className="max-w-xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-black uppercase tracking-wider shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider shadow-sm">
             Launch Platform
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0E14] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#0B0E14] tracking-tight">
             Ready to Slice the Market?
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
@@ -355,7 +355,7 @@ export default function LandingPage() {
         <div className="flex justify-center pt-2 relative z-10">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm px-8 py-4 font-black rounded-xl bg-[#0B0E14] hover:bg-[#161B26] text-[#CDE06A] shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 text-sm px-8 py-4 font-semibold rounded-xl bg-[#0B0E14] hover:bg-[#161B26] text-[#CDE06A] shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
           >
             <span>Launch Dashboard Terminal</span>
             <ArrowRight className="w-4 h-4" />

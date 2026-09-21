@@ -57,7 +57,7 @@ export default function PrivacyPage() {
             <EyeOff className="w-3.5 h-3.5" />
             <span>Decentralized Privacy Standards</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
             Privacy Policy
           </h1>
           <p className="text-sm sm:text-base text-[#8F9CAE] leading-relaxed">

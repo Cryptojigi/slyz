@@ -48,7 +48,7 @@
 
 /* Tactile button classes */
 .btn-primary {
-  @apply inline-flex items-center justify-center font-bold px-6 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
+  @apply inline-flex items-center justify-center font-semibold px-6 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
   background-color: #CDE06A;
   color: #0B0E14;
 }
@@ -100,7 +100,7 @@
   border-radius: 12px !important;
   background-color: #CDE06A !important;
   color: #0B0E14 !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   height: 40px !important;
   line-height: 40px !important;
   padding: 0 18px !important;
@@ -143,7 +143,7 @@
 
 .wallet-adapter-modal-title {
   color: #FFFFFF !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   font-size: 17px !important;
   letter-spacing: -0.02em !important;
   line-height: 1.35 !important;
@@ -330,4 +330,51 @@
   }
 }
 
+/* ─── Mobile Text Readability Enhancements ─── */
+/* Bump tiny text sizes on small screens to prevent clutter and squinting */
+@media (max-width: 639px) {
+  /* Bento cards: give more breathing room on mobile */
+  .bento-card {
+    padding: 1rem;
+  }
 
+  /* Labels and auxiliary text that use arbitrary 10–11px sizes: bump to 12px minimum */
+  .text-\[10px\],
+  .text-\[11px\] {
+    font-size: 0.75rem !important; /* 12px */
+    line-height: 1.125rem !important;
+  }
+
+  /* text-xs (12px) → 13px on mobile for better legibility */
+  .text-xs {
+    font-size: 0.8125rem !important; /* 13px */
+    line-height: 1.25rem !important;
+  }
+
+  /* Ensure body-level small text gets a comfortable baseline */
+  .text-sm {
+    font-size: 0.875rem !important; /* 14px */
+    line-height: 1.375rem !important;
+  }
+
+  /* Slightly increase spacing between vertically stacked items */
+  .space-y-1 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: 0.375rem;
+  }
+
+  /* Make button tap targets more comfortable on mobile */
+  .btn-primary,
+  .btn-secondary {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Ensure mono font-size in inputs/labels is readable */
+  input.font-mono,
+  span.font-mono,
+  div.font-mono {
+    font-size: 0.8125rem !important;
+  }
+}

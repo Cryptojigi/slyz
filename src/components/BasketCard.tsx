@@ -55,7 +55,7 @@ export const BasketCard: React.FC<Props> = ({ basket, prices }) => {
         </div>
 
         {/* Basket Title & Tagline */}
-        <h3 className="text-xl font-extrabold text-white tracking-tight group-hover:text-[#CDE06A] transition-colors">
+        <h3 className="text-xl font-bold text-white tracking-tight group-hover:text-[#CDE06A] transition-colors">
           {basket.name}
         </h3>
         <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">

@@ -18,6 +18,7 @@ interface Props {
   prices: Record<string, TokenPriceInfo>;
   timeframe: "24H" | "7D" | "30D" | "1Y";
   onTimeframeChange: (tf: "24H" | "7D" | "30D" | "1Y") => void;
+  loading?: boolean;
 }
 
 export const STOCK_LINE_COLORS = [
@@ -31,13 +32,15 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
   prices,
   timeframe,
   onTimeframeChange,
+  loading = false,
 }) => {
-  // Extract the 3 stocks in this theme
+  // Extract the stocks in this theme
   const stocks = useMemo(() => {
     return basket.components.map((c, idx) => {
       const asset = VERIFIED_STOCKS[c.symbol];
       const priceInfo = asset ? prices[asset.mint] : undefined;
-      const currentPrice = priceInfo?.usdPrice || 150;
+      const hasPrice = !!priceInfo && typeof priceInfo.usdPrice === "number" && priceInfo.usdPrice > 0;
+      const currentPrice = hasPrice ? priceInfo.usdPrice : 0;
       // Jupiter API priceChange24h is already expressed as percentage (e.g. 1.42 for 1.42%)
       const change24hPct = priceInfo ? (priceInfo.priceChange24h || 0) : 0;
       const color = STOCK_LINE_COLORS[idx % STOCK_LINE_COLORS.length];
@@ -48,12 +51,15 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
         name: asset?.name || c.symbol,
         weight: c.targetWeight,
         currentPrice,
+        hasPrice,
         change24hPct,
         color,
         mint: asset?.mint,
       };
     });
   }, [basket, prices]);
+
+  const hasAnyPrices = useMemo(() => stocks.some((s) => s.hasPrice && s.currentPrice > 0), [stocks]);
 
   // Generate synchronized price series for all 3 stocks across the selected timeframe
   const chartData = useMemo(() => {
@@ -99,12 +105,12 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[#8F9CAE]">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8F9CAE]">
               Real-Time Theme Pricing
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#CDE06A] animate-pulse" />
           </div>
-          <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2 mt-0.5">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 mt-0.5">
             <span>{basket.name}</span>
             <span className="text-[11px] sm:text-xs px-2 py-0.5 rounded-lg bg-[#CDE06A]/15 text-[#CDE06A] font-bold">
               3-Stock Composite
@@ -143,24 +149,33 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
                   className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: stock.color }}
                 />
-                <span className="text-[11px] sm:text-xs font-black text-white truncate">{stock.underlying}</span>
+                <span className="text-[11px] sm:text-xs font-semibold text-white truncate">{stock.underlying}</span>
               </div>
               <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#8F9CAE] shrink-0">
                 {stock.weight}%
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-1 pt-1 border-t border-[#262D3D]/60 gap-0.5">
-              <span className="font-mono font-bold text-[11px] sm:text-xs text-white truncate">
-                ${stock.currentPrice.toFixed(2)}
-              </span>
-              <span
-                className={`text-[9px] sm:text-[10px] font-bold font-mono shrink-0 ${
-                  stock.change24hPct >= 0 ? "text-[#CDE06A]" : "text-rose-400"
-                }`}
-              >
-                {stock.change24hPct >= 0 ? "+" : ""}
-                {stock.change24hPct.toFixed(2)}%
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-1 pt-1 border-t border-[#262D3D]/60 gap-0.5 min-h-[22px]">
+              {stock.hasPrice && stock.currentPrice > 0 ? (
+                <>
+                  <span className="font-mono font-bold text-[11px] sm:text-xs text-white truncate">
+                    ${stock.currentPrice.toFixed(2)}
+                  </span>
+                  <span
+                    className={`text-[9px] sm:text-[10px] font-bold font-mono shrink-0 ${
+                      stock.change24hPct >= 0 ? "text-[#CDE06A]" : "text-rose-400"
+                    }`}
+                  >
+                    {stock.change24hPct >= 0 ? "+" : ""}
+                    {stock.change24hPct.toFixed(2)}%
+                  </span>
+                </>
+              ) : (
+                <div className="flex items-center justify-between w-full">
+                  <span className="h-3.5 w-12 bg-[#262D3D] rounded animate-pulse inline-block" />
+                  <span className="h-3.5 w-8 bg-[#262D3D] rounded animate-pulse inline-block" />
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -168,6 +183,14 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
 
       {/* Responsive Recharts Multi-Stock Chart Area */}
       <div className="w-full h-52 sm:h-60 bg-[#0B0E14]/80 rounded-2xl border border-[#262D3D] p-3 sm:p-4 overflow-hidden relative">
+        {(!hasAnyPrices || loading) && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0B0E14]/80 backdrop-blur-[2px]">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#8F9CAE] animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-[#CDE06A]" />
+              <span>Fetching live Jupiter oracle prices...</span>
+            </div>
+          </div>
+        )}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid stroke="#262D3D" strokeDasharray="3 3" opacity={0.4} />

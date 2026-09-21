@@ -71,7 +71,7 @@ export default function DocsPage() {
             <BookOpen className="w-3.5 h-3.5" />
             <span>Protocol Documentation & Architecture</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
             Slyz Documentation
           </h1>
           <p className="text-sm sm:text-base text-[#8F9CAE] leading-relaxed">
@@ -137,7 +137,7 @@ export default function DocsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="rounded-xl bg-[#161B26] border border-[#262D3D] p-6 space-y-3">
-              <div className="w-8 h-8 rounded-lg bg-[#CDE06A]/10 text-[#CDE06A] font-black text-sm flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[#CDE06A]/10 text-[#CDE06A] font-bold text-sm flex items-center justify-center">
                 1
               </div>
               <h3 className="text-base font-bold text-white">Connect a Solana Wallet</h3>
@@ -148,7 +148,7 @@ export default function DocsPage() {
             </div>
 
             <div className="rounded-xl bg-[#161B26] border border-[#262D3D] p-6 space-y-3">
-              <div className="w-8 h-8 rounded-lg bg-[#8D8AFF]/10 text-[#8D8AFF] font-black text-sm flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[#8D8AFF]/10 text-[#8D8AFF] font-bold text-sm flex items-center justify-center">
                 2
               </div>
               <h3 className="text-base font-bold text-white">Fund USDC & SOL</h3>
@@ -160,7 +160,7 @@ export default function DocsPage() {
             </div>
 
             <div className="rounded-xl bg-[#161B26] border border-[#262D3D] p-6 space-y-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-400/10 text-emerald-400 font-black text-sm flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-emerald-400/10 text-emerald-400 font-bold text-sm flex items-center justify-center">
                 3
               </div>
               <h3 className="text-base font-bold text-white">Select a Pie & Invest</h3>

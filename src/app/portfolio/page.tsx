@@ -24,7 +24,7 @@ import {
   CURATED_BASKETS,
   BasketComponent,
 } from "@/lib/constants";
-import { getJupiterPrices, TokenPriceInfo } from "@/lib/jupiter";
+import { getJupiterPrices, TokenPriceInfo, getCachedJupiterPrices } from "@/lib/jupiter";
 import { fetchUserBalances, UserBalances } from "@/lib/solana";
 import {
   fetchPreStocksLive,
@@ -55,7 +55,7 @@ export default function PortfolioPage() {
     token2022RawAmounts: {},
     hasSufficientGas: false,
   });
-  const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
+  const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>(() => getCachedJupiterPrices());
   const [preStocksLive, setPreStocksLive] = useState<Record<string, PreStockAssetLive>>(PRESTOCKS_FALLBACK);
   const [loading, setLoading] = useState(true);
 
@@ -181,18 +181,39 @@ export default function PortfolioPage() {
     largest.amountUsd = Math.round((largest.amountUsd + residual) * 100) / 100;
   }
 
+  // If initial load and no cached prices or balances are available yet
+  if (loading && Object.keys(prices).length === 0) {
+    return (
+      <div className="space-y-8 max-w-6xl mx-auto animate-pulse">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="h-4 bg-[#161B26] rounded w-24 mb-2" />
+            <div className="h-9 bg-[#161B26] rounded-xl w-72" />
+            <div className="h-4 bg-[#161B26] rounded w-56 mt-2" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 bg-[#161B26] rounded-xl border border-[#262D3D]" />
+          ))}
+        </div>
+        <div className="h-72 bg-[#161B26] rounded-xl border border-[#262D3D]" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-6xl mx-auto">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-[#CDE06A] mb-2">
+          <p className="text-xs sm:text-xs font-semibold uppercase tracking-wider text-[#CDE06A] mb-2">
             Non-Custodial
           </p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Portfolio & Drift Tracker
           </h1>
-          <p className="text-xs text-[#8F9CAE] mt-0.5">
+          <p className="text-sm sm:text-xs text-[#8F9CAE] mt-0.5">
             Real-time on-chain Token-2022 share balances and automated rebalancing.
           </p>
         </div>
@@ -265,7 +286,7 @@ export default function PortfolioPage() {
           </div>
           <div className="space-y-2">
             <span className="pill-badge pill-badge-lime">Clean Slate</span>
-            <h3 className="text-2xl font-extrabold text-white">No Active Theme Pies Yet</h3>
+            <h3 className="text-2xl font-bold text-white">No Active Theme Pies Yet</h3>
             <p className="text-sm text-[#8F9CAE] max-w-md mx-auto leading-relaxed">
               This wallet doesn&apos;t hold any tokenized stock positions yet. Choose a curated theme or design your own custom basket with fractional shares from just $10 USDC.
             </p>
@@ -310,16 +331,16 @@ export default function PortfolioPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Card 1: Total Stock Value */}
             <div className="bento-card">
-              <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
+              <span className="text-xs font-medium text-[#8F9CAE] uppercase block mb-1">
                 Total xStocks Holdings
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-white font-mono">
+                <span className="text-3xl font-bold text-white font-mono">
                   ${totalValueUsd.toFixed(2)}
                 </span>
-                <span className="text-xs text-[#8F9CAE] font-mono">USD</span>
+                <span className="text-xs text-[#8F9CAE] font-mono font-medium">USD</span>
               </div>
-              <span className="text-[11px] text-[#CDE06A] font-semibold mt-2 flex items-center gap-1">
+              <span className="text-[11px] text-[#CDE06A] font-medium mt-2 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 <span>Token-2022 Scaled UI Shares</span>
               </span>
@@ -327,12 +348,12 @@ export default function PortfolioPage() {
 
             {/* Card 2: Maximum Drift */}
             <div className="bento-card">
-              <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
+              <span className="text-xs font-medium text-[#8F9CAE] uppercase block mb-1">
                 Portfolio Allocation Drift
               </span>
               <div className="flex items-baseline gap-2">
                 <span
-                  className={`text-3xl font-extrabold font-mono ${
+                  className={`text-3xl font-bold font-mono ${
                     maxDriftPct > 5 ? "text-amber-400" : "text-[#CDE06A]"
                   }`}
                 >
@@ -340,7 +361,7 @@ export default function PortfolioPage() {
                 </span>
                 <span className="text-xs text-[#8F9CAE]">max deviation</span>
               </div>
-              <p className="text-[11px] text-[#8F9CAE] mt-2">
+              <p className="text-[11px] text-[#8F9CAE] mt-2 font-normal">
                 {maxDriftPct > 5
                   ? "Rebalance recommended via Smart Top-Up"
                   : "Well aligned with target weights"}
@@ -349,7 +370,7 @@ export default function PortfolioPage() {
 
             {/* Card 3: Wallet Liquidity */}
             <div className="bento-card">
-              <span className="text-xs font-semibold text-[#8F9CAE] uppercase block mb-1">
+              <span className="text-xs font-medium text-[#8F9CAE] uppercase block mb-1">
                 Available Wallet Capital
               </span>
               <div className="flex items-center gap-2.5">
@@ -361,10 +382,10 @@ export default function PortfolioPage() {
                   className="w-7 h-7 rounded-full object-contain shrink-0"
                 />
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-white font-mono">
+                  <span className="text-3xl font-bold text-white font-mono">
                     ${balances.usdcBalance.toFixed(2)}
                   </span>
-                  <span className="text-xs text-[#8F9CAE] font-mono font-bold">USDC</span>
+                  <span className="text-xs text-[#8F9CAE] font-mono font-medium">USDC</span>
                 </div>
               </div>
               <div className="mt-3 pt-2 border-t border-[#262D3D] flex items-center justify-between">
@@ -418,7 +439,7 @@ export default function PortfolioPage() {
             <div className="lg:col-span-7 bento-card overflow-hidden p-0">
               <div className="p-4 border-b border-[#262D3D] flex items-center justify-between">
                 <div>
-                  <h3 className="font-extrabold text-sm text-white">Component Holdings</h3>
+                  <h3 className="font-bold text-sm text-white">Component Holdings</h3>
                   <p className="text-[10px] text-[#8F9CAE]">
                     Reflects wallet-wide on-chain Token-2022 balances
                   </p>
@@ -462,13 +483,13 @@ export default function PortfolioPage() {
                               </div>
                               <div>
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-bold text-white block">{pos.underlying}</span>
+                                  <span className="font-semibold text-white block">{pos.underlying}</span>
                                   {pos.market === "private" ? (
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30">
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30">
                                       Pre-IPO
                                     </span>
                                   ) : (
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#CDE06A]/20 text-[#CDE06A] border border-[#CDE06A]/30">
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#CDE06A]/20 text-[#CDE06A] border border-[#CDE06A]/30">
                                       xStock
                                     </span>
                                   )}
@@ -491,7 +512,7 @@ export default function PortfolioPage() {
                           </td>
 
                           <td className="py-3.5 px-4">
-                            <span className="text-white font-bold block">
+                            <span className="text-white font-semibold block">
                               {pos.shareEquivalents > 0
                                 ? pos.shareEquivalents.toFixed(4)
                                 : "0.0000"}
@@ -501,13 +522,13 @@ export default function PortfolioPage() {
                             </span>
                           </td>
 
-                          <td className="py-3.5 px-4 font-bold text-white">
+                          <td className="py-3.5 px-4 font-semibold text-white">
                             ${pos.currentValueUsd.toFixed(2)}
                           </td>
 
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-white font-bold">
+                              <span className="text-white font-semibold">
                                 {pos.currentWeightPct.toFixed(1)}%
                               </span>
                               <span className="text-[#8F9CAE] text-[10px]">
@@ -518,7 +539,7 @@ export default function PortfolioPage() {
 
                           <td className="py-3.5 px-4 text-right">
                             <span
-                              className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                              className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${
                                 Math.abs(pos.driftPct) < 1
                                   ? "text-[#8F9CAE] bg-[#161B26]"
                                   : isDriftPositive
@@ -548,7 +569,7 @@ export default function PortfolioPage() {
             <div className="flex items-center justify-between border-b border-[#262D3D] pb-4">
               <div>
                 <span className="pill-badge pill-badge-lime mb-1">Smart Rebalancing</span>
-                <h3 className="text-lg font-extrabold text-white">
+                <h3 className="text-lg font-bold text-white">
                   Smart Top-Up Rebalance
                 </h3>
                 <p className="text-xs text-[#8F9CAE]">

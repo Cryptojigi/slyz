@@ -127,18 +127,18 @@ export const LiveSlyzSculpture: React.FC<Props> = ({ className = "" }) => {
           {/* Internal Stock Badges */}
           <div className="relative z-10 w-full h-full px-6 flex items-center justify-between text-white">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-lg bg-black/25 backdrop-blur-sm font-extrabold text-[11px] tracking-wider border border-white/15 shadow-sm">
+              <span className="px-2.5 py-1 rounded-lg bg-black/25 backdrop-blur-sm font-semibold text-[11px] tracking-wider border border-white/15 shadow-sm">
                 NVDA
               </span>
-              <span className="px-2.5 py-1 rounded-lg bg-black/25 backdrop-blur-sm font-extrabold text-[11px] tracking-wider border border-white/15 shadow-sm">
+              <span className="px-2.5 py-1 rounded-lg bg-black/25 backdrop-blur-sm font-semibold text-[11px] tracking-wider border border-white/15 shadow-sm">
                 AAPL
               </span>
-              <span className="px-2.5 py-1 rounded-lg bg-black/25 backdrop-blur-sm font-extrabold text-[11px] tracking-wider border border-white/15 shadow-sm">
+              <span className="px-2.5 py-1 rounded-lg bg-black/25 backdrop-blur-sm font-semibold text-[11px] tracking-wider border border-white/15 shadow-sm">
                 MSFT
               </span>
             </div>
 
-            <div className="flex items-center gap-1 text-[11px] font-extrabold bg-white/20 border border-white/20 px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm">
+            <div className="flex items-center gap-1 text-[11px] font-semibold bg-white/20 border border-white/20 px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm">
               <TrendingUp className="w-3 h-3 text-[#CDE06A]" />
               <span>+18.4%</span>
             </div>
@@ -165,20 +165,20 @@ export const LiveSlyzSculpture: React.FC<Props> = ({ className = "" }) => {
           {/* Internal Content */}
           <div className="relative z-10 w-full h-full px-6 flex items-center justify-between text-[#0B0E14]">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-black/15 flex items-center justify-center font-black text-xs">
+              <div className="w-7 h-7 rounded-lg bg-black/15 flex items-center justify-center font-bold text-xs">
                 ⚡
               </div>
               <div className="leading-tight">
-                <span className="text-xs font-black tracking-wider uppercase block">
+                <span className="text-xs font-bold tracking-wider uppercase block">
                   ONE-THEME PIES
                 </span>
-                <span className="text-[10px] font-extrabold opacity-80 block">
+                <span className="text-[10px] font-semibold opacity-80 block">
                   Fractional Equities on Solana
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] font-black bg-black/15 px-3 py-1 rounded-lg">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold bg-black/15 px-3 py-1 rounded-lg">
               <Zap className="w-3 h-3 fill-current" />
               <span>~3.2s</span>
             </div>

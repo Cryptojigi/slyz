@@ -88,12 +88,12 @@ export const DonutChart: React.FC<Props> = ({
       {(centerLabel || centerSublabel) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           {centerLabel && (
-            <span className="text-xl font-extrabold text-white tracking-tight font-mono">
+            <span className="text-xl font-bold text-white tracking-tight font-mono">
               {centerLabel}
             </span>
           )}
           {centerSublabel && (
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8F9CAE]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-[#8F9CAE]">
               {centerSublabel}
             </span>
           )}

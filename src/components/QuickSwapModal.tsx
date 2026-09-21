@@ -310,7 +310,7 @@ export const QuickSwapModal: React.FC = () => {
                 value={inputAmount}
                 disabled={status === "signing" || status === "confirming"}
                 onChange={(e) => setInputAmount(e.target.value)}
-                className="w-full bg-transparent text-xl sm:text-2xl font-extrabold text-white placeholder-[#8F9CAE]/40 focus:outline-none"
+                className="w-full bg-transparent text-xl sm:text-2xl font-bold text-white placeholder-[#8F9CAE]/40 focus:outline-none"
               />
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#161B26] border border-[#262D3D] shrink-0 font-bold text-xs text-white">
                 {isSolToUsdc ? (
@@ -417,7 +417,7 @@ export const QuickSwapModal: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between gap-3">
-              <div className="text-xl sm:text-2xl font-extrabold text-[#CDE06A]">
+              <div className="text-xl sm:text-2xl font-bold text-[#CDE06A]">
                 {quoting ? (
                   <span className="text-[#8F9CAE] text-base animate-pulse flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -564,7 +564,7 @@ export const QuickSwapModal: React.FC = () => {
                 status === "confirming" ||
                 !!quoteError
               }
-              className="w-full btn-primary !py-3 text-xs font-extrabold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary !py-3 text-xs font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {status === "signing" ? (
                 <>

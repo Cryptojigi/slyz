@@ -306,7 +306,7 @@ export function LiquidationModal({
         <div className="p-4 sm:p-5 border-b border-[#262D3D] flex items-center justify-between shrink-0">
           <div>
             <span className="pill-badge pill-badge-purple mb-1 text-[10px]">Sequential Exit</span>
-            <h3 className="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <span>Liquidate Pie to</span>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-[#2775CA]/15 border border-[#2775CA]/30 text-white text-[11px]">
                 <Image
@@ -345,7 +345,7 @@ export function LiquidationModal({
           {/* Holdings summary */}
           <div className="p-4 rounded-xl bg-[#0B0E14] border border-[#262D3D] flex items-center justify-between text-xs">
             <span className="text-[#8F9CAE]">Estimated Total Proceeds:</span>
-            <span className="font-mono font-extrabold text-white text-sm flex items-center gap-1.5">
+            <span className="font-mono font-bold text-white text-sm flex items-center gap-1.5">
               <Image
                 src="/usdc-logo.svg"
                 alt="USDC"
