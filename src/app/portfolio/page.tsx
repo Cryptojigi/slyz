@@ -617,22 +617,22 @@ export default function PortfolioPage() {
                           </td>
 
                           <td className="py-3.5 px-4 text-right">
-                            {pos.rawBalance > 0.000001 ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setLiquidationTarget(pos.symbol);
-                                  setIsLiquidationOpen(true);
-                                }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500 text-rose-300 text-[11px] font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
-                                title={`Liquidate ${pos.underlying || pos.symbol} to USDC`}
-                              >
-                                <ArrowDownLeft className="w-3 h-3 text-rose-400" />
-                                <span>Sell</span>
-                              </button>
-                            ) : (
-                              <span className="text-[10px] text-[#8F9CAE]/40 font-mono">—</span>
-                            )}
+                            <div className="flex items-center justify-end gap-1.5">
+                              {pos.rawBalance > 0.000001 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setLiquidationTarget(pos.symbol);
+                                    setIsLiquidationOpen(true);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500 text-rose-300 text-[11px] font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
+                                  title={`Liquidate ${pos.underlying || pos.symbol} to USDC`}
+                                >
+                                  <ArrowDownLeft className="w-3 h-3 text-rose-400" />
+                                  <span>Sell</span>
+                                </button>
+                              ) : null}
+                            </div>
                           </td>
                         </tr>
                       );

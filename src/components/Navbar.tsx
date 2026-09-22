@@ -16,6 +16,7 @@ import {
   Zap,
   BookOpen,
   ArrowUpDown,
+  Gift,
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletBalances } from "@/context/WalletBalanceContext";
@@ -121,6 +122,17 @@ export const Navbar = () => {
                 My Portfolio
               </Link>
               <Link
+                href="/gift"
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  pathname === "/gift"
+                    ? "bg-[#CDE06A] text-[#0B0E14]"
+                    : "text-[#8F9CAE] hover:text-white"
+                }`}
+              >
+                <Gift className="w-3.5 h-3.5" />
+                Gift Stocks
+              </Link>
+              <Link
                 href="/docs"
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                   pathname === "/docs"
@@ -137,21 +149,6 @@ export const Navbar = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          {/* Market Status (App Viewports) */}
-          {!isLandingPage && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#161B26] border border-[#262D3D] text-[11px] font-medium text-[#8F9CAE]">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#CDE06A] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#CDE06A]"></span>
-              </span>
-              <span>Solana Mainnet</span>
-              <span className="text-[#262D3D]">|</span>
-              <span className="text-white font-semibold flex items-center gap-1">
-                24/7 xStocks
-              </span>
-            </div>
-          )}
-
           {/* Conditional Action: Landing Page shows 'Launch App', Dashboard shows Wallet Button + Balance Capsule */}
           {isLandingPage ? (
             <Link
@@ -373,6 +370,17 @@ export const Navbar = () => {
               >
                 <PieChart className="w-4 h-4" />
                 My Portfolio & Drift
+              </Link>
+              <Link
+                href="/gift"
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold ${
+                  pathname === "/gift"
+                    ? "bg-[#CDE06A] text-[#0B0E14]"
+                    : "bg-[#161B26] text-white"
+                }`}
+              >
+                <Gift className="w-4 h-4" />
+                Gift Stocks Hub
               </Link>
               <Link
                 href="/docs"
