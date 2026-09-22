@@ -32,8 +32,11 @@ export const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 export const USDC_DECIMALS = 6;
 export const TOKEN_2022_PROGRAM_ID = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 
-// Minimum SOL required in wallet for ATA rent + gas (~0.015 - 0.02 SOL)
+// Minimum SOL required in wallet for creating new Token-2022 ATA accounts and fees (~0.015 SOL)
 export const MIN_SOL_BALANCE = 0.015;
+
+// Minimum SOL required for liquidating/selling positions (no new ATAs created, only swap tx fees ~0.00015 SOL)
+export const MIN_LIQUIDATION_SOL = 0.0015;
 
 export const VERIFIED_STOCKS: Record<string, StockAsset> = {
   // --- Public Listed Equities (xStocks - 8 decimals) ---

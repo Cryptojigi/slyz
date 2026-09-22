@@ -10,16 +10,15 @@ import {
   AlertCircle,
   Loader2,
   ExternalLink,
-  DollarSign,
-  ArrowRight,
   ShieldAlert,
   ArrowDownLeft,
+  Check,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import {
   VERIFIED_STOCKS,
   USDC_MINT,
-  MIN_SOL_BALANCE,
+  MIN_LIQUIDATION_SOL,
 } from "@/lib/constants";
 import { getJupiterQuote, buildSwapTransaction } from "@/lib/jupiter";
 import { PortfolioPosition } from "@/lib/portfolio";
@@ -27,11 +26,13 @@ import {
   waitForTransactionConfirmation,
   isSignatureConfirmedOnChain,
 } from "@/lib/confirmTransaction";
+import { useWalletBalances } from "@/context/WalletBalanceContext";
 
 export interface LiquidationStepState {
   symbol: string;
   shareAmount: number;
   estimatedUsd: number;
+  selected: boolean;
   status: "idle" | "quoting" | "signing" | "confirming" | "success" | "failed";
   txSignature?: string;
   receivedUsdc?: number;
@@ -45,6 +46,7 @@ interface LiquidationModalProps {
   positions: PortfolioPosition[];
   solBalance: number;
   onSuccess: () => void;
+  targetSymbol?: string | null;
 }
 
 export function LiquidationModal({
@@ -53,19 +55,27 @@ export function LiquidationModal({
   positions,
   solBalance,
   onSuccess,
+  targetSymbol,
 }: LiquidationModalProps) {
   const { connection } = useConnection();
   const wallet = useWallet();
+  const { openQuickSwap } = useWalletBalances();
 
-  // Only liquidate assets that have an actual positive balance
-  const activeHoldings = positions.filter((p) => p.rawBalance > 0.000001);
+  const getRelevantHoldings = () => {
+    const active = positions.filter((p) => p.rawBalance > 0.000001);
+    if (targetSymbol) {
+      return active.filter((p) => p.symbol === targetSymbol);
+    }
+    return active;
+  };
 
   const [steps, setSteps] = useState<LiquidationStepState[]>(() =>
-    activeHoldings.map((p) => ({
+    getRelevantHoldings().map((p) => ({
       symbol: p.symbol,
       shareAmount: p.rawBalance,
       rawAmountString: p.rawAmountString,
       estimatedUsd: p.currentValueUsd,
+      selected: true,
       status: "idle",
     }))
   );
@@ -80,16 +90,17 @@ export function LiquidationModal({
     setMounted(true);
   }, []);
 
-  // Synchronize steps whenever modal opens or positions update
+  // Synchronize steps whenever modal opens or positions/target change
   useEffect(() => {
     if (isOpen) {
-      const freshActive = positions.filter((p) => p.rawBalance > 0.000001);
+      const relevant = getRelevantHoldings();
       setSteps(
-        freshActive.map((p) => ({
+        relevant.map((p) => ({
           symbol: p.symbol,
           shareAmount: p.rawBalance,
           rawAmountString: p.rawAmountString,
           estimatedUsd: p.currentValueUsd,
+          selected: true,
           status: "idle",
         }))
       );
@@ -98,12 +109,44 @@ export function LiquidationModal({
       setCompleted(false);
       setGasError(null);
     }
-  }, [isOpen, positions]);
+  }, [isOpen, positions, targetSymbol]);
 
   if (!mounted || !isOpen) return null;
 
-  const totalUsdEstimated = activeHoldings.reduce((acc, p) => acc + p.currentValueUsd, 0);
-  const hasEnoughSol = solBalance >= MIN_SOL_BALANCE;
+  const selectedSteps = steps.filter((s) => s.selected);
+  const totalUsdEstimated = selectedSteps.reduce((acc, s) => acc + s.estimatedUsd, 0);
+
+  // Realistic Solana fee calculation:
+  // Selling existing positions does not create new ATAs (no ATA rent).
+  // Each swap transaction costs ~0.00005 SOL (including priority fee).
+  // Minimum required SOL buffer: 0.0015 SOL baseline + 0.0005 SOL per signature.
+  const minSolRequired = Math.max(MIN_LIQUIDATION_SOL, selectedSteps.length * 0.0005);
+  const hasEnoughSol = solBalance >= minSolRequired;
+
+  const isSingleAsset = Boolean(targetSymbol) || steps.length === 1;
+  const singleAssetStock = targetSymbol
+    ? VERIFIED_STOCKS[targetSymbol]
+    : steps.length === 1
+    ? VERIFIED_STOCKS[steps[0]?.symbol]
+    : null;
+  const singleAssetPosition = targetSymbol
+    ? positions.find((p) => p.symbol === targetSymbol)
+    : steps.length === 1
+    ? positions.find((p) => p.symbol === steps[0]?.symbol)
+    : null;
+
+  const toggleStepSelected = (symbol: string) => {
+    if (isRunning) return;
+    setSteps((prev) =>
+      prev.map((s) => (s.symbol === symbol ? { ...s, selected: !s.selected } : s))
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (isRunning) return;
+    const allSelected = steps.every((s) => s.selected);
+    setSteps((prev) => prev.map((s) => ({ ...s, selected: !allSelected })));
+  };
 
   const updateStep = (index: number, patch: Partial<LiquidationStepState>) => {
     setSteps((prev) =>
@@ -117,9 +160,14 @@ export function LiquidationModal({
       return;
     }
 
+    if (selectedSteps.length === 0) {
+      setGasError("Please select at least one stock to liquidate.");
+      return;
+    }
+
     if (!hasEnoughSol) {
       setGasError(
-        `Low SOL balance (${solBalance.toFixed(4)} SOL). You need at least 0.015 SOL to pay for Solana network transaction fees.`
+        `Low SOL balance (${solBalance.toFixed(4)} SOL). You need ~${minSolRequired.toFixed(4)} SOL to pay for Solana network transaction fees.`
       );
       return;
     }
@@ -131,6 +179,9 @@ export function LiquidationModal({
 
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
+
+      // Skip unselected positions
+      if (!step.selected) continue;
 
       // 1. Skip already completed steps if retrying
       if (step.status === "success" && step.txSignature) {
@@ -179,7 +230,7 @@ export function LiquidationModal({
         // Use exact on-chain base units string if available to avoid floating-point dust
         const baseUnits =
           step.rawAmountString && step.rawAmountString !== "0"
-            ? Number(step.rawAmountString)
+            ? Math.floor(Number(step.rawAmountString))
             : Math.floor(step.shareAmount * Math.pow(10, asset.decimals));
 
         if (baseUnits <= 0) {
@@ -301,13 +352,19 @@ export function LiquidationModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-[430px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+      <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-[440px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#262D3D] flex items-center justify-between shrink-0">
           <div>
-            <span className="pill-badge pill-badge-purple mb-1 text-[10px]">Sequential Exit</span>
+            <span className="pill-badge pill-badge-purple mb-1 text-[10px]">
+              {isSingleAsset ? "Single Stock Exit" : "Sequential Exit"}
+            </span>
             <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <span>Liquidate Pie to</span>
+              <span>
+                {isSingleAsset
+                  ? `Liquidate ${singleAssetStock?.underlying || targetSymbol || steps[0]?.symbol || "Stock"} to`
+                  : "Liquidate Positions to"}
+              </span>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-[#2775CA]/15 border border-[#2775CA]/30 text-white text-[11px]">
                 <Image
                   src="/usdc-logo.svg"
@@ -320,7 +377,9 @@ export function LiquidationModal({
               </span>
             </h3>
             <p className="text-[11px] text-[#8F9CAE]">
-              Selling {activeHoldings.length} tokenized positions back to USDC
+              {isSingleAsset
+                ? `Selling ${singleAssetPosition?.shareEquivalents ? singleAssetPosition.shareEquivalents.toFixed(4) : steps[0]?.shareAmount?.toFixed(4) || ""} ${singleAssetStock?.underlying || targetSymbol || steps[0]?.symbol || ""} directly back to USDC`
+                : `Selling ${selectedSteps.length} of ${steps.length} tokenized position${steps.length === 1 ? "" : "s"} back to USDC`}
             </p>
           </div>
           {!isRunning && (
@@ -335,6 +394,25 @@ export function LiquidationModal({
 
         {/* Content Body */}
         <div className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1">
+          {/* Low SOL Alert Banner */}
+          {!hasEnoughSol && !completed && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  Low SOL ({solBalance.toFixed(4)} SOL). Need ~{minSolRequired.toFixed(4)} SOL for network fees.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => openQuickSwap("USDC_TO_SOL")}
+                className="px-2.5 py-1 rounded-lg bg-[#CDE06A] text-[#0B0E14] font-bold text-[11px] hover:bg-[#b8cb56] transition-all shrink-0 ml-2"
+              >
+                Quick Swap
+              </button>
+            </div>
+          )}
+
           {gasError && (
             <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
               <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -343,7 +421,7 @@ export function LiquidationModal({
           )}
 
           {/* Holdings summary */}
-          <div className="p-4 rounded-xl bg-[#0B0E14] border border-[#262D3D] flex items-center justify-between text-xs">
+          <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-[#262D3D] flex items-center justify-between text-xs">
             <span className="text-[#8F9CAE]">Estimated Total Proceeds:</span>
             <span className="font-mono font-bold text-white text-sm flex items-center gap-1.5">
               <Image
@@ -357,7 +435,21 @@ export function LiquidationModal({
             </span>
           </div>
 
-          {/* Sequential Step List */}
+          {/* Selection header for multi-asset liquidation */}
+          {!targetSymbol && steps.length > 1 && !isRunning && !completed && (
+            <div className="flex items-center justify-between px-1 text-[11px] text-[#8F9CAE]">
+              <span>Select positions to liquidate:</span>
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="text-[#CDE06A] hover:underline font-medium cursor-pointer"
+              >
+                {steps.every((s) => s.selected) ? "Deselect All" : "Select All"}
+              </button>
+            </div>
+          )}
+
+          {/* Step / Position List */}
           <div className="space-y-2.5">
             {steps.map((step, idx) => {
               const asset = VERIFIED_STOCKS[step.symbol];
@@ -367,7 +459,9 @@ export function LiquidationModal({
                 <div
                   key={step.symbol}
                   className={`p-3.5 rounded-xl border transition-all ${
-                    isActive
+                    !step.selected
+                      ? "bg-[#0B0E14]/40 border-[#262D3D]/50 opacity-60"
+                      : isActive
                       ? "bg-[#1D2332] border-[#8D8AFF] shadow-lg shadow-[#8D8AFF]/10"
                       : step.status === "success"
                       ? "bg-[#0B0E14]/60 border-[#CDE06A]/30"
@@ -377,18 +471,34 @@ export function LiquidationModal({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#161B26] border border-[#262D3D] flex items-center justify-center text-xs font-mono text-white">
-                        {step.status === "success" ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#CDE06A]" />
-                        ) : step.status === "failed" ? (
-                          <AlertCircle className="w-4 h-4 text-rose-400" />
-                        ) : isActive ? (
-                          <Loader2 className="w-3.5 h-3.5 text-[#8D8AFF] animate-spin" />
-                        ) : (
-                          idx + 1
-                        )}
-                      </div>
+                    <div className="flex items-center gap-2.5">
+                      {/* Optional Checkbox for multi-asset toggle */}
+                      {!targetSymbol && steps.length > 1 && !isRunning && step.status !== "success" ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleStepSelected(step.symbol)}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                            step.selected
+                              ? "bg-[#CDE06A] border-[#CDE06A] text-[#0B0E14]"
+                              : "border-[#262D3D] bg-[#0B0E14] text-transparent hover:border-[#8F9CAE]"
+                          }`}
+                          title={step.selected ? "Uncheck to keep position" : "Check to liquidate"}
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </button>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-[#161B26] border border-[#262D3D] flex items-center justify-center text-xs font-mono text-white">
+                          {step.status === "success" ? (
+                            <CheckCircle2 className="w-4 h-4 text-[#CDE06A]" />
+                          ) : step.status === "failed" ? (
+                            <AlertCircle className="w-4 h-4 text-rose-400" />
+                          ) : isActive ? (
+                            <Loader2 className="w-3.5 h-3.5 text-[#8D8AFF] animate-spin" />
+                          ) : (
+                            idx + 1
+                          )}
+                        </div>
+                      )}
 
                       <div>
                         <span className="font-bold text-sm text-white block">
@@ -402,7 +512,9 @@ export function LiquidationModal({
 
                     <div className="text-right">
                       {step.status === "idle" && (
-                        <span className="text-[11px] font-mono text-[#8F9CAE]">Queued</span>
+                        <span className="text-[11px] font-mono text-[#8F9CAE]">
+                          {step.selected ? "Queued" : "Skipped"}
+                        </span>
                       )}
                       {step.status === "quoting" && (
                         <span className="text-[11px] font-mono text-[#8D8AFF] flex items-center gap-1">
@@ -479,14 +591,14 @@ export function LiquidationModal({
             <div className="flex justify-between text-xs text-[#8F9CAE] font-mono">
               <span>Exit Progress</span>
               <span>
-                {completedCount} of {steps.length} swaps completed
+                {completedCount} of {selectedSteps.length} swaps completed
               </span>
             </div>
             <div className="w-full h-2 bg-[#0B0E14] rounded-full overflow-hidden border border-[#262D3D]">
               <div
                 className="h-full bg-gradient-to-r from-[#8D8AFF] to-[#CDE06A] transition-all duration-300"
                 style={{
-                  width: `${(completedCount / Math.max(1, steps.length)) * 100}%`,
+                  width: `${(completedCount / Math.max(1, selectedSteps.length)) * 100}%`,
                 }}
               ></div>
             </div>
@@ -498,7 +610,7 @@ export function LiquidationModal({
           {completed ? (
             <button
               onClick={onClose}
-              className="w-full btn-primary flex items-center justify-center gap-2 !py-2.5 sm:!py-3 text-xs sm:text-sm font-bold shadow-lg"
+              className="w-full btn-primary flex items-center justify-center gap-2 !py-2.5 sm:!py-3 text-xs sm:text-sm font-bold shadow-lg cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Liquidation Complete — Return to Portfolio</span>
@@ -509,7 +621,7 @@ export function LiquidationModal({
                 type="button"
                 onClick={onClose}
                 disabled={isRunning}
-                className="btn-secondary text-xs !py-2.5 px-3.5"
+                className="btn-secondary text-xs !py-2.5 px-3.5 cursor-pointer"
               >
                 Cancel
               </button>
@@ -517,18 +629,24 @@ export function LiquidationModal({
               <button
                 type="button"
                 onClick={startSequentialLiquidation}
-                disabled={isRunning || !hasEnoughSol || activeHoldings.length === 0}
-                className="btn-primary flex items-center gap-2 text-xs sm:text-sm flex-1 justify-center !py-2.5 disabled:opacity-50"
+                disabled={isRunning || !hasEnoughSol || selectedSteps.length === 0}
+                className="btn-primary flex items-center gap-2 text-xs sm:text-sm flex-1 justify-center !py-2.5 disabled:opacity-50 cursor-pointer"
               >
                 {isRunning ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Executing Swaps ({activeStepIndex + 1}/{steps.length})...</span>
+                    <span>Executing Swaps ({activeStepIndex + 1}/{selectedSteps.length})...</span>
                   </>
+                ) : !hasEnoughSol ? (
+                  <span>Need ~{minSolRequired.toFixed(4)} SOL for Fees</span>
+                ) : selectedSteps.length === 0 ? (
+                  <span>Select At Least 1 Stock</span>
                 ) : (
                   <>
                     <ArrowDownLeft className="w-4 h-4" />
-                    <span>Confirm Exit to USDC ({steps.length} Signatures)</span>
+                    <span>
+                      Confirm Exit to USDC ({selectedSteps.length} Signature{selectedSteps.length === 1 ? "" : "s"})
+                    </span>
                   </>
                 )}
               </button>

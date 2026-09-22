@@ -55,9 +55,10 @@ export default function PortfolioPage() {
     token2022RawAmounts: {},
     hasSufficientGas: false,
   });
-  const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>(() => getCachedJupiterPrices());
+  const [prices, setPrices] = useState<Record<string, TokenPriceInfo>>({});
   const [preStocksLive, setPreStocksLive] = useState<Record<string, PreStockAssetLive>>(PRESTOCKS_FALLBACK);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   // Smart Top-Up Modal State
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
@@ -66,9 +67,15 @@ export default function PortfolioPage() {
 
   // Liquidation / Exit Modal State
   const [isLiquidationOpen, setIsLiquidationOpen] = useState(false);
+  const [liquidationTarget, setLiquidationTarget] = useState<string | null>(null);
 
-  // Load stored baskets from localStorage
+  // Load cached prices and stored baskets from localStorage on client mount
   useEffect(() => {
+    setMounted(true);
+    const cachedPrices = getCachedJupiterPrices();
+    if (Object.keys(cachedPrices).length > 0) {
+      setPrices(cachedPrices);
+    }
     const loaded = getStoredBaskets();
     setStoredBaskets(loaded);
   }, []);
@@ -181,8 +188,8 @@ export default function PortfolioPage() {
     largest.amountUsd = Math.round((largest.amountUsd + residual) * 100) / 100;
   }
 
-  // If initial load and no cached prices or balances are available yet
-  if (loading && Object.keys(prices).length === 0) {
+  // If not mounted or initial load with no cached prices
+  if (!mounted || (loading && Object.keys(prices).length === 0)) {
     return (
       <div className="space-y-8 max-w-6xl mx-auto animate-pulse">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -230,9 +237,12 @@ export default function PortfolioPage() {
           </button>
 
           <button
-            onClick={() => setIsLiquidationOpen(true)}
+            onClick={() => {
+              setLiquidationTarget(null);
+              setIsLiquidationOpen(true);
+            }}
             disabled={!wallet.connected || totalValueUsd <= 0.05}
-            className="btn-secondary flex items-center gap-2 text-xs border-rose-500/30 text-rose-300 hover:bg-rose-950/40 hover:border-rose-500 disabled:opacity-50"
+            className="btn-secondary flex items-center gap-2 text-xs border-rose-500/30 text-rose-300 hover:bg-rose-950/40 hover:border-rose-500 disabled:opacity-50 cursor-pointer"
             title="Liquidate all positions in this pie back to USDC"
           >
             <ArrowDownLeft className="w-3.5 h-3.5" />
@@ -458,6 +468,7 @@ export default function PortfolioPage() {
                       <th className="py-3 px-4">Value</th>
                       <th className="py-3 px-4">Weight</th>
                       <th className="py-3 px-4 text-right">Drift</th>
+                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#262D3D]/50 font-mono">
@@ -550,6 +561,25 @@ export default function PortfolioPage() {
                               {isDriftPositive ? "+" : ""}
                               {pos.driftPct.toFixed(1)}%
                             </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right">
+                            {pos.rawBalance > 0.000001 ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLiquidationTarget(pos.symbol);
+                                  setIsLiquidationOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 hover:border-rose-500 text-rose-300 text-[11px] font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
+                                title={`Liquidate ${pos.underlying || pos.symbol} to USDC`}
+                              >
+                                <ArrowDownLeft className="w-3 h-3 text-rose-400" />
+                                <span>Sell</span>
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-[#8F9CAE]/40 font-mono">—</span>
+                            )}
                           </td>
                         </tr>
                       );
@@ -677,9 +707,13 @@ export default function PortfolioPage() {
       {isLiquidationOpen && (
         <LiquidationModal
           isOpen={isLiquidationOpen}
-          onClose={() => setIsLiquidationOpen(false)}
+          onClose={() => {
+            setIsLiquidationOpen(false);
+            setLiquidationTarget(null);
+          }}
           positions={positions}
           solBalance={balances.solBalance}
+          targetSymbol={liquidationTarget}
           onSuccess={() => {
             loadData();
           }}
