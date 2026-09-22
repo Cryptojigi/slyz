@@ -17,6 +17,8 @@ import {
   Layers,
   Sliders,
   ArrowUpDown,
+  Trash2,
+  CheckCircle2,
 } from "lucide-react";
 import { useWalletBalances } from "@/context/WalletBalanceContext";
 import {
@@ -33,6 +35,7 @@ import {
 } from "@/lib/prestocks";
 import {
   getStoredBaskets,
+  removeStoredBasket,
   StoredBasket,
   calculatePortfolioPositions,
   calculateSmartTopUp,
@@ -337,6 +340,48 @@ export default function PortfolioPage() {
             </div>
           )}
 
+          {/* Liquidated Pie Notice Banner */}
+          {totalValueUsd <= 0 && hasInvestedBaskets && (
+            <div className="p-4 rounded-xl bg-[#161B26] border border-[#262D3D] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/30 flex items-center justify-center text-[#CDE06A] shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">
+                    {activeBasket.name} is fully liquidated
+                  </h4>
+                  <p className="text-xs text-[#8F9CAE]">
+                    All stock positions have been sold to USDC. You can clear this empty pie or re-invest anytime.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    removeStoredBasket(activeBasket.id);
+                    const remaining = getStoredBaskets();
+                    setStoredBaskets(remaining);
+                    setSelectedBasketIndex(0);
+                  }}
+                  className="btn-secondary text-xs !py-1.5 !px-3 text-rose-300 border-rose-500/30 hover:border-rose-500 hover:bg-rose-950/30 flex items-center gap-1.5 cursor-pointer"
+                  title="Remove this empty pie from your portfolio"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Clear Empty Pie</span>
+                </button>
+                <Link
+                  href={`/invest/${activeBasket.id}`}
+                  className="btn-primary text-xs !py-1.5 !px-3 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Re-invest</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* Overview Cards Row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Card 1: Total Stock Value */}
@@ -364,15 +409,23 @@ export default function PortfolioPage() {
               <div className="flex items-baseline gap-2">
                 <span
                   className={`text-3xl font-bold font-mono ${
-                    maxDriftPct > 5 ? "text-amber-400" : "text-[#CDE06A]"
+                    totalValueUsd <= 0
+                      ? "text-[#8F9CAE]"
+                      : maxDriftPct > 5
+                      ? "text-amber-400"
+                      : "text-[#CDE06A]"
                   }`}
                 >
                   {maxDriftPct.toFixed(1)}%
                 </span>
-                <span className="text-xs text-[#8F9CAE]">max deviation</span>
+                <span className="text-xs text-[#8F9CAE]">
+                  {totalValueUsd <= 0 ? "fully liquidated" : "max deviation"}
+                </span>
               </div>
               <p className="text-[11px] text-[#8F9CAE] mt-2 font-normal">
-                {maxDriftPct > 5
+                {totalValueUsd <= 0
+                  ? "All positions exited to USDC — 0% active drift"
+                  : maxDriftPct > 5
                   ? "Rebalance recommended via Smart Top-Up"
                   : "Well aligned with target weights"}
               </p>
@@ -716,6 +769,13 @@ export default function PortfolioPage() {
           targetSymbol={liquidationTarget}
           onSuccess={() => {
             loadData();
+            // If the whole pie was liquidated, remove it from stored baskets
+            if (!liquidationTarget && activeBasket && activeBasket.id !== "onchain-detected" && activeBasket.id !== "empty") {
+              removeStoredBasket(activeBasket.id);
+              const remaining = getStoredBaskets();
+              setStoredBaskets(remaining);
+              setSelectedBasketIndex(0);
+            }
           }}
         />
       )}

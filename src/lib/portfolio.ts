@@ -62,6 +62,20 @@ export function saveBasketInvestment(basket: StoredBasket): void {
 }
 
 /**
+ * Remove a stored basket from localStorage (e.g. after full liquidation or user dismissal).
+ */
+export function removeStoredBasket(basketId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = getStoredBaskets();
+    const updated = existing.filter((b) => b.id !== basketId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error("Error removing stored basket:", e);
+  }
+}
+
+/**
  * Calculate full portfolio positions, applying multipliers and calculating drift.
  * Handles both public xStocks (Jupiter prices) and private PreStocks (live PreStocks API).
  */
@@ -133,8 +147,9 @@ export function calculatePortfolioPositions(
   // Second pass: compute weights and drift
   let maxDriftPct = 0;
   const positions: PortfolioPosition[] = rawPositions.map((pos) => {
+    // If total portfolio value is $0 (e.g. fully liquidated), there is no drift
     const currentWeightPct = totalValueUsd > 0 ? (pos.currentValueUsd / totalValueUsd) * 100 : 0;
-    const driftPct = currentWeightPct - pos.targetWeightPct;
+    const driftPct = totalValueUsd > 0 ? currentWeightPct - pos.targetWeightPct : 0;
     if (Math.abs(driftPct) > maxDriftPct) {
       maxDriftPct = Math.abs(driftPct);
     }
