@@ -2,13 +2,14 @@
   <img src="./public/slyzlogo.png" alt="Slyz Logo" width="90" height="90" style="border-radius: 16px; margin-bottom: 12px;" />
   <h1>Slyz</h1>
   <p><strong>Slice the Market. Own the Theme.</strong></p>
-  <p><em>Non-custodial, fractional thematic stock basket investing and stock gifting on Solana.</em></p>
+  <p><em>Non-custodial thematic stock basket investing, Pre-IPO stock access, and on-chain stock gifting -- all on Solana.</em></p>
 
   <p>
     <a href="https://useslyz.vercel.app"><img src="https://img.shields.io/badge/Live_App-useslyz.vercel.app-CDE06A?style=for-the-badge&logo=vercel&logoColor=0B0E14" alt="Live App" /></a>
     <img src="https://img.shields.io/badge/Solana-Mainnet--Beta-8D8AFF?style=for-the-badge&logo=solana&logoColor=white" alt="Solana Mainnet" />
     <img src="https://img.shields.io/badge/Standard-Token--2022-14F195?style=for-the-badge" alt="Token-2022" />
     <img src="https://img.shields.io/badge/DEX-Jupiter_Lite-F87171?style=for-the-badge&logo=target" alt="Jupiter Lite" />
+    <img src="https://img.shields.io/badge/Pre--IPO-PreStocks-F5A623?style=for-the-badge" alt="PreStocks" />
     <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" />
   </p>
 </div>
@@ -27,37 +28,210 @@ Investing in stocks on-chain today is fragmented, confusing, and impractical for
 
 1. **No easy way to invest thematically.** You want exposure to "AI" or "Big Tech" as a theme, but you're forced to research individual tickers, find the right tokenized versions, and execute separate swap transactions for each one. On traditional brokerages this takes a few clicks; on-chain it takes dozens.
 
-2. **Two separate markets, zero unified experience.** Public equities (Apple, Nvidia, Tesla) live on one set of protocols (xStocks), while private pre-IPO companies (SpaceX, OpenAI, Anthropic) live on a completely different one (PreStocks). Each has different token decimals, different fee structures, and different liquidity pools. No existing tool combines them.
+2. **Pre-IPO companies are completely inaccessible.** OpenAI, SpaceX, Anthropic -- the most valuable private technology companies in the world -- are off-limits to ordinary investors. Even on-chain, the tokens exist ([PreStocks](https://prestocks.com) has tokenized them on Solana), but there's no consumer-grade app that integrates them alongside public equities, handles their unique 9-decimal precision, resolves their live pricing, or protects users from thin AMM liquidity. The raw tokens sit there, untouchable by anyone who doesn't want to manually interact with DEX aggregators and manage Token-2022 quirks by hand.
 
-3. **Rebalancing is a nightmare.** When your portfolio drifts from target weights, the only option is manual selling and re-buying -- creating taxable events, paying swap fees twice, and losing to slippage on every trade.
+3. **You cannot gift stocks to anyone.** On traditional platforms, stock gifting is either impossible or buried behind account-level restrictions. On-chain, it's even worse. Want to send a friend $50 in SpaceX shares for their birthday? You'd have to walk them through setting up a Solana wallet, funding it with SOL, finding the right Token-2022 mint address, navigating a DEX, and executing a swap -- all before they can own a single share. There is no "send a link, they click claim" experience. It doesn't exist.
 
-4. **You can't gift stocks to anyone.** Want to send a friend $50 in Tesla shares for their birthday? There's no way to do it. You'd have to walk them through setting up a wallet, finding the right token, and executing a swap themselves.
+4. **Rebalancing is a nightmare.** When your portfolio drifts from target weights, the only option is manual selling and re-buying -- creating taxable events, paying swap fees twice, and losing to slippage on every trade.
 
-5. **Token-2022 complexity is hidden but dangerous.** Many tokenized stocks use Solana's Token-2022 standard with features like transfer fees (1% on every transfer) and scaled UI multipliers that change over time. If an app doesn't handle these correctly, users silently lose money -- receiving fewer shares than expected, or having claims fail entirely because the vault math is wrong.
+5. **Token-2022 complexity is hidden but dangerous.** Many tokenized stocks use Solana's Token-2022 standard with features like transfer fees (1% withheld on every PreStocks transfer) and scaled UI multipliers that change over time. If an app doesn't handle these correctly, users silently lose money -- receiving fewer shares than expected, or having claims fail entirely because the vault math is wrong.
 
 ---
 
 ## What Slyz Solves
 
-**Slyz is a non-custodial web app that lets anyone invest in curated stock baskets and gift fractional shares to friends -- all on Solana, with a few clicks.**
+**Slyz is a non-custodial web app that lets anyone invest in curated stock baskets, access pre-IPO companies, and gift fractional shares to friends -- all on Solana, with a few clicks.**
 
-Here's what that means in plain terms:
+- **Pick a theme, enter an amount, done.** Select "AI Frontier" or "The Mag 3", type `$50`, and Slyz automatically splits your USDC across 3 stocks, executes each swap through Jupiter, and deposits the tokenized shares directly into your wallet.
 
-- **Pick a theme, enter an amount, done.** Select "AI Frontier" or "The Mag 3", type `$50`, and Slyz automatically splits your USDC across 3 stocks, executes each swap through Jupiter, and deposits the tokenized shares directly into your wallet. You never hold custody with Slyz -- it's your wallet, your keys, your shares.
+- **Access pre-IPO companies that were previously unreachable.** Slyz is the first consumer app to properly integrate PreStocks tokens -- bringing OpenAI, Anthropic, SpaceX, Anduril, Figure AI, Kalshi, Neuralink, and Polymarket into a single unified interface with live pricing, fractional share support, and full Token-2022 transfer fee handling.
 
-- **Public and private stocks in one place.** Slyz supports 10 public equities (NVDA, AAPL, MSFT, TSLA, AMZN, META, GOOGL, SPY, QQQ, COIN) and 8 private pre-IPO companies (OpenAI, Anthropic, SpaceX, Anduril, Figure AI, Kalshi, Neuralink, Polymarket) through a single unified interface.
+- **Gift any stock -- public or pre-IPO -- to anyone with a link.** Slyz introduces the first on-chain stock gifting system on Solana. Send fractional shares of Tesla, SpaceX, or OpenAI as an expiring claim link. The recipient just connects their wallet and clicks "Claim." No prior setup needed. No fees for the recipient.
 
-- **Rebalance without selling.** Slyz tracks how far each holding has drifted from its target weight and uses a "water-filling" algorithm to route 100% of new deposits into the underweight assets. Zero sells, zero extra tax events, zero unnecessary slippage.
+- **Rebalance without selling.** Water-filling algorithm routes 100% of new deposits into underweight assets. Zero sells, zero extra tax events, zero unnecessary slippage.
 
-- **Gift stock to anyone with a link.** Send fractional shares of any tokenized stock as an expiring claim link. The recipient just connects their Solana wallet and clicks "Claim" -- they don't need to already own the token. The gift link uses a non-custodial ephemeral vault: a temporary keypair is generated client-side, the secret key is embedded in the URL hash fragment (never sent to any server), and the sender funds the vault with shares and enough SOL to cover the recipient's claim transaction.
-
-- **Token-2022 math done right.** Slyz dynamically reads each token's on-chain capabilities (scaled UI multipliers, transfer fee basis points) and accounts for them everywhere: gift creation, claiming, reclaiming, and display. Escrow link gifts correctly calculate the double-transfer fee (sender to vault, vault to recipient = 0.99 x 0.99 = 0.9801 net for assets with 1% transfer fees). The recipient always sees the exact net amount they'll receive.
+- **Token-2022 math done right.** Slyz dynamically reads each token's on-chain capabilities and accounts for them everywhere: investing, gifting, claiming, reclaiming, and display.
 
 ---
 
-## Features
+## PreStocks Integration -- Bringing Pre-IPO to Everyone
 
-### Thematic Basket Investing
+### What is PreStocks?
+
+[PreStocks](https://prestocks.com) is a protocol on Solana that tokenizes ownership in the world's most valuable private companies. Each PreStocks token represents fractional exposure to a pre-IPO company, minted as a Token-2022 asset with 9-decimal precision and a 1% (100 basis points) transfer fee enforced at the protocol level.
+
+These aren't synthetic derivatives or price feeds. They are on-chain tokens with real supply, real liquidity pools on Jupiter, and real market prices that reflect secondary-market valuation of these private companies.
+
+### Why the Integration Matters
+
+Before Slyz, using PreStocks tokens meant:
+- Finding the correct mint address manually (8 separate contracts, each starting with `Pre...`)
+- Knowing that PreStocks uses 9 decimal places (not 8 like xStocks) and doing the math yourself
+- Understanding that every transfer silently withholds 1% via Token-2022's `transferFeeConfig` extension
+- Dealing with `scaledUiAmountConfig` multipliers that change over time (OpenAI's multiplier is currently ~1.486, meaning 1 "display share" does not equal 1 raw token)
+- Checking Jupiter liquidity depth manually before placing an order, because thin AMM pools can cause 10%+ slippage
+- Having no live pricing dashboard -- the PreStocks API exists, but it doesn't serve CORS headers, so browsers can't read it directly
+
+Slyz solves every one of these problems.
+
+### How We Integrated PreStocks
+
+**1. Verified Mint Registry**
+
+All 8 PreStocks mint addresses are sourced directly from the official PreStocks API (`https://prestocks.com/api/prestocks`) and hardcoded with their verified contract addresses, decimal precision (9), transfer fee (100 bps), and scaled UI multipliers:
+
+| Asset | Mint Address | Multiplier | Transfer Fee |
+|---|---|---|---|
+| OpenAI | `PreweJYECqtQwBt...` | 1.4861347 | 1% (100 bps) |
+| Anthropic | `Pren1FvFX6J3E4k...` | 1.0 | 1% (100 bps) |
+| SpaceX | `PreANxuXjsy2pvi...` | 5.0 | 1% (100 bps) |
+| Anduril | `PresTj4Yc2bAR19...` | 1.0 | 1% (100 bps) |
+| Figure AI | `PreZad18qfPtbxN...` | 1.0 | 1% (100 bps) |
+| Kalshi | `PreLWGkkeqG1s4H...` | 1.0 | 1% (100 bps) |
+| Neuralink | `PrekqLJvJ3qVdXm...` | 1.0 | 1% (100 bps) |
+| Polymarket | `Pre8AREmFPtoJFT...` | 1.0 | 1% (100 bps) |
+
+**2. Server-Side CORS Proxy**
+
+The upstream PreStocks API (`prestocks.com/api/prestocks`) returns valid JSON but sends no `Access-Control-Allow-Origin` header. Browsers block it outright. Slyz runs a Next.js API route (`/api/prestocks`) that fetches upstream server-side and re-serves the payload from the app's own origin. The proxy caches upstream responses for 60 seconds with a `stale-while-revalidate` window of 5 minutes, so the browser always gets a fast same-origin response.
+
+**3. Three-Tier Data Failover**
+
+PreStocks pricing never goes dark, even if the upstream API is down:
+
+| Priority | Source | Freshness |
+|---|---|---|
+| 1 | Live API via server-side proxy | Polled every 30s, cached 45s in-memory |
+| 2 | localStorage (`slyz_prestocks_last_payload`) | Last successful response, survives page reloads |
+| 3 | Authentic static snapshot | Baked-in baseline from the official API, used on first offline visit |
+
+**4. Impact Guard and Liquidity Gating**
+
+PreStocks tokens trade on automated market maker pools through Jupiter. Some of these pools are thin. Slyz enforces:
+- Maximum $25 order caps for PreStocks basket purchases to keep price impact under 5%
+- Live Jupiter pool impact checking before execution
+- Hardcoded slippage guards per asset
+
+**5. Live On-Chain Capability Resolution**
+
+Rather than trusting a static table, Slyz calls `getParsedAccountInfo` on each PreStocks mint and reads the live `scaledUiAmountConfig` and `transferFeeConfig` extensions directly from the blockchain. This catches multiplier drift (issuers update multipliers over time) and fee changes. Results are cached for 60 seconds.
+
+A verification script (`scripts/verify-mints.mjs`) compares all 18 mints (10 xStocks + 8 PreStocks) against their on-chain values and reports any mismatch. This runs before every deployment.
+
+### The Frontier Basket
+
+Slyz ships with a curated "Frontier" basket that gives instant multi-asset exposure to three of the highest-valued private companies:
+
+| Asset | Weight | Why |
+|---|---|---|
+| **OpenAI PreStocks** | 40% | The company behind GPT and the leading frontier AI lab. |
+| **Anthropic PreStocks** | 35% | The leading AI safety-focused lab and builder of Claude. |
+| **SpaceX PreStocks** | 25% | The world's most valuable private company; reusable rockets, Starlink, and deep-space ambitions. |
+
+One click. Three pre-IPO titans. Non-custodial settlement into the investor's own Solana wallet.
+
+---
+
+## Stock Gifting System -- Sending Shares as a Link
+
+### Why This Matters
+
+Stock gifting does not exist on-chain. Not on Solana, not on Ethereum, not anywhere. You can send tokens, sure, but there's no product that lets you:
+
+1. Pick a stock (public or pre-IPO)
+2. Choose a dollar amount
+3. Add a personal note and set an expiry timer
+4. Generate a claim link that works for anyone -- even someone who has never used crypto before
+5. Have the recipient claim shares into their own wallet without paying any network fees
+6. Get the shares back automatically if they're not claimed in time
+
+Slyz does all of this. And because it integrates PreStocks, you can gift pre-IPO shares of OpenAI, SpaceX, or Anthropic -- assets that most people on earth cannot access through any traditional brokerage.
+
+### Two Delivery Methods
+
+**Link Gift (Escrow)**
+
+The sender generates a shareable claim URL. The shares sit in a temporary, non-custodial vault on-chain until the recipient claims them or the timer expires.
+
+How it works under the hood:
+
+1. **Keypair generation** -- Slyz generates a fresh Solana `Keypair` entirely in the browser. This is the ephemeral vault account.
+
+2. **Transaction construction** -- A single Solana transaction bundles three instructions:
+   - Transfer 0.0035 SOL from sender to the vault (covers the recipient's future ATA rent and claim transaction fees)
+   - Create the vault's Token-2022 Associated Token Account idempotently
+   - `TransferChecked` of the token shares from sender's ATA to the vault's ATA
+
+3. **Fee-aware amount calculation** -- For PreStocks tokens with a 1% transfer fee, the system calculates the net amount the recipient will actually receive. On the escrow path, there are *two* fee-bearing transfers (sender to vault, then vault to recipient), so the net is `0.99 x 0.99 = 0.9801` of gross. This double-fee deduction is computed and displayed to the sender *before* they approve the transaction.
+
+4. **Claim URL generation** -- The vault's secret key, gift metadata, share amounts, and net amounts are serialized into JSON, Base64-encoded, and placed in the URL hash fragment (`#gift=...`). The hash fragment is *never sent to any server over HTTP* -- it stays entirely in the browser. There is no database. Slyz is fully databaseless for gifting.
+
+5. **Sender approval** -- The transaction is simulated first (preflight validation). If the simulation passes, the sender signs with their wallet and the transaction is broadcast.
+
+6. **Claim page** -- The recipient opens the link, connects any Solana wallet, and clicks "Claim." The claim transaction is signed entirely by the vault's ephemeral keypair (reconstituted from the URL hash). The recipient pays nothing -- the vault's pre-funded SOL covers ATA creation and transaction fees.
+
+7. **Post-claim cleanup** -- After transferring shares to the recipient, the vault sweeps its remaining SOL balance to the recipient's wallet (minus a 35,000 lamport reserve for the claim transaction fee). If the token has no withheld transfer fees (xStocks), the vault ATA is closed and its rent is also returned to the recipient.
+
+8. **Expiry and reclaim** -- If the gift expires unclaimed, the sender can reclaim the shares and SOL back from the vault. The reclaim transaction uses the same ephemeral keypair stored in the sender's local gift history.
+
+**Direct Gift (Wallet-to-Wallet)**
+
+For cases where the sender knows the recipient's Solana address, shares are transferred directly in a single transaction. No escrow, no vault, no expiry timer. One transfer, one fee deduction (for PreStocks assets), instant settlement.
+
+### Gift Personalization and Controls
+
+| Feature | Details |
+|---|---|
+| **Sender Name** | Displayed to the recipient on the claim page. Defaults to "A Friend." |
+| **Personal Note** | Free-text message shown on the gift card and claim page. |
+| **Theme** | Three visual themes: Gold, Lime, and Purple. Affects the countdown clock styling, gift card colors, and confetti animation. |
+| **Expiry Timer Presets** | 7 minutes, 10 minutes, 15 minutes, 30 minutes. |
+| **Custom Duration** | Manual hours and minutes input, capped at 24 hours maximum. |
+| **Live Countdown Clock** | Visible to both sender (on the gift hub) and recipient (on the claim page). Animated day/hour/minute/second display with theme-matched styling. |
+
+### Gift Vault Tracker
+
+After creating a gift, the sender can track all their sent vaults on the Gift Hub page:
+
+- **Status badges**: Active Link, Claimed, Expired
+- **Live countdown timers** for each active vault
+- **Copy claim link** button for re-sharing
+- **On-chain transaction receipts** via Solscan links
+- **Filter by status**: All, Active, Claimed, Expired
+- **Net share display**: Always shows the net amount after transfer fees, not the gross
+
+### Gifting a Pre-IPO Stock -- What That Actually Means
+
+When you gift OpenAI PreStocks through Slyz, here's what happens at the protocol level:
+
+1. The sender's wallet signs a Token-2022 `TransferChecked` instruction against the OpenAI PreStocks mint (`PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF`), which has:
+   - 9 decimal places (1 billion sub-units per whole token)
+   - A `scaledUiAmountConfig` multiplier of ~1.4861347 (1 "display share" = ~0.6729 raw tokens)
+   - A `transferFeeConfig` of 100 basis points (1%), withheld from the receiving account on every transfer
+
+2. Slyz queries the mint's live on-chain configuration to get the current multiplier and fee (they can change), converts the sender's dollar amount into the correct number of raw base units, calculates the exact net after one fee deduction (direct gift) or two fee deductions (link gift), and shows the recipient the real number they'll receive.
+
+3. The recipient -- who may never have heard of PreStocks, Token-2022, or Solana -- opens a link, connects a wallet, clicks one button, and owns fractional shares of OpenAI. They can see it in their Portfolio page, track its value against PreStocks live pricing, or gift it forward to someone else.
+
+This is the first time pre-IPO stock gifting has existed in any form, on any chain.
+
+### Preflight Simulation and Error Handling
+
+Every gift transaction (link creation, direct transfer, claim, and reclaim) is simulated against the Solana runtime before the wallet signature prompt. The simulation response is parsed for specific Token-2022 error codes:
+
+| Error | What Happened | User-Facing Message |
+|---|---|---|
+| `0x1` (InsufficientFunds) | Not enough tokens or SOL | "Insufficient share or SOL balance to process this transaction." |
+| `0x11` (AccountFrozen) | Issuer has frozen the token account | "This token account is frozen by the issuer." |
+| Paused | Issuer has paused transfers | "Transfers for this asset are temporarily paused by the token issuer." |
+| TransferHook | Transfer hook validation failed | "Transfer hook validation failed for this asset." |
+| AccountNotFound | Token account doesn't exist | "Token account not found. Please ensure you hold this asset before gifting." |
+
+This prevents the user from approving a transaction that will fail on-chain and waste network fees.
+
+---
+
+## Thematic Basket Investing
 
 | Basket | Market | Assets | Thesis |
 |---|---|---|---|
@@ -68,28 +242,16 @@ Here's what that means in plain terms:
 | **Big Commerce** | Public (xStocks) | AMZN 40%, META 30%, GOOGL 30% | Digital ad monopolies and global logistics platforms. |
 | **Frontier** | Private (PreStocks) | OpenAI 40%, Anthropic 35%, SpaceX 25% | Direct exposure to the most valuable private tech companies. |
 
-You can also build custom baskets with 2 to 4 public equities using the **Slyz Studio**, with interactive allocation sliders and a live donut chart.
+Custom baskets with 2 to 4 public equities can be assembled in the **Slyz Studio**, with interactive allocation sliders and a live donut chart.
 
-### Stock Gifting
+---
 
-- **Link Gifts (Escrow):** Generate a claim URL with an expiring timer (7 min to 24 hrs). The shares sit in a temporary non-custodial vault until claimed. If unclaimed, the sender can reclaim them.
-- **Direct Gifts:** Send shares straight to a friend's Solana wallet address. One transfer, no escrow.
-- **Transfer Fee Transparency:** For PreStocks assets that carry a 1% issuer transfer fee, the exact net amount is shown upfront before the sender confirms. Link gifts account for the double-transfer path; direct gifts account for the single-transfer path.
-- **Vault Sponsorship:** The sender deposits 0.0035 SOL into the ephemeral vault to cover the recipient's claim transaction network fees and account rent -- the recipient pays nothing.
-
-### Portfolio Management
+## Portfolio Management
 
 - **Real-Time Drift Tracking:** Reads live Token-2022 account balances directly from Solana mainnet, calculates current value via Jupiter oracle prices, and compares against target weights.
 - **Smart Top-Up Rebalancing:** Water-filling algorithm routes new deposits into underweight assets only. No selling, no unnecessary tax events.
 - **Exit to USDC:** Full or partial liquidation back into USDC with sequential swap execution.
 - **Cost Basis and PnL:** Track unrealized profit/loss against acquisition cost.
-
-### On-Chain Safety
-
-- **Non-Custodial:** Slyz never holds user funds or private keys. Every transaction is built client-side and signed by the user's own wallet.
-- **Preflight Simulation:** All gifting transactions are simulated before broadcast. Clear error messages for frozen accounts, paused transfers, insufficient balance, and hook failures.
-- **Impact Guard:** PreStocks purchases are capped with slippage guards and order limits to defend against thin AMM pool liquidity.
-- **Live Mint Verification:** An included verification script (`scripts/verify-mints.mjs`) compares all 18 on-chain Token-2022 mint configurations against the app's static fallback table to catch multiplier or fee drift before deployment.
 
 ---
 
@@ -97,7 +259,7 @@ You can also build custom baskets with 2 to 4 public equities using the **Slyz S
 
 ### Dual-Sleeve Model
 
-Slyz bridges two separate token ecosystems through a unified investment and gifting engine:
+Slyz bridges two separate token ecosystems through a unified investment, portfolio, and gifting engine:
 
 ```
                          +-----------------------+
@@ -126,49 +288,63 @@ Slyz bridges two separate token ecosystems through a unified investment and gift
    | COINx                 |                  | Neuralink Polymarket   |
    +----------+------------+                  +-------------+----------+
               |                                            |
-              +----------------+          +----------------+
-                               |          |
-                         +-----v----------v------+
-                         |   Jupiter Lite API     |
-                         |   (Swap Aggregation)   |
-                         +----------+------------+
-                                    |
-                         +----------v------------+
-                         |   Solana Mainnet       |
-                         |   (Token-2022 Program) |
-                         +-----------------------+
+              +---+-------- INVEST --------+---+-----------+
+              |   +-------- GIFT ----------+   |
+              |                                |
+              +----------------+---------------+
+                               |
+                    +----------v-----------+
+                    |   Jupiter Lite API    |
+                    |   (Swap Aggregation)  |
+                    +----------+-----------+
+                               |
+                    +----------v-----------+
+                    |   Solana Mainnet      |
+                    |   (Token-2022)        |
+                    +----------------------+
 ```
 
 ### Gifting Flow
 
 ```
-  LINK GIFT (Escrow):
-  Sender --> [Fund Vault TX] --> Ephemeral Vault ATA
-                                      |
-                                 Claim URL with
-                                 secret key in #hash
-                                      |
-                              Recipient clicks link
-                                      |
-                              [Claim TX signed by vault keypair]
-                                      |
-                              Recipient ATA <-- shares
-                              Recipient    <-- swept SOL
+  LINK GIFT (Escrow) -- e.g. "Gift $50 in OpenAI PreStocks"
+  ================================================================
+
+  Sender Wallet
+    |
+    |--> [1] Transfer 0.0035 SOL to ephemeral vault (recipient fee sponsorship)
+    |--> [2] Create vault Token-2022 ATA
+    |--> [3] TransferChecked: shares from sender ATA --> vault ATA
+    |         (1% withheld by Token-2022 transferFeeConfig)
+    |
+    |--> Wallet signs --> Broadcast --> Confirmed on Solana Mainnet
+    |
+    +--> Generate claim URL:
+         https://useslyz.vercel.app/gift/claim#gift=<base64(payload+secretKey)>
+         (secret key ONLY in URL hash -- never sent to any server)
+
+  Recipient opens link --> connects wallet --> clicks "Claim"
+    |
+    |--> [1] Create recipient Token-2022 ATA (paid by vault SOL)
+    |--> [2] TransferChecked: shares from vault ATA --> recipient ATA
+    |         (1% withheld again -- double-fee accounted for)
+    |--> [3] Close vault ATA if no withheld fees (rent returned)
+    |--> [4] Sweep remaining SOL from vault --> recipient wallet
+    |
+    +--> All signed by vault ephemeral keypair. Recipient pays $0.
 
 
-  DIRECT GIFT:
-  Sender --> [TransferChecked TX] --> Recipient ATA
+  DIRECT GIFT -- e.g. "Send $25 in TSLAx to sol_address"
+  ================================================================
+
+  Sender Wallet
+    |
+    |--> [1] Create recipient Token-2022 ATA (paid by sender)
+    |--> [2] TransferChecked: shares from sender ATA --> recipient ATA
+    |         (single transfer = single fee deduction for PreStocks)
+    |
+    +--> Wallet signs --> Broadcast --> Confirmed
 ```
-
-### Token-2022 Capability Resolution
-
-The app resolves each mint's live configuration from chain data at runtime:
-
-1. **Scaled UI Multiplier** -- converts between "display shares" (what the user sees) and "raw base units" (what the blockchain stores). For example, OPENAI has a multiplier of ~1.486, meaning 1 display share = 1/1.486 raw base units. These multipliers change over time as issuers adjust them.
-
-2. **Transfer Fee BPS** -- PreStocks assets charge 100 basis points (1%) per transfer, withheld from the receiving account. The app reads this from the mint's `transferFeeConfig` extension, not from a static table.
-
-Results are cached for 60 seconds to avoid RPC spam. Static fallback values are baked in for offline/degraded scenarios.
 
 ---
 
@@ -201,7 +377,7 @@ Live on-chain settlement proof for "The Mag 3" basket (sequential 3-leg executio
 | Solana Web3 | `@solana/web3.js` and `@solana/spl-token` (Token-2022 program parsing) |
 | Wallet Support | `@solana/wallet-adapter-react` (Phantom, Solflare, Backpack, WalletConnect, Mobile Wallet Adapter) |
 | DEX Aggregator | [Jupiter Unified Lite API](https://lite-api.jup.ag) |
-| Pre-IPO Data | [PreStocks REST API](https://prestocks.com/api/prestocks) (proxied server-side) |
+| Pre-IPO Data | [PreStocks REST API](https://prestocks.com/api/prestocks) (proxied server-side via `/api/prestocks`) |
 | RPC | Dedicated Alchemy Solana Mainnet endpoint |
 | Deployment | [Vercel](https://vercel.com) |
 
@@ -291,36 +467,36 @@ npm run start
 slyz/
   src/
     app/
-      page.tsx              Landing page
-      dashboard/            Basket explorer, swap terminal, studio
-      portfolio/            Holdings, drift tracker, rebalancing, exits
+      page.tsx                   Landing page
+      dashboard/                 Basket explorer, swap terminal, Slyz Studio
+      portfolio/                 Holdings, drift tracker, rebalancing, exits
       gift/
-        page.tsx            Gift hub (create gifts, track sent vaults)
-        claim/page.tsx      Gift claim page (recipient-facing)
-      invest/[basketId]/    Per-basket investment execution page
-      docs/                 Documentation page
-      api/prestocks/        Server-side proxy for PreStocks API (CORS)
+        page.tsx                 Gift Hub (create gifts, track vaults, reclaim)
+        claim/page.tsx           Gift claim page (recipient-facing)
+      invest/[basketId]/         Per-basket investment execution page
+      docs/                      Documentation page
+      api/prestocks/route.ts     Server-side CORS proxy for PreStocks API
     components/
-      GiftStockModal.tsx    Gift creation modal (link + direct)
-      GiftCountdownClock.tsx  Live countdown timer for gift expiry
-      LiveSlyzSculpture.tsx   Animated 3D landing page element
+      GiftStockModal.tsx         Gift creation modal (link + direct, all 18 assets)
+      GiftCountdownClock.tsx     Live countdown timer with themed styling
+      LiveSlyzSculpture.tsx      Animated 3D landing page element
       ...
     lib/
-      constants.ts          Verified stocks, baskets, Token-2022 capability resolver
-      gifting.ts            Gift vault creation, claim, reclaim, simulation
-      jupiter.ts            Jupiter Lite API integration (quotes, swaps, prices)
-      solana.ts             Balance fetching, Token-2022 account parsing
-      portfolio.ts          Portfolio position calculation, drift analysis
-      prestocks.ts          PreStocks API client with 3-tier failover
+      constants.ts               18 verified stocks, baskets, on-chain capability resolver
+      gifting.ts                 Vault creation, claim, reclaim, preflight simulation
+      jupiter.ts                 Jupiter Lite API (quotes, swaps, prices)
+      solana.ts                  Balance fetching, Token-2022 account parsing
+      portfolio.ts               Position calculation, drift analysis
+      prestocks.ts               PreStocks API client with 3-tier failover
     context/
-      WalletBalanceContext.tsx   Global wallet balance state
+      WalletBalanceContext.tsx    Global wallet balance state
   scripts/
-    verify-mints.mjs        On-chain mint verification (run before deploy)
+    verify-mints.mjs             On-chain mint verification (pre-deploy check)
   public/
-    slyzlogo.png            App icon
-    slyz-preview.png        Landing page screenshot
-    portfolio-preview.png   Portfolio screenshot
-    ...                     Partner logos (Solana, Jupiter, xStocks, PreStocks)
+    slyzlogo.png                 App icon
+    slyz-preview.png             Landing page screenshot
+    portfolio-preview.png        Portfolio screenshot
+    ...                          Partner logos (Solana, Jupiter, xStocks, PreStocks)
 ```
 
 ---
@@ -330,10 +506,11 @@ slyz/
 | Principle | Implementation |
 |---|---|
 | **Non-Custodial** | Slyz never holds user funds or private keys. All transactions are built in the browser and signed by the user's wallet. |
-| **Ephemeral Gift Vaults** | Gift link secret keys exist only in the URL hash fragment -- they are never sent to Slyz servers or stored in any database. |
-| **Preflight Simulation** | Every gift transaction is simulated before broadcast. Simulation errors are parsed into human-readable messages (frozen account, paused transfers, insufficient balance). |
-| **Impact Guard** | PreStocks purchases enforce slippage limits and order size caps to protect against thin AMM liquidity. |
-| **Live Capability Verification** | On-chain multipliers and fee rates are read from the blockchain at runtime, not assumed from static values. |
+| **Databaseless Gifting** | Gift vault secret keys exist only in the URL hash fragment. They are never sent to Slyz servers, never stored in any database, and never logged. The entire gifting system runs without a backend database. |
+| **Preflight Simulation** | Every gift transaction is simulated before the wallet signature prompt. Simulation errors are parsed into human-readable messages for frozen accounts, paused transfers, insufficient balance, and hook failures. |
+| **Impact Guard** | PreStocks purchases enforce slippage limits and order size caps ($25 per leg) to protect against thin AMM liquidity. |
+| **Live Capability Verification** | On-chain multipliers and fee rates are read from the blockchain at runtime via `getParsedAccountInfo`, not assumed from static values. A pre-deploy verification script validates all 18 mints. |
+| **Vault Sponsorship** | Senders deposit 0.0035 SOL into the ephemeral vault to cover the recipient's ATA rent and claim fees. Recipients pay nothing. |
 
 ---
 
@@ -344,5 +521,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 <div align="center">
-  <p>Built for the Solana ecosystem.</p>
+  <p>Built for the Solana ecosystem. Powered by <a href="https://prestocks.com">PreStocks</a>, <a href="https://backed.fi">xStocks</a>, and <a href="https://jup.ag">Jupiter</a>.</p>
 </div>
