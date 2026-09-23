@@ -583,7 +583,7 @@ export const QuickSwapModal: React.FC = () => {
               ) : (
                 <>
                   <Zap className="w-4 h-4" />
-                  <span>Swap {inputSymbol} ➔ {outputSymbol}</span>
+                  <span>Swap {inputSymbol} to {outputSymbol}</span>
                 </>
               )}
             </button>

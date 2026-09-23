@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   RotateCcw,
   X,
+  Check,
 } from "lucide-react";
 import {
   getJupiterQuote,
@@ -221,7 +222,7 @@ export const ExecutionModal: React.FC<Props> = ({
         if (impact > 0.025) {
           // 2.5%+ -> WARN: display badge on step, continue.
           updateStep(i, {
-            errorMessage: `⚠ High price impact: ${(impact * 100).toFixed(2)}%`,
+            errorMessage: `High price impact: ${(impact * 100).toFixed(2)}%`,
           });
         }
 
@@ -380,9 +381,9 @@ export const ExecutionModal: React.FC<Props> = ({
           {!isRunning && (
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-xs transition-colors"
+              className="w-7 h-7 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -470,7 +471,9 @@ export const ExecutionModal: React.FC<Props> = ({
                     {/* Step Status Text */}
                     <div className="text-[11px] font-mono">
                       {step.status === "success" && (
-                        <span className="text-[#CDE06A] font-bold">Filled ✓</span>
+                        <span className="text-[#CDE06A] font-bold inline-flex items-center gap-1">
+                          Filled <Check className="w-3 h-3" />
+                        </span>
                       )}
                       {step.status === "signing" && (
                         <span className="text-[#8D8AFF] animate-pulse">Confirming...</span>
@@ -597,8 +600,9 @@ export const ExecutionModal: React.FC<Props> = ({
           ) : (
             <div className="space-y-2.5">
               <div className="p-2.5 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/30 text-center">
-                <p className="text-xs sm:text-sm font-bold text-[#CDE06A]">
-                  🎉 All {steps.length} swaps confirmed!
+                <p className="text-xs sm:text-sm font-bold text-[#CDE06A] flex items-center justify-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#CDE06A]" />
+                  <span>All {steps.length} swaps confirmed!</span>
                 </p>
                 <p className="text-[11px] text-[#8F9CAE] mt-0.5">
                   Your tokenized equity holdings are now active on Solana.

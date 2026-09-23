@@ -8,7 +8,6 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   Gift,
   Clock,
-  Sparkles,
   ArrowDownLeft,
   ExternalLink,
   ShieldCheck,
@@ -219,7 +218,7 @@ export default function GiftClaimPage() {
                 )}
               </div>
               <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-[#CDE06A] text-[#0B0E14] flex items-center justify-center shadow-md">
-                <Sparkles className="w-4 h-4" />
+                <Gift className="w-3.5 h-3.5" />
               </div>
             </div>
 
@@ -337,7 +336,7 @@ export default function GiftClaimPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
+                  <Gift className="w-4 h-4" />
                   <span>Claim {payload.shareAmount.toFixed(4)} {asset.underlying} to Wallet</span>
                 </>
               )}

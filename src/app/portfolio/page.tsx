@@ -17,8 +17,10 @@ import {
   Layers,
   Sliders,
   ArrowUpDown,
-  Trash2,
   CheckCircle2,
+  Check,
+  X,
+  Trash2,
 } from "lucide-react";
 import { useWalletBalances } from "@/context/WalletBalanceContext";
 import {
@@ -462,8 +464,8 @@ export default function PortfolioPage() {
                   />
                   <span>
                     SOL: {balances.solBalance.toFixed(3)} SOL{" "}
-                    <span className={balances.hasSufficientGas ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
-                      {balances.hasSufficientGas ? "✓" : "(Low SOL)"}
+                    <span className={balances.hasSufficientGas ? "text-emerald-400 font-bold inline-flex items-center gap-0.5" : "text-amber-400 font-bold"}>
+                      {balances.hasSufficientGas ? <Check className="w-3 h-3 inline" /> : "(Low SOL)"}
                     </span>
                   </span>
                 </div>
@@ -661,9 +663,9 @@ export default function PortfolioPage() {
               </div>
               <button
                 onClick={() => setIsTopUpOpen(false)}
-                className="w-8 h-8 rounded-xl bg-[#0B0E14] text-[#8F9CAE] hover:text-white flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-[#0B0E14] text-[#8F9CAE] hover:text-white flex items-center justify-center transition-colors"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   ArrowDownLeft,
   Check,
+  X,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import {
@@ -385,9 +386,9 @@ export function LiquidationModal({
           {!isRunning && (
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center text-xs transition-colors"
+              className="w-7 h-7 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>

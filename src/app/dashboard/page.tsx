@@ -19,7 +19,6 @@ import {
   Copy,
   ExternalLink,
   ChevronRight,
-  Sparkles,
   RefreshCw,
   SlidersHorizontal,
   ArrowRight,
@@ -484,7 +483,7 @@ export default function DashboardPage() {
                 : "text-[#8F9CAE] hover:text-white hover:bg-[#1D2332]"
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <Lock className="w-3.5 h-3.5 shrink-0" />
             <span>Private (PreStocks)</span>
             <span className="hidden md:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/20">
               Frontier • 8 Assets
@@ -526,7 +525,6 @@ export default function DashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#262D3D]">
                 <div className="flex items-center gap-2.5">
                   <span className="px-2.5 py-1 rounded-lg bg-[#8D8AFF]/15 border border-[#8D8AFF]/30 text-[#8D8AFF] text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3" />
                     PreStocks™ Verified Pipeline
                   </span>
                   <span className="text-xs text-[#8F9CAE] font-mono">
@@ -663,13 +661,12 @@ export default function DashboardPage() {
           <div className="space-y-3 relative z-10">
             <div className="flex items-center justify-between">
               <span
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider ${
                   marketFilter === "private"
                     ? "bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30"
                     : "bg-[#CDE06A]/15 text-[#CDE06A]"
                 }`}
               >
-                <Sparkles className="w-3 h-3" />
                 {marketFilter === "private" ? "Featured Pre-IPO Pie" : "Featured Theme"}
               </span>
               <div className="w-7 h-7 rounded-lg bg-[#262D3D] flex items-center justify-center text-white">
@@ -795,7 +792,9 @@ export default function DashboardPage() {
                     />
                     <span>Need USDC? You have {balances.solBalance.toFixed(3)} SOL available</span>
                   </span>
-                  <span className="underline">Convert Now ➔</span>
+                  <span className="underline flex items-center gap-1">
+                    Convert Now <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
                 </button>
               )}
             </div>
@@ -1069,9 +1068,11 @@ export default function DashboardPage() {
                               height={14}
                               className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
                             />
-                            <span>Swap SOL ➔ USDC</span>
+                            <span>Swap SOL to USDC</span>
                           </span>
-                          <span className="underline">Convert ➔</span>
+                          <span className="underline flex items-center gap-1">
+                            Convert <ArrowRight className="w-3 h-3" />
+                          </span>
                         </button>
                       )}
                     </div>
@@ -1293,7 +1294,7 @@ export default function DashboardPage() {
       {activeTab === "custom" && marketFilter === "private" && (
         <div className="bento-card text-center py-16 px-6 max-w-xl mx-auto space-y-4">
           <div className="w-12 h-12 rounded-xl bg-[#8D8AFF]/20 border border-[#8D8AFF]/30 text-[#8D8AFF] mx-auto flex items-center justify-center">
-            <Sparkles className="w-6 h-6" />
+            <SlidersHorizontal className="w-6 h-6" />
           </div>
           <h3 className="text-xl font-bold text-white">Custom Studio is Configured for Public Equities</h3>
           <p className="text-xs text-[#8F9CAE] leading-relaxed">

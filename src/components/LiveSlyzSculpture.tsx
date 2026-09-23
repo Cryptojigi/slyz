@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { Sparkles, TrendingUp, ShieldCheck, Zap, Layers, ArrowUpRight } from "lucide-react";
+import { TrendingUp, ShieldCheck, Zap, Layers, ArrowUpRight } from "lucide-react";
 
 interface Props {
   className?: string;
@@ -165,8 +165,8 @@ export const LiveSlyzSculpture: React.FC<Props> = ({ className = "" }) => {
           {/* Internal Content */}
           <div className="relative z-10 w-full h-full px-6 flex items-center justify-between text-[#0B0E14]">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-black/15 flex items-center justify-center font-bold text-xs">
-                ⚡
+              <div className="w-7 h-7 rounded-lg bg-black/15 flex items-center justify-center font-bold text-xs text-[#0B0E14]">
+                <Zap className="w-3.5 h-3.5 fill-current" />
               </div>
               <div className="leading-tight">
                 <span className="text-xs font-bold tracking-wider uppercase block">

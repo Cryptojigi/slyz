@@ -154,7 +154,7 @@ export default function GiftHubPage() {
             </h1>
             <p className="text-sm text-[#8F9CAE] leading-relaxed">
               Surprise friends or family with fractional shares of Apple, Tesla, Nvidia, SpaceX, or OpenAI.
-              Generate a secure claim link with custom expiration (24h, 7d, or custom date) and sponsored zero-fee claiming.
+              Generate a secure claim link with custom expiration (7–30 mins or custom duration up to 24 hrs) and sponsored zero-fee claiming.
             </p>
           </div>
 
@@ -451,7 +451,7 @@ export default function GiftHubPage() {
             </div>
             <h3 className="font-bold text-white text-sm">Pick Stock & Set Expiration</h3>
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Select any tokenized stock or pre-IPO share. Set how long the claim link remains valid before expiring (24 hours, 7 days, or a custom date).
+              Select any tokenized stock or pre-IPO share. Set how long the claim link remains valid before expiring (7–30 minutes, or a custom duration up to 24 hours).
             </p>
           </div>
 
