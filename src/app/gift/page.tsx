@@ -355,7 +355,7 @@ export default function GiftHubPage() {
                           </span>
                         </div>
                         <span className="text-[11px] text-[#8F9CAE] font-mono block">
-                          {gift.recipientAddressOrDomain
+                          ~{(gift.netShareAmount ?? gift.shareAmount).toFixed(4)} shares • {gift.recipientAddressOrDomain
                             ? `Direct: ${gift.recipientAddressOrDomain.slice(0, 6)}...${gift.recipientAddressOrDomain.slice(-4)}`
                             : "Claim Link Escrow"}
                         </span>

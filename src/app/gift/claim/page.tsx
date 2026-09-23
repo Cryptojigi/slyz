@@ -230,7 +230,8 @@ export default function GiftClaimPage() {
                 ${payload.estimatedUsd.toFixed(2)} in {asset.underlying}
               </h2>
               <p className="text-xs font-mono text-[#CDE06A]">
-                {payload.shareAmount.toFixed(4)} {isPrivate ? "PreStocks Shares" : "xStocks Shares"}
+                {(payload.netShareAmount ?? payload.shareAmount).toFixed(4)} {isPrivate ? "PreStocks Shares" : "xStocks Shares"}
+                {payload.feeBps && payload.feeBps > 0 ? " (net after 1% issuer fee)" : ""}
               </p>
 
               {payload.note && (
@@ -240,12 +241,12 @@ export default function GiftClaimPage() {
               )}
             </div>
 
-            {/* Live Expiration Countdown Clock (Visible while active) */}
+            {/* Live Expiration Countdown Clock (Sender-Set UX Window) */}
             {payload.expiryTimestamp > 0 && (
               <div className="pt-1 space-y-2">
                 <div className="flex items-center justify-center gap-1.5 text-xs text-[#F5A623] font-bold">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>Claim Link Expires In:</span>
+                  <span>Sender-Set Expiry Window:</span>
                 </div>
                 <GiftCountdownClock
                   targetTimestamp={payload.expiryTimestamp}
@@ -276,7 +277,7 @@ export default function GiftClaimPage() {
               <div>
                 <h4 className="font-bold text-white text-base">Shares Safely in Your Wallet!</h4>
                 <p className="text-xs text-[#8F9CAE]">
-                  You now own {payload.shareAmount.toFixed(4)} shares of {asset.name}.
+                  You now own {(payload.netShareAmount ?? payload.shareAmount).toFixed(4)} shares of {asset.name}.
                 </p>
               </div>
               {claimTxSig && (
@@ -337,7 +338,7 @@ export default function GiftClaimPage() {
               ) : (
                 <>
                   <Gift className="w-4 h-4" />
-                  <span>Claim {payload.shareAmount.toFixed(4)} {asset.underlying} to Wallet</span>
+                  <span>Claim {(payload.netShareAmount ?? payload.shareAmount).toFixed(4)} {asset.underlying} to Wallet</span>
                 </>
               )}
             </button>

@@ -29,6 +29,12 @@ import {
   VERIFIED_STOCKS,
   TOKEN_2022_PROGRAM_ID,
   StockAsset,
+  displaySharesToRawUnits,
+  rawUnitsToDisplayShares,
+  calculateNetShares,
+  getEffectiveMultiplier,
+  getTransferFeeBps,
+  resolveMintCapabilities,
 } from "@/lib/constants";
 import { PortfolioPosition } from "@/lib/portfolio";
 import {
@@ -40,6 +46,7 @@ import {
   saveSentGift,
   buildFundGiftLinkTransaction,
   buildDirectGiftTransferTransaction,
+  simulateAndValidateTransaction,
 } from "@/lib/gifting";
 import { GiftCountdownClock } from "./GiftCountdownClock";
 
@@ -92,6 +99,16 @@ export function GiftStockModal({
   const [generatedClaimUrl, setGeneratedClaimUrl] = useState<string>("");
   const [fundedTxSig, setFundedTxSig] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [capsVersion, setCapsVersion] = useState(0); // bump to recompute
+
+  useEffect(() => {
+    if (!connection || !selectedSymbol) return;
+    let cancelled = false;
+    resolveMintCapabilities(connection, selectedSymbol)
+      .then(() => { if (!cancelled) setCapsVersion((v) => v + 1); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [selectedSymbol, connection]);
 
   useEffect(() => {
     setMounted(true);
@@ -136,6 +153,7 @@ export function GiftStockModal({
 
   // Find matching user position if user already holds shares
   const userPosition = positions.find((p) => p.symbol === selectedSymbol);
+  const availableShares = userPosition ? userPosition.rawBalance : 0;
   const hasPosition = Boolean(userPosition && userPosition.rawBalance > 0.00001);
 
   // Form validation & parsing
@@ -143,7 +161,6 @@ export function GiftStockModal({
   const hasValidAmount = parsedAmount >= 1;
   const hasValidRecipient =
     deliveryType === "link" || recipientAddress.trim().length >= 32;
-  const isFormValid = hasValidAmount && hasValidRecipient;
 
   // Approximate share calculation (fallback price for PreStocks or xStocks)
   const estimatedPrice = userPosition?.usdPrice && userPosition.usdPrice > 0
@@ -152,6 +169,20 @@ export function GiftStockModal({
     ? 250 // Approximate benchmark mark price
     : 150;
   const estimatedShares = parsedAmount > 0 ? Math.max(0.0001, parsedAmount / estimatedPrice) : 0;
+
+  // Multiplier and transfer fee calculation (capsVersion forces recomputation after live capabilities resolve)
+  void capsVersion;
+  const netCalc = calculateNetShares(
+    estimatedShares,
+    selectedSymbol,
+    deliveryType === "link" ? 2 : 1
+  );
+  const minRequiredSol = deliveryType === "link" ? 0.0056 : 0.002;
+  const hasSufficientShares = availableShares >= estimatedShares && availableShares > 0;
+  const hasSufficientSol = solBalance >= minRequiredSol;
+
+  const isFormValid =
+    hasValidAmount && hasValidRecipient && hasSufficientShares && hasSufficientSol;
 
   const handleFundGift = async () => {
     if (!wallet.publicKey || !wallet.signTransaction) {
@@ -169,8 +200,14 @@ export function GiftStockModal({
       return;
     }
 
-    const minRequiredSol = deliveryType === "link" ? 0.004 : 0.002;
-    if (solBalance < minRequiredSol) {
+    if (!hasSufficientShares) {
+      setExecutionError(
+        `Insufficient ${currentAsset.name} balance. You hold ${availableShares.toFixed(4)} shares, but this gift requires ~${estimatedShares.toFixed(4)} shares.`
+      );
+      return;
+    }
+
+    if (!hasSufficientSol) {
       setExecutionError(
         `Low SOL balance (${solBalance.toFixed(4)} SOL). Need at least ${minRequiredSol} SOL for account rent & network fees.`
       );
@@ -190,15 +227,19 @@ export function GiftStockModal({
         const vaultKeypair = Keypair.generate();
 
         // 2. Build on-chain funding transaction
-        const { transaction } = await buildFundGiftLinkTransaction({
-          connection,
-          senderPublicKey: wallet.publicKey,
-          symbol: selectedSymbol,
-          shareAmount: estimatedShares,
-          vaultKeypair,
-        });
+        const { transaction, baseUnits, netBaseUnits, netShares, feeBps } =
+          await buildFundGiftLinkTransaction({
+            connection,
+            senderPublicKey: wallet.publicKey,
+            symbol: selectedSymbol,
+            shareAmount: estimatedShares,
+            vaultKeypair,
+          });
 
-        // 3. User signs and broadcasts
+        // 3. Preflight simulation to detect pause/freeze/hook/balance issues BEFORE prompting wallet
+        await simulateAndValidateTransaction(connection, transaction, wallet.publicKey);
+
+        // 4. User signs and broadcasts
         const signedTx = await wallet.signTransaction(transaction);
         const signature = await connection.sendRawTransaction(signedTx.serialize(), {
           skipPreflight: false,
@@ -208,12 +249,16 @@ export function GiftStockModal({
         const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
         await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
 
-        // 4. Construct Gift Payload
+        // 5. Construct Gift Payload
         const giftId = `gift_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const payload: GiftClaimPayload = {
           id: giftId,
           symbol: selectedSymbol,
           shareAmount: estimatedShares,
+          netShareAmount: netShares,
+          feeBps,
+          rawAmountString: baseUnits.toString(),
+          netRawAmountString: netBaseUnits.toString(),
           estimatedUsd: parsedAmount,
           senderName: senderName.trim() || "A Friend",
           senderPublicKey: wallet.publicKey.toBase58(),
@@ -229,11 +274,15 @@ export function GiftStockModal({
         setGeneratedClaimUrl(claimUrl);
         setFundedTxSig(signature);
 
-        // 5. Persist in sender's local sent gifts record
+        // 6. Persist in sender's local sent gifts record
         const sentRecord: SentGiftRecord = {
           id: giftId,
           symbol: selectedSymbol,
           shareAmount: estimatedShares,
+          netShareAmount: netShares,
+          feeBps,
+          rawAmountString: baseUnits.toString(),
+          netRawAmountString: netBaseUnits.toString(),
           estimatedUsd: parsedAmount,
           senderName: senderName.trim() || "A Friend",
           senderPublicKey: wallet.publicKey.toBase58(),
@@ -263,13 +312,17 @@ export function GiftStockModal({
       } else {
         // Direct transfer
         const recipientPk = new PublicKey(recipientAddress.trim());
-        const { transaction } = await buildDirectGiftTransferTransaction({
-          connection,
-          senderPublicKey: wallet.publicKey,
-          recipientPublicKey: recipientPk,
-          symbol: selectedSymbol,
-          shareAmount: estimatedShares,
-        });
+        const { transaction, baseUnits, netBaseUnits, netShares, feeBps } =
+          await buildDirectGiftTransferTransaction({
+            connection,
+            senderPublicKey: wallet.publicKey,
+            recipientPublicKey: recipientPk,
+            symbol: selectedSymbol,
+            shareAmount: estimatedShares,
+          });
+
+        // Preflight simulation before signature
+        await simulateAndValidateTransaction(connection, transaction, wallet.publicKey);
 
         const signedTx = await wallet.signTransaction(transaction);
         const signature = await connection.sendRawTransaction(signedTx.serialize(), {
@@ -455,6 +508,17 @@ export function GiftStockModal({
                     </span>
                   )}
                 </div>
+
+                {/* Connected Wallet Position Display */}
+                {wallet.connected && (
+                  <div className="flex items-center justify-between text-[11px] mb-2 px-1">
+                    <span className="text-[#8F9CAE]">Your {currentAsset.underlying} Balance:</span>
+                    <span className={`font-mono font-medium ${availableShares > 0 ? "text-white" : "text-amber-400"}`}>
+                      {availableShares.toFixed(4)} shares
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex gap-2 mb-2">
                   {["10", "25", "50", "100"].map((amt) => (
                     <button
@@ -480,6 +544,48 @@ export function GiftStockModal({
                   className="w-full bg-[#0B0E14] border border-[#262D3D] rounded-xl px-3.5 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-[#CDE06A]"
                   placeholder="Enter USD amount (e.g. 25)"
                 />
+
+                {/* Net Breakdown with 1% Transfer Fee Handling */}
+                {parsedAmount > 0 && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-1 text-xs">
+                    <div className="flex justify-between items-center text-[#8F9CAE]">
+                      <span>Gross Gift:</span>
+                      <span className="text-white font-mono">~{estimatedShares.toFixed(4)} shares</span>
+                    </div>
+                    {netCalc.hasFee && (
+                      <div className="flex justify-between items-center text-[#F5A623]">
+                        <span>1% Issuer Transfer Fee:</span>
+                        <span className="font-mono">-{netCalc.feeShares.toFixed(4)} shares</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-[#CDE06A] font-semibold pt-1 border-t border-[#262D3D]">
+                      <span>Recipient Receives (Net):</span>
+                      <span className="font-mono">~{netCalc.netShares.toFixed(4)} shares</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upfront Warning if user has insufficient token balance */}
+                {wallet.connected && parsedAmount > 0 && !hasSufficientShares && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>
+                      {availableShares === 0
+                        ? `You do not own any ${currentAsset.name} shares in this wallet. Please acquire shares on the Dashboard first.`
+                        : `Insufficient balance. You hold ${availableShares.toFixed(4)} shares, but this gift requires ~${estimatedShares.toFixed(4)} shares.`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Upfront Warning if user has low SOL balance */}
+                {wallet.connected && !hasSufficientSol && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>
+                      Low SOL balance ({solBalance.toFixed(4)} SOL). Need at least {minRequiredSol} SOL to sponsor recipient claim rent & network fees.
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Timing Selector (Only for Link mode) */}
@@ -669,9 +775,15 @@ export function GiftStockModal({
             <div className="text-center py-10 space-y-4">
               <Loader2 className="w-10 h-10 text-[#CDE06A] animate-spin mx-auto" />
               <div className="space-y-1">
-                <h4 className="font-bold text-white text-base">Creating & Funding Gift Vault...</h4>
+                <h4 className="font-bold text-white text-base">
+                  {deliveryType === "link"
+                    ? "Funding Temporary Escrow..."
+                    : "Sending Stock to Wallet..."}
+                </h4>
                 <p className="text-xs text-[#8F9CAE] max-w-xs mx-auto">
-                  Please approve the transaction in your Solana wallet to fund the tokenized shares and vault rent.
+                  {deliveryType === "link"
+                    ? "Please approve the transaction in your Solana wallet to deposit the shares into a temporary non-custodial escrow for your link."
+                    : "Please approve the transaction in your Solana wallet to transfer the shares directly to your friend."}
                 </p>
               </div>
             </div>
@@ -827,7 +939,13 @@ export function GiftStockModal({
                   <span>
                     {!hasValidAmount
                       ? "Enter Gift Amount"
-                      : "Enter Recipient Address"}
+                      : !hasValidRecipient
+                      ? "Enter Recipient Address"
+                      : !hasSufficientShares
+                      ? `Insufficient ${currentAsset.underlying} Balance`
+                      : !hasSufficientSol
+                      ? "Low SOL for Rent & Sponsorship"
+                      : "Cannot Complete"}
                   </span>
                 </button>
               ) : (

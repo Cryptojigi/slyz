@@ -13,7 +13,14 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import bs58 from "bs58";
-import { VERIFIED_STOCKS, TOKEN_2022_PROGRAM_ID } from "./constants";
+import {
+  VERIFIED_STOCKS,
+  TOKEN_2022_PROGRAM_ID,
+  displaySharesToRawUnits,
+  rawUnitsToDisplayShares,
+  calculateNetShares,
+  resolveMintCapabilities,
+} from "./constants";
 
 export type GiftTheme = "gold" | "lime" | "purple";
 export type GiftDeliveryType = "link" | "direct";
@@ -23,7 +30,10 @@ export interface GiftClaimPayload {
   id: string;
   symbol: string;
   shareAmount: number;
+  netShareAmount?: number;
+  feeBps?: number;
   rawAmountString?: string;
+  netRawAmountString?: string;
   estimatedUsd: number;
   senderName: string;
   senderPublicKey: string;
@@ -39,6 +49,10 @@ export interface SentGiftRecord {
   id: string;
   symbol: string;
   shareAmount: number;
+  netShareAmount?: number;
+  feeBps?: number;
+  rawAmountString?: string;
+  netRawAmountString?: string;
   estimatedUsd: number;
   senderName: string;
   senderPublicKey: string;
@@ -54,6 +68,63 @@ export interface SentGiftRecord {
   status: GiftStatus;
   theme: GiftTheme;
   note: string;
+}
+
+/**
+ * Simulates a Solana transaction and maps raw failure codes to user-friendly messages.
+ */
+export async function simulateAndValidateTransaction(
+  connection: Connection,
+  transaction: Transaction,
+  feePayer: PublicKey
+): Promise<void> {
+  transaction.feePayer = feePayer;
+  if (!transaction.recentBlockhash) {
+    const { blockhash } = await connection.getLatestBlockhash("confirmed");
+    transaction.recentBlockhash = blockhash;
+  }
+
+  const simulation = await connection.simulateTransaction(transaction);
+  if (simulation.value.err) {
+    const err = simulation.value.err;
+    const logs = simulation.value.logs?.join("\n") || "";
+    console.error("Simulation failed:", err, logs);
+
+    if (
+      logs.includes("custom program error: 0x1") ||
+      logs.includes("insufficient funds") ||
+      logs.includes("InsufficientFunds")
+    ) {
+      throw new Error(
+        "Insufficient share or SOL balance to process this transaction."
+      );
+    }
+    if (
+      logs.includes("custom program error: 0x11") ||
+      logs.includes("AccountFrozen") ||
+      logs.includes("frozen")
+    ) {
+      throw new Error("This token account is frozen by the issuer.");
+    }
+    if (logs.includes("paused") || logs.includes("Paused")) {
+      throw new Error(
+        "Transfers for this asset are temporarily paused by the token issuer."
+      );
+    }
+    if (logs.includes("TransferHook") || logs.includes("hook")) {
+      throw new Error("Transfer hook validation failed for this asset.");
+    }
+    if (logs.includes("AccountNotFound")) {
+      throw new Error(
+        "Token account not found. Please ensure you hold this asset before gifting."
+      );
+    }
+    throw new Error(
+      `Transaction simulation failed: ${
+        typeof err === "object" ? JSON.stringify(err) : String(err)
+      }`
+    );
+  }
 }
 
 const STORAGE_KEY_SENT_GIFTS = "slyz_sent_gifts";
@@ -139,7 +210,7 @@ export function updateSentGiftStatus(id: string, status: GiftStatus): void {
 /**
  * Build the transaction that funds a Gift Claim Link.
  * Bundles:
- * 1. Transfer 0.0035 SOL to the ephemeral vault (to cover future recipient ATA rent + fees).
+ * 1. Transfer 0.0035 SOL to the ephemeral vault (to cover future recipient ATA rent + network fees).
  * 2. Idempotent ATA creation for the ephemeral vault.
  * 3. TransferChecked of the token shares from sender to the vault.
  */
@@ -150,7 +221,14 @@ export async function buildFundGiftLinkTransaction(params: {
   shareAmount: number;
   rawAmountString?: string;
   vaultKeypair: Keypair;
-}): Promise<{ transaction: Transaction; baseUnits: bigint; decimals: number }> {
+}): Promise<{
+  transaction: Transaction;
+  baseUnits: bigint;
+  netBaseUnits: bigint;
+  netShares: number;
+  decimals: number;
+  feeBps: number;
+}> {
   const { connection, senderPublicKey, symbol, shareAmount, rawAmountString, vaultKeypair } = params;
   const asset = VERIFIED_STOCKS[symbol];
   if (!asset) {
@@ -158,19 +236,34 @@ export async function buildFundGiftLinkTransaction(params: {
   }
 
   const mint = new PublicKey(asset.mint);
-  const decimals = asset.decimals; // 8 for xStocks, 9 for PreStocks
+  const decimals = asset.decimals;
+  const caps = await resolveMintCapabilities(connection, symbol);
+  const feeBps = caps.feeBps;
 
+  // Exact baseUnits honoring the multiplier if rawAmountString is omitted
   const baseUnits =
     rawAmountString && rawAmountString !== "0"
       ? BigInt(rawAmountString)
-      : BigInt(Math.floor(shareAmount * Math.pow(10, decimals)));
+      : displaySharesToRawUnits(shareAmount, symbol, caps.multiplier);
+
+  if (baseUnits <= BigInt(0)) {
+    throw new Error("Invalid share amount for gifting.");
+  }
+
+  const feeUnitsFor = (u: bigint) =>
+    feeBps > 0 ? (u * BigInt(feeBps) + BigInt(9999)) / BigInt(10000) : BigInt(0);
+
+  // TWO fee-bearing transfers on the escrow path: sender→vault, then vault→recipient
+  const afterVaultUnits = baseUnits - feeUnitsFor(baseUnits);
+  const netBaseUnits = afterVaultUnits - feeUnitsFor(afterVaultUnits);
+  const netShares = rawUnitsToDisplayShares(netBaseUnits, symbol, caps.multiplier);
 
   const senderAta = getAssociatedTokenAddressSync(mint, senderPublicKey, false, TOKEN_2022_PK);
   const vaultAta = getAssociatedTokenAddressSync(mint, vaultKeypair.publicKey, false, TOKEN_2022_PK);
 
   const transaction = new Transaction();
 
-  // 1. Fund the vault with 0.0035 SOL for claiming gas & rent
+  // 1. Fund the vault with 0.0035 SOL for claiming network fees & rent
   transaction.add(
     SystemProgram.transfer({
       fromPubkey: senderPublicKey,
@@ -209,7 +302,7 @@ export async function buildFundGiftLinkTransaction(params: {
   transaction.lastValidBlockHeight = lastValidBlockHeight;
   transaction.feePayer = senderPublicKey;
 
-  return { transaction, baseUnits, decimals };
+  return { transaction, baseUnits, netBaseUnits, netShares, decimals, feeBps };
 }
 
 /**
@@ -222,7 +315,14 @@ export async function buildDirectGiftTransferTransaction(params: {
   symbol: string;
   shareAmount: number;
   rawAmountString?: string;
-}): Promise<{ transaction: Transaction; baseUnits: bigint; decimals: number }> {
+}): Promise<{
+  transaction: Transaction;
+  baseUnits: bigint;
+  netBaseUnits: bigint;
+  netShares: number;
+  decimals: number;
+  feeBps: number;
+}> {
   const { connection, senderPublicKey, recipientPublicKey, symbol, shareAmount, rawAmountString } =
     params;
   const asset = VERIFIED_STOCKS[symbol];
@@ -232,11 +332,21 @@ export async function buildDirectGiftTransferTransaction(params: {
 
   const mint = new PublicKey(asset.mint);
   const decimals = asset.decimals;
+  const caps = await resolveMintCapabilities(connection, symbol);
+  const feeBps = caps.feeBps;
 
   const baseUnits =
     rawAmountString && rawAmountString !== "0"
       ? BigInt(rawAmountString)
-      : BigInt(Math.floor(shareAmount * Math.pow(10, decimals)));
+      : displaySharesToRawUnits(shareAmount, symbol, caps.multiplier);
+
+  if (baseUnits <= BigInt(0)) {
+    throw new Error("Invalid share amount for gifting.");
+  }
+
+  const feeUnits = feeBps > 0 ? (baseUnits * BigInt(feeBps) + BigInt(9999)) / BigInt(10000) : BigInt(0);
+  const netBaseUnits = baseUnits > feeUnits ? baseUnits - feeUnits : BigInt(0);
+  const netShares = rawUnitsToDisplayShares(netBaseUnits, symbol, caps.multiplier);
 
   const senderAta = getAssociatedTokenAddressSync(mint, senderPublicKey, false, TOKEN_2022_PK);
   const recipientAta = getAssociatedTokenAddressSync(
@@ -278,7 +388,7 @@ export async function buildDirectGiftTransferTransaction(params: {
   transaction.lastValidBlockHeight = lastValidBlockHeight;
   transaction.feePayer = senderPublicKey;
 
-  return { transaction, baseUnits, decimals };
+  return { transaction, baseUnits, netBaseUnits, netShares, decimals, feeBps };
 }
 
 /**
@@ -300,6 +410,15 @@ export async function executeClaimGift(params: {
     }
   }
 
+  // Validate time lock
+  if (payload.unlockTimestamp && payload.unlockTimestamp > 0) {
+    const now = Math.floor(Date.now() / 1000);
+    if (now < payload.unlockTimestamp) {
+      const waitMinutes = Math.ceil((payload.unlockTimestamp - now) / 60);
+      throw new Error(`This gift is time-locked and cannot be claimed yet. Please return in ${waitMinutes} minute(s).`);
+    }
+  }
+
   // Reconstitute the ephemeral vault keypair
   const secretKey = bs58.decode(payload.secretKeyBase58);
   const vaultKeypair = Keypair.fromSecretKey(secretKey);
@@ -311,10 +430,8 @@ export async function executeClaimGift(params: {
 
   const mint = new PublicKey(asset.mint);
   const decimals = asset.decimals;
-  const baseUnits =
-    payload.rawAmountString && payload.rawAmountString !== "0"
-      ? BigInt(payload.rawAmountString)
-      : BigInt(Math.floor(payload.shareAmount * Math.pow(10, decimals)));
+  const caps = await resolveMintCapabilities(connection, payload.symbol);
+  const feeBps = caps.feeBps;
 
   const vaultAta = getAssociatedTokenAddressSync(mint, vaultKeypair.publicKey, false, TOKEN_2022_PK);
   const recipientAta = getAssociatedTokenAddressSync(
@@ -323,6 +440,36 @@ export async function executeClaimGift(params: {
     false,
     TOKEN_2022_PK
   );
+
+  // 1. Fetch vault ATA's actual on-chain available balance
+  let transferUnits: bigint = BigInt(0);
+  try {
+    const balanceInfo = await connection.getTokenAccountBalance(vaultAta, "confirmed");
+    if (balanceInfo?.value?.amount) {
+      transferUnits = BigInt(balanceInfo.value.amount);
+    }
+  } catch (err) {
+    console.warn("Could not query vaultTokenBalance directly:", err);
+  }
+
+  // Fallback to payload amount if on-chain query returned empty/failed
+  if (transferUnits === BigInt(0)) {
+    if (payload.netRawAmountString && payload.netRawAmountString !== "0") {
+      transferUnits = BigInt(payload.netRawAmountString);
+    } else if (payload.rawAmountString && payload.rawAmountString !== "0") {
+      const raw = BigInt(payload.rawAmountString);
+      const withheld = feeBps > 0 ? (raw * BigInt(feeBps) + BigInt(9999)) / BigInt(10000) : BigInt(0);
+      transferUnits = raw > withheld ? raw - withheld : raw;
+    } else {
+      const raw = displaySharesToRawUnits(payload.shareAmount, payload.symbol, caps.multiplier);
+      const withheld = feeBps > 0 ? (raw * BigInt(feeBps) + BigInt(9999)) / BigInt(10000) : BigInt(0);
+      transferUnits = raw > withheld ? raw - withheld : raw;
+    }
+  }
+
+  if (transferUnits === BigInt(0)) {
+    throw new Error("This gift vault holds 0 shares or has already been claimed.");
+  }
 
   // Fetch vault SOL balance to sweep leftover rent back to recipient
   const vaultSolBalance = await connection.getBalance(vaultKeypair.publicKey);
@@ -340,33 +487,36 @@ export async function executeClaimGift(params: {
     )
   );
 
-  // 2. Transfer shares from vault to recipient
+  // 2. Transfer available net shares from vault to recipient
   transaction.add(
     createTransferCheckedInstruction(
       vaultAta,
       mint,
       recipientAta,
       vaultKeypair.publicKey,
-      baseUnits,
+      transferUnits,
       decimals,
       [],
       TOKEN_2022_PK
     )
   );
 
-  // 3. Close vault Token-2022 ATA to reclaim rent to recipient
-  transaction.add(
-    createCloseAccountInstruction(
-      vaultAta,
-      recipientPublicKey,
-      vaultKeypair.publicKey,
-      [],
-      TOKEN_2022_PK
-    )
-  );
+  // 3. Close vault Token-2022 ATA to reclaim rent ONLY if no withheld transfer fees exist.
+  // In Token-2022, closing an account with withheld transfer fees reverts with an error.
+  if (feeBps === 0) {
+    transaction.add(
+      createCloseAccountInstruction(
+        vaultAta,
+        recipientPublicKey,
+        vaultKeypair.publicKey,
+        [],
+        TOKEN_2022_PK
+      )
+    );
+  }
 
-  // 4. Sweep remaining SOL lamports from vault to recipient
-  const estimatedFee = 10_000;
+  // 4. Sweep remaining SOL lamports from vault to recipient (35,000 lamport reserve for priority fees)
+  const estimatedFee = 35_000;
   if (vaultSolBalance > estimatedFee + 10_000) {
     transaction.add(
       SystemProgram.transfer({
@@ -383,6 +533,9 @@ export async function executeClaimGift(params: {
   transaction.feePayer = vaultKeypair.publicKey;
 
   transaction.sign(vaultKeypair);
+
+  // Preflight simulation before broadcast to capture errors cleanly
+  await simulateAndValidateTransaction(connection, transaction, vaultKeypair.publicKey);
 
   const signature = await connection.sendRawTransaction(transaction.serialize(), {
     skipPreflight: false,
@@ -425,10 +578,38 @@ export async function executeReclaimGift(params: {
 
   const mint = new PublicKey(asset.mint);
   const decimals = asset.decimals;
-  const baseUnits = BigInt(Math.floor(giftRecord.shareAmount * Math.pow(10, decimals)));
+  const caps = await resolveMintCapabilities(connection, giftRecord.symbol);
+  const feeBps = caps.feeBps;
 
   const vaultAta = getAssociatedTokenAddressSync(mint, vaultKeypair.publicKey, false, TOKEN_2022_PK);
   const senderAta = getAssociatedTokenAddressSync(mint, senderPublicKey, false, TOKEN_2022_PK);
+
+  // 1. Fetch available vault token balance
+  let transferUnits: bigint = BigInt(0);
+  try {
+    const balanceInfo = await connection.getTokenAccountBalance(vaultAta, "confirmed");
+    if (balanceInfo?.value?.amount) {
+      transferUnits = BigInt(balanceInfo.value.amount);
+    }
+  } catch (err) {
+    console.warn("Could not fetch on-chain vault token balance for reclaim:", err);
+  }
+
+  if (transferUnits === BigInt(0)) {
+    if (giftRecord.netRawAmountString && giftRecord.netRawAmountString !== "0") {
+      transferUnits = BigInt(giftRecord.netRawAmountString);
+    } else {
+      const raw = giftRecord.rawAmountString
+        ? BigInt(giftRecord.rawAmountString)
+        : displaySharesToRawUnits(giftRecord.shareAmount, giftRecord.symbol, caps.multiplier);
+      const withheld = feeBps > 0 ? (raw * BigInt(feeBps) + BigInt(9999)) / BigInt(10000) : BigInt(0);
+      transferUnits = raw > withheld ? raw - withheld : raw;
+    }
+  }
+
+  if (transferUnits === BigInt(0)) {
+    throw new Error("Vault holds zero shares to reclaim.");
+  }
 
   const vaultSolBalance = await connection.getBalance(vaultKeypair.publicKey);
 
@@ -445,33 +626,35 @@ export async function executeReclaimGift(params: {
     )
   );
 
-  // 2. Transfer shares back to sender
+  // 2. Transfer available shares back to sender
   transaction.add(
     createTransferCheckedInstruction(
       vaultAta,
       mint,
       senderAta,
       vaultKeypair.publicKey,
-      baseUnits,
+      transferUnits,
       decimals,
       [],
       TOKEN_2022_PK
     )
   );
 
-  // 3. Close vault ATA and return rent to sender
-  transaction.add(
-    createCloseAccountInstruction(
-      vaultAta,
-      senderPublicKey,
-      vaultKeypair.publicKey,
-      [],
-      TOKEN_2022_PK
-    )
-  );
+  // 3. Close vault ATA only if feeBps === 0 (no withheld transfer fees)
+  if (feeBps === 0) {
+    transaction.add(
+      createCloseAccountInstruction(
+        vaultAta,
+        senderPublicKey,
+        vaultKeypair.publicKey,
+        [],
+        TOKEN_2022_PK
+      )
+    );
+  }
 
-  // 4. Sweep remaining SOL back to sender
-  const estimatedFee = 10_000;
+  // 4. Sweep remaining SOL back to sender (35,000 lamport reserve)
+  const estimatedFee = 35_000;
   if (vaultSolBalance > estimatedFee + 10_000) {
     transaction.add(
       SystemProgram.transfer({
@@ -488,6 +671,9 @@ export async function executeReclaimGift(params: {
   transaction.feePayer = vaultKeypair.publicKey;
 
   transaction.sign(vaultKeypair);
+
+  // Preflight simulation before broadcast
+  await simulateAndValidateTransaction(connection, transaction, vaultKeypair.publicKey);
 
   const signature = await connection.sendRawTransaction(transaction.serialize(), {
     skipPreflight: false,

@@ -1,3 +1,5 @@
+import { PublicKey } from "@solana/web3.js";
+
 export type MarketKind = "public" | "private";
 
 export interface StockAsset {
@@ -10,6 +12,8 @@ export interface StockAsset {
   category: "tech" | "index" | "crypto" | "growth" | "preipo";
   market: MarketKind;
   issuer: "xstocks" | "prestocks";
+  transferFeeBps?: number;
+  scaledUiMultiplier?: number;
 }
 
 export interface BasketComponent {
@@ -50,6 +54,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "tech",
     market: "public",
     issuer: "xstocks",
+    scaledUiMultiplier: 1.0017011968,
+    transferFeeBps: 0,
   },
   AAPLx: {
     symbol: "AAPLx",
@@ -61,6 +67,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "tech",
     market: "public",
     issuer: "xstocks",
+    scaledUiMultiplier: 1.0032690125,
   },
   MSFTx: {
     symbol: "MSFTx",
@@ -72,6 +79,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "tech",
     market: "public",
     issuer: "xstocks",
+    scaledUiMultiplier: 1.0059033905,
   },
   TSLAx: {
     symbol: "TSLAx",
@@ -105,6 +113,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "tech",
     market: "public",
     issuer: "xstocks",
+    scaledUiMultiplier: 1.0028515433,
   },
   GOOGLx: {
     symbol: "GOOGLx",
@@ -116,6 +125,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "tech",
     market: "public",
     issuer: "xstocks",
+    scaledUiMultiplier: 1.0023772501,
   },
   SPYx: {
     symbol: "SPYx",
@@ -127,6 +137,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "index",
     market: "public",
     issuer: "xstocks",
+    scaledUiMultiplier: 1.0057145603,
   },
   QQQx: {
     symbol: "QQQx",
@@ -138,6 +149,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "index",
     market: "public",
     issuer: "xstocks",
+    scaledUiMultiplier: 1.0034560759,
   },
   COINx: {
     symbol: "COINx",
@@ -162,6 +174,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
+    scaledUiMultiplier: 1.4861347,
   },
   ANTHROPIC: {
     symbol: "ANTHROPIC",
@@ -173,6 +187,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
   },
   SPACEX: {
     symbol: "SPACEX",
@@ -184,6 +199,8 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
+    scaledUiMultiplier: 5,
   },
   ANDURIL: {
     symbol: "ANDURIL",
@@ -195,6 +212,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
   },
   FIGUREAI: {
     symbol: "FIGUREAI",
@@ -206,6 +224,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
   },
   KALSHI: {
     symbol: "KALSHI",
@@ -217,6 +236,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
   },
   NEURALINK: {
     symbol: "NEURALINK",
@@ -228,6 +248,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
   },
   POLYMARKET: {
     symbol: "POLYMARKET",
@@ -239,6 +260,7 @@ export const VERIFIED_STOCKS: Record<string, StockAsset> = {
     category: "preipo",
     market: "private",
     issuer: "prestocks",
+    transferFeeBps: 100,
   },
 };
 
@@ -247,6 +269,120 @@ export const EXECUTABLE_PRIVATE_SYMBOLS = ["OPENAI", "ANTHROPIC", "SPACEX"] as c
 
 export function isPreStock(symbol: string): boolean {
   return VERIFIED_STOCKS[symbol]?.issuer === "prestocks";
+}
+
+// ─── On-chain Token-2022 capability resolution ──────────────────────────────
+export interface MintCapabilities {
+  multiplier: number;
+  feeBps: number;
+  source: "chain" | "table";
+}
+
+const CAP_TTL_MS = 60_000;
+const capabilityCache = new Map<string, { caps: MintCapabilities; at: number }>();
+
+/**
+ * Read the mint's live Token-2022 capabilities (scaled-UI multiplier + transfer fee).
+ * The chain is the source of truth; the static table is an offline fallback only.
+ * Results are cached for 60s to avoid RPC spam.
+ */
+export async function resolveMintCapabilities(
+  connection: { getParsedAccountInfo: (pk: any) => Promise<any> },
+  symbol: string
+): Promise<MintCapabilities> {
+  const asset = VERIFIED_STOCKS[symbol];
+  const fallback: MintCapabilities = {
+    multiplier: asset?.scaledUiMultiplier ?? 1,
+    feeBps: asset?.transferFeeBps ?? (asset && asset.market === "private" ? 100 : 0),
+    source: "table",
+  };
+  if (!asset) return fallback;
+
+  const cached = capabilityCache.get(symbol);
+  if (cached && Date.now() - cached.at < CAP_TTL_MS) return cached.caps;
+
+  try {
+    const resp = await connection.getParsedAccountInfo(new PublicKey(asset.mint));
+    const info = (resp?.value as any)?.data?.parsed?.info;
+    if (!info) return fallback;
+
+    const exts: Record<string, any> = {};
+    for (const e of info.extensions ?? []) exts[e.extension] = e.state ?? {};
+
+    const sc = exts.scaledUiAmountConfig ?? {};
+    const cur = Number(sc.multiplier ?? 1) || 1;
+    const next = Number(sc.newMultiplier ?? cur) || cur;
+    const effTs = Number(sc.newMultiplierEffectiveTimestamp ?? 0) || 0;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const multiplier = effTs && nowSec >= effTs ? next : cur;
+
+    const tf = exts.transferFeeConfig ?? {};
+    const feeBps =
+      Number(
+        tf.newerTransferFee?.transferFeeBasisPoints ??
+          tf.olderTransferFee?.transferFeeBasisPoints ??
+          0
+      ) || 0;
+
+    const caps: MintCapabilities = { multiplier, feeBps, source: "chain" };
+    capabilityCache.set(symbol, { caps, at: Date.now() });
+    return caps;
+  } catch {
+    return fallback;
+  }
+}
+
+export function getEffectiveMultiplier(symbol: string): number {
+  const cached = capabilityCache.get(symbol);
+  if (cached) return cached.caps.multiplier;
+  return VERIFIED_STOCKS[symbol]?.scaledUiMultiplier ?? 1;
+}
+
+export function getTransferFeeBps(symbol: string): number {
+  const cached = capabilityCache.get(symbol);
+  if (cached) return cached.caps.feeBps;
+  return VERIFIED_STOCKS[symbol]?.transferFeeBps ?? (isPreStock(symbol) ? 100 : 0);
+}
+
+export function displaySharesToRawUnits(
+  shares: number,
+  symbol: string,
+  multiplierOverride?: number
+): bigint {
+  const asset = VERIFIED_STOCKS[symbol];
+  if (!asset || shares <= 0) return BigInt(0);
+  const multiplier = multiplierOverride ?? getEffectiveMultiplier(symbol);
+  const decimals = asset.decimals;
+  const rawBase = Math.floor((shares / multiplier) * Math.pow(10, decimals));
+  return BigInt(Math.max(1, rawBase));
+}
+
+export function rawUnitsToDisplayShares(
+  rawUnits: bigint | string | number,
+  symbol: string,
+  multiplierOverride?: number
+): number {
+  const asset = VERIFIED_STOCKS[symbol];
+  if (!asset) return 0;
+  const multiplier = multiplierOverride ?? getEffectiveMultiplier(symbol);
+  const rawNum = Number(rawUnits);
+  return (rawNum / Math.pow(10, asset.decimals)) * multiplier;
+}
+
+export function calculateNetShares(
+  grossShares: number,
+  symbol: string,
+  transfers: 1 | 2 = 1
+): { netShares: number; feeShares: number; feeBps: number; hasFee: boolean } {
+  const feeBps = getTransferFeeBps(symbol);
+  const factor = (10000 - feeBps) / 10000;
+  const netShares = grossShares * Math.pow(factor, transfers);
+  return {
+    netShares,
+    feeShares: grossShares - netShares,
+    feeBps,
+    hasFee: feeBps > 0,
+  };
 }
 
 export const CURATED_BASKETS: Basket[] = [
