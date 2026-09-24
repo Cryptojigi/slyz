@@ -51,9 +51,9 @@ Investing in stocks on-chain today is fragmented, confusing, and impractical for
 
 - **Pick a theme, enter an amount, done.** Select "AI Frontier" or "The Mag 3", type `$50`, and Slyz automatically splits your USDC across 3 stocks, executes each swap through Jupiter, and deposits the tokenized shares directly into your wallet.
 
-- **Access pre-IPO companies that were previously unreachable.** Slyz is the first consumer app to properly integrate PreStocks tokens -- bringing OpenAI, Anthropic, SpaceX, Anduril, Figure AI, Kalshi, Neuralink, and Polymarket into a single unified interface with live pricing, fractional share support, and full Token-2022 transfer fee handling.
+- **Access pre-IPO companies that were previously unreachable.** Slyz brings OpenAI, Anthropic, SpaceX, Anduril, Figure AI, Kalshi, Neuralink, and Polymarket into a single unified interface with live pricing, fractional share support, and full Token-2022 transfer fee handling.
 
-- **Gift any stock -- public or pre-IPO -- to anyone with a link.** Slyz introduces the first on-chain stock gifting system on Solana. Send fractional shares of Tesla, SpaceX, or OpenAI as an expiring claim link. The recipient just connects their wallet and clicks "Claim." No prior setup needed. No fees for the recipient.
+- **Gift any stock -- public or pre-IPO -- to anyone with a link.** Send fractional shares of Tesla, SpaceX, or OpenAI as an expiring claim link. The recipient just connects their wallet and clicks "Claim." No prior setup needed. No fees for the recipient.
 
 - **Rebalance without selling.** Water-filling algorithm routes 100% of new deposits into underweight assets. Zero sells, zero extra tax events, zero unnecessary slippage.
 
@@ -220,7 +220,7 @@ When you gift OpenAI PreStocks through Slyz, here's what happens at the protocol
 
 3. The recipient -- who may never have heard of PreStocks, Token-2022, or Solana -- opens a link, connects a wallet, clicks one button, and owns fractional shares of OpenAI. They can see it in their Portfolio page, track its value against PreStocks live pricing, or gift it forward to someone else.
 
-This is the first time pre-IPO stock gifting has existed in any form, on any chain.
+In traditional finance, gifting private equity means accredited-investor verification, issuer approval, and legal fees. Here, it is a link.
 
 ### Preflight Simulation and Error Handling
 
