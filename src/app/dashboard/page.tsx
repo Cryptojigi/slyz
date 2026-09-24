@@ -1260,7 +1260,7 @@ export default function DashboardPage() {
                             </Link>
                           ) : (
                             <span className="text-[11px] text-[#8F9CAE] italic">
-                              Awaiting Pool Depth
+                              Direct purchase only
                             </span>
                           )
                         ) : (
