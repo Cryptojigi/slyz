@@ -6,6 +6,7 @@
 
   <p>
     <a href="https://useslyz.vercel.app"><img src="https://img.shields.io/badge/Live_App-useslyz.vercel.app-CDE06A?style=for-the-badge&logo=vercel&logoColor=0B0E14" alt="Live App" /></a>
+    <a href="https://youtu.be/pZI0qYkwNDg"><img src="https://img.shields.io/badge/Demo_Video-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video" /></a>
     <img src="https://img.shields.io/badge/Solana-Mainnet--Beta-8D8AFF?style=for-the-badge&logo=solana&logoColor=white" alt="Solana Mainnet" />
     <img src="https://img.shields.io/badge/Standard-Token--2022-14F195?style=for-the-badge" alt="Token-2022" />
     <img src="https://img.shields.io/badge/DEX-Jupiter_Lite-F87171?style=for-the-badge&logo=target" alt="Jupiter Lite" />
@@ -18,6 +19,12 @@
 
 <div align="center">
   <img src="./public/slyz-preview.png" alt="Slyz Application Preview" width="100%" style="border-radius: 16px; border: 1px solid #262D3D; box-shadow: 0 20px 50px rgba(0,0,0,0.6);" />
+  <br /><br />
+  <p>
+    🎬 <strong>Watch the 2-Minute Demo Video:</strong> <a href="https://youtu.be/pZI0qYkwNDg"><strong>https://youtu.be/pZI0qYkwNDg</strong></a>
+    &nbsp;&nbsp;•&nbsp;&nbsp;
+    🌐 <strong>Live App:</strong> <a href="https://useslyz.vercel.app"><strong>useslyz.vercel.app</strong></a>
+  </p>
 </div>
 
 ---
