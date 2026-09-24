@@ -15,6 +15,7 @@ import {
   Lock,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   Flame,
   Coins,
   Gift,
@@ -25,8 +26,36 @@ import { LiveSlyzSculpture } from "@/components/LiveSlyzSculpture";
 import { Footer } from "@/components/Footer";
 import { TechLogosMarquee } from "@/components/TechLogosMarquee";
 
+const FAQ_ITEMS = [
+  {
+    question: "What can I invest in on Slyz?",
+    answer: "Slyz offers themed baskets of verified tokenized public equities, plus a private-market PreStocks shelf. Public xStocks are available across curated themes and the Custom Studio; pre-IPO exposure is available today through the curated Frontier basket.",
+  },
+  {
+    question: "What are PreStocks and what do they represent?",
+    answer: "PreStocks are on-chain tokens designed to provide economic exposure to selected private companies before an IPO. They are not company shares and do not convey equity ownership, voting rights, or corporate dividends. Slyz shows live token pricing alongside the available PreStocks market data.",
+  },
+  {
+    question: "Can I tailor a pie to my own view?",
+    answer: "Yes. Start with a curated public-market theme and adjust its weights, or build a Custom Studio pie with two to four verified public xStocks. The app recalculates dollar allocations as you edit, so every leg stays intentional.",
+  },
+  {
+    question: "Can I gift tokenized stocks or pre-IPO exposure?",
+    answer: "Yes. From the Gift Stocks hub, you can send eligible holdings directly to a Solana wallet or create an expiring claim link. Claim links use a client-side escrow flow, show a live countdown, and let the recipient claim into a Solana wallet with sponsored network fees.",
+  },
+  {
+    question: "How does Slyz protect me during execution?",
+    answer: "You approve swaps from your own wallet - Slyz never takes custody of your keys or balances. Each basket leg is handled sequentially to fit Solana transaction limits, with live quotes and a price-impact guard that stops trades above the configured threshold.",
+  },
+  {
+    question: "What do I need to get started?",
+    answer: "Connect a Solana wallet, keep a small SOL balance for network costs, and fund it with USDC. Public themed pies start from $10, with a $1 minimum allocation per leg; private-market orders also display their execution impact before you sign.",
+  },
+] as const;
+
 export default function LandingPage() {
   const previewBaskets = CURATED_BASKETS.slice(0, 3); // The Mag 3, The Index, AI Frontier
+  const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(0);
 
   return (
     <div className="space-y-24 pb-12">
@@ -49,7 +78,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-sm sm:text-base lg:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
-              Invest in curated baskets of tokenized US equities and pre-IPO venture companies on Solana — three signatures, one theme.
+              Invest in curated baskets of tokenized US equities and pre-IPO venture companies on Solana - three signatures, one theme.
               Non-custodial, fractional shares powered by Jupiter, xStocks Token-2022, and PreStocks.
             </p>
 
@@ -318,7 +347,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-white">Hybrid Public + Private Baskets</h3>
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Blend public and pre-IPO in a single pie — MSFTx + GOOGLx + OpenAI + Anthropic. Today the Custom Pie Builder covers the 10 public xStocks and private exposure runs through the curated Frontier basket. Next: both, together. No retail brokerage can put a public stalwart and its private challenger in one basket.
+              Blend public and pre-IPO in a single pie - MSFTx + GOOGLx + OpenAI + Anthropic. Today the Custom Pie Builder covers the 10 public xStocks and private exposure runs through the curated Frontier basket. Next: both, together. No retail brokerage can put a public stalwart and its private challenger in one basket.
             </p>
           </div>
 
@@ -375,7 +404,7 @@ export default function LandingPage() {
               The honest near-term gap
             </h4>
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Private assets in the Custom Pie Builder. The limitation is disclosed in-product today, and everything else on this list builds on removing it — so it is first.
+              Private assets in the Custom Pie Builder. The limitation is disclosed in-product today, and everything else on this list builds on removing it - so it is first.
             </p>
           </div>
 
@@ -397,46 +426,59 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 5. Frequently Asked Questions */}
-      <section id="faq" className="scroll-mt-24 space-y-8 max-w-3xl mx-auto">
-        <div className="text-center space-y-2">
-          <span className="pill-badge pill-badge-periwinkle">Transparency</span>
-          <h2 className="text-3xl font-bold text-white tracking-tight">
-            Frequently Asked Questions
+      {/* 6. Frequently Asked Questions */}
+      <section id="faq" className="scroll-mt-24 space-y-6 max-w-4xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="pill-badge pill-badge-periwinkle">Clear by Design</span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+            Questions, Answered
           </h2>
+          <p className="text-sm sm:text-base text-[#8F9CAE] leading-relaxed">
+            A straightforward view of how Slyz turns USDC into thematic public-market and private-market token exposure - always from your own wallet.
+          </p>
         </div>
 
-        <div className="space-y-4">
-          <div className="bento-card space-y-2">
-            <h4 className="text-sm font-bold text-white">What are xStocks and how are they backed?</h4>
-            <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              xStocks are tokenized representations of US equities issued under the Solana Token-2022 standard. They trade 24/7 on decentralized liquidity pools with verified on-chain mint addresses.
-            </p>
-          </div>
+        <div className="space-y-3">
+          {FAQ_ITEMS.map((item, index) => {
+            const isOpen = openFaqIndex === index;
+            const answerId = `faq-answer-${index}`;
 
-          <div className="bento-card space-y-2">
-            <h4 className="text-sm font-bold text-white">Can I customize the percentages of a theme?</h4>
-            <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Yes! In the Slyz Terminal, you can freely edit the percentage weight of any stock in a curated theme or build your own custom pie from scratch with 2 to 4 assets.
-            </p>
-          </div>
+            return (
+              <article
+                key={item.question}
+                className={`overflow-hidden rounded-xl border transition-colors duration-200 ${
+                  isOpen
+                    ? "bg-[#161B26] border-[#8D8AFF]/50 shadow-lg shadow-[#8D8AFF]/5"
+                    : "bg-[#161B26] border-[#262D3D] hover:border-[#384257]"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                  aria-expanded={isOpen}
+                  aria-controls={answerId}
+                  className="w-full flex items-center justify-between gap-4 p-4 sm:p-5 text-left"
+                >
+                  <span className="flex-1 text-sm font-bold text-white">{item.question}</span>
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-[#8F9CAE] transition-transform duration-200 ${isOpen ? "rotate-180 text-[#CDE06A]" : ""}`} />
+                </button>
 
-          <div className="bento-card space-y-2">
-            <h4 className="text-sm font-bold text-white">What is the minimum investment?</h4>
-            <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              You can start investing with as little as $10 USDC. Slyz enforces a $1 minimum leg floor so you never trigger failed swaps or zero-amount errors.
-            </p>
-          </div>
-
-          <div className="bento-card space-y-2">
-            <h4 className="text-sm font-bold text-white">Why does Slyz require sequential signatures?</h4>
-            <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Solana transactions have strict 1232-byte packet limits (MTU). Executing multiple token swaps within a single transaction frequently exceeds this limit and fails. Slyz routes each swap sequentially with skip-and-retry safety.
-            </p>
-          </div>
+                <div
+                  id={answerId}
+                  className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                >
+                  <div className="overflow-hidden">
+                    <p className="border-t border-[#262D3D] px-4 sm:px-5 pb-5 pt-4 text-xs leading-relaxed text-[#8F9CAE]">
+                      {item.answer}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
+
       </section>
-
       {/* 6. Bottom Call to Action Banner (White Theme) */}
       <section className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xl shadow-slate-950/20 text-[#0B0E14]">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-100/50 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
