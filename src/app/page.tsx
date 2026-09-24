@@ -16,6 +16,9 @@ import {
   ExternalLink,
   ChevronRight,
   Flame,
+  Coins,
+  Gift,
+  Sparkles,
 } from "lucide-react";
 import { CURATED_BASKETS, VERIFIED_STOCKS } from "@/lib/constants";
 import { LiveSlyzSculpture } from "@/components/LiveSlyzSculpture";
@@ -291,6 +294,105 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Every leg is inspected against Jupiter's live fraction impact before prompting your signature. Trades exceeding 5% impact are automatically blocked to protect your capital.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Roadmap: What's Next */}
+      <section id="roadmap" className="scroll-mt-24 space-y-10">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="pill-badge pill-badge-lime">Roadmap</span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+            What's Next
+          </h2>
+          <p className="text-sm sm:text-base text-[#8F9CAE]">
+            Slyz is live today with 10 verified public xStocks, 8 PreStocks pre-IPO assets, and non-custodial gift links. Here is what we are building on top of that.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card 1 */}
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
+              <Layers className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Hybrid Public + Private Baskets</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Blend public and pre-IPO in a single pie — MSFTx + GOOGLx + OpenAI + Anthropic. Today the Custom Pie Builder covers the 10 public xStocks and private exposure runs through the curated Frontier basket. Next: both, together. No retail brokerage can put a public stalwart and its private challenger in one basket.
+            </p>
+          </div>
+
+          {/* Card 2 */}
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
+              <Coins className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Micro-Angel DCA</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Stream $20 a week into OpenAI, SpaceX and Anduril. Pre-IPO access stops being a one-off purchase and becomes a habit.
+            </p>
+          </div>
+
+          {/* Card 3 */}
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
+              <TrendingUp className="w-5 h-5 text-[#CDE06A]" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Venture Radar v2</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Official mark price vs live token price is already live. Next: implied valuation against the last funding round, backer tags, and a spread gauge against late-stage secondary pricing.
+            </p>
+          </div>
+
+          {/* Card 4 */}
+          <div className="bento-card space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Cohort & Thesis Baskets</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Segment the PreStocks set by narrative, not sector: IPO Watchlist • Frontier Robotics & Physical AI (Figure AI, SpaceX, Anduril) • Truth & Prediction (Kalshi, Polymarket).
+            </p>
+          </div>
+
+          {/* Card 5 */}
+          <div className="bento-card space-y-3 md:col-span-2 lg:col-span-2">
+            <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
+              <Gift className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white">Gifting as an Ecosystem Primitive</h3>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Claim links already work with no wallet setup and no fees for the recipient. Next: productize them for hackathon prizes, contributor rewards, and founder milestone gifts.
+            </p>
+          </div>
+        </div>
+
+        {/* Closing trust blocks */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <div className="p-6 rounded-2xl bg-[#161B26] border border-[#262D3D] space-y-2">
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              The honest near-term gap
+            </h4>
+            <p className="text-xs text-[#8F9CAE] leading-relaxed">
+              Private assets in the Custom Pie Builder. The limitation is disclosed in-product today, and everything else on this list builds on removing it — so it is first.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#161B26] border border-[#262D3D] space-y-3">
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Already working today
+            </h4>
+            <div className="flex flex-wrap gap-1.5 text-[11px] font-mono text-slate-300">
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">10 verified public xStocks routed through Jupiter</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">8 PreStocks assets with live mark-vs-token pricing</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">Sequential multi-leg execution with preflight price-impact checks</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">Token-2022: dynamic capability resolution, scaledUiAmount multipliers, 100 bps transfer-fee withholding in escrow math</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">Portfolio, drift tracker, Smart Top-Up, liquidation to USDC</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">Non-custodial claim-link gifting with expiration, unlock scheduling and reclaim</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">Verified mainnet execution with public signatures</span>
+            </div>
           </div>
         </div>
       </section>

@@ -22,11 +22,12 @@ import {
   Info,
   Flame,
   Search,
+  Rocket,
 } from "lucide-react";
 import { VERIFIED_STOCKS, CURATED_BASKETS, USDC_MINT } from "@/lib/constants";
 import { PRESTOCKS_FALLBACK } from "@/lib/prestocks";
 
-type DocTab = "getting-started" | "architecture" | "mechanics" | "baskets" | "directory" | "safety";
+type DocTab = "getting-started" | "architecture" | "mechanics" | "baskets" | "directory" | "safety" | "roadmap";
 
 export default function DocsPage() {
   const [activeTab, setActiveTab] = useState<DocTab>("getting-started");
@@ -91,6 +92,7 @@ export default function DocsPage() {
             { id: "baskets", label: "Curated Thematic Baskets", icon: PieChart },
             { id: "directory", label: "Verified Token Directory", icon: Coins },
             { id: "safety", label: "Anti-Phishing & Safety", icon: ShieldCheck },
+            { id: "roadmap", label: "Roadmap", icon: Rocket },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -585,6 +587,113 @@ export default function DocsPage() {
                   <li>Cross-reference token mint addresses against our Verified Contract Directory.</li>
                   <li>Review transaction simulation outputs in Phantom or Solflare before approving.</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. ROADMAP */}
+      {activeTab === "roadmap" && (
+        <div className="space-y-8 animate-fade-in text-sm text-[#8F9CAE]">
+          {/* Section 1: Overview */}
+          <div className="rounded-2xl bg-[#161B26] border border-[#262D3D] p-6 sm:p-8 space-y-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Rocket className="w-5 h-5 text-[#CDE06A]" />
+              <span>Slyz Protocol Roadmap: What's Next</span>
+            </h2>
+            <p className="leading-relaxed">
+              Slyz is live today on Solana mainnet with 10 verified public xStocks, 8 PreStocks pre-IPO assets,
+              and non-custodial gift links. Here is what we are actively engineering and shipping next on top of our
+              existing foundation.
+            </p>
+          </div>
+
+          {/* Section 2: Planned Milestones */}
+          <div className="rounded-2xl bg-[#161B26] border border-[#262D3D] p-6 sm:p-8 space-y-6">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#8D8AFF]" />
+              <span>Core Expansion Initiatives</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-5 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-2">
+                <span className="text-xs font-bold text-[#CDE06A] uppercase tracking-wider block">
+                  1. Hybrid Public + Private Baskets
+                </span>
+                <h4 className="text-sm font-bold text-white">Unified Venture Barbell Execution</h4>
+                <p className="text-xs text-[#8F9CAE] leading-relaxed">
+                  Blend public equities and pre-IPO venture assets in a single thematic pie — such as holding MSFTx, GOOGLx, OpenAI, and Anthropic together. While the Custom Pie Builder currently covers the 10 public xStocks and private exposure runs through curated baskets like Frontier, our next milestone enables users to assemble both sleeves together in custom proportions. No retail brokerage can put a public incumbent and its private challenger into a single execution ticket.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-2">
+                <span className="text-xs font-bold text-[#8D8AFF] uppercase tracking-wider block">
+                  2. Micro-Angel DCA
+                </span>
+                <h4 className="text-sm font-bold text-white">Automated Recurring Accumulation</h4>
+                <p className="text-xs text-[#8F9CAE] leading-relaxed">
+                  Stream $20 a week into OpenAI, SpaceX, and Anduril. By integrating automated recurring swaps over Jupiter, pre-IPO investing stops being a sporadic, manual event and becomes an ongoing disciplined accumulation strategy for retail builders.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-2">
+                <span className="text-xs font-bold text-[#CDE06A] uppercase tracking-wider block">
+                  3. Venture Radar v2
+                </span>
+                <h4 className="text-sm font-bold text-white">Deep Secondary Market Intelligence</h4>
+                <p className="text-xs text-[#8F9CAE] leading-relaxed">
+                  While our real-time radar already tracks live AMM DEX pricing against official issuer mark valuations, version 2 adds implied market capitalizations relative to each company's latest funding round, verified lead backer tags, and secondary spread indicators against late-stage private transactions.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-2">
+                <span className="text-xs font-bold text-[#8D8AFF] uppercase tracking-wider block">
+                  4. Cohort & Thesis Baskets
+                </span>
+                <h4 className="text-sm font-bold text-white">Narrative-Driven Pre-IPO Groupings</h4>
+                <p className="text-xs text-[#8F9CAE] leading-relaxed">
+                  Segment the PreStocks universe by market thesis rather than standard equity sectors: IPO Watchlist (anticipated near-term public listings), Frontier Robotics & Physical AI (Figure AI, SpaceX, Anduril), and Truth & Prediction (Kalshi, Polymarket).
+                </p>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-2 md:col-span-2">
+                <span className="text-xs font-bold text-[#CDE06A] uppercase tracking-wider block">
+                  5. Gifting as an Ecosystem Primitive
+                </span>
+                <h4 className="text-sm font-bold text-white">Productized Equity Rewards & Micro-Grants</h4>
+                <p className="text-xs text-[#8F9CAE] leading-relaxed">
+                  Slyz claim links already work seamlessly without requiring prior wallet setup or recipient network fees. Next, we are productizing this primitive for hackathon prizes, open-source contributor bounties, and founder milestone gifts, making fractional equity the native currency of Web3 recognition.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Honest Near-Term Gap & Already Working Today */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-2xl bg-[#161B26] border border-[#262D3D] p-6 space-y-3">
+              <h4 className="text-base font-bold text-white flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+                <span>The Honest Near-Term Gap</span>
+              </h4>
+              <p className="text-xs text-[#8F9CAE] leading-relaxed">
+                Private assets in the Custom Pie Builder. This boundary is transparently disclosed in-product today, and every expansion milestone listed above builds directly upon removing it — which is why it sits as our top technical priority.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#161B26] border border-[#262D3D] p-6 space-y-3">
+              <h4 className="text-base font-bold text-white flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+                <span>Already Working Today</span>
+              </h4>
+              <div className="flex flex-wrap gap-1.5 text-[11px] font-mono text-slate-300">
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">10 verified public xStocks routed through Jupiter</span>
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">8 PreStocks assets with live mark-vs-token pricing</span>
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">Sequential multi-leg execution with preflight checks</span>
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">Token-2022: dynamic capability resolution, scaled multipliers, 100 bps fee withholding</span>
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">Portfolio, drift tracker, Smart Top-Up, liquidation to USDC</span>
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">Non-custodial claim-link gifting with expiration & reclaim</span>
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">Verified mainnet execution with public signatures</span>
               </div>
             </div>
           </div>

@@ -90,6 +90,9 @@ export const Navbar = () => {
               <a href="#security" className="hover:text-white transition-colors">
                 Security
               </a>
+              <a href="#roadmap" className="hover:text-white transition-colors">
+                Roadmap
+              </a>
               <a href="#faq" className="hover:text-white transition-colors">
                 FAQ
               </a>
@@ -254,6 +257,13 @@ export const Navbar = () => {
                 className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white"
               >
                 Security
+              </a>
+              <a
+                href="#roadmap"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white"
+              >
+                Roadmap
               </a>
               <a
                 href="#faq"
