@@ -415,7 +415,7 @@ function InvestPageContent() {
                 <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold block">Pre-IPO Pool Liquidity Notice</span>
-                  <span>Order sizes above $25 USDC invite high price impact (&gt;5%) on decentralized AMM pools. Jupiter execution safeguards will abort trades that exceed 5% impact.</span>
+                  <span>Your estimated price impact is shown before you confirm. Execution aborts automatically if impact exceeds 5%.</span>
                 </div>
               </div>
             )}

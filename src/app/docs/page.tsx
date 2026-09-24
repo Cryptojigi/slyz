@@ -225,7 +225,7 @@ export default function DocsPage() {
                 <ul className="text-xs space-y-1.5 list-disc pl-4 text-[#8F9CAE]">
                   <li>Raw base-unit string accounting to prevent decimal dust.</li>
                   <li>Pre-set investments capped at $25 to avoid market impact.</li>
-                  <li>Automated &lt; 5% price impact safety blocks on execution.</li>
+                  <li>Automated execution aborts any swap whose price impact exceeds 5%.</li>
                   <li>Provides economic exposure only; not corporate equity or voting stock.</li>
                 </ul>
               </div>

@@ -765,7 +765,7 @@ export default function DashboardPage() {
               {selectedTheme.market === "private" && Number(featuredAmount) > 25 && (
                 <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-500/40 text-[11px] text-amber-200 flex items-center gap-1.5">
                   <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  <span>Pool liquidity advisory: orders over $25 risk &gt;5% price impact.</span>
+                  <span>Your estimated price impact is shown in the execution preview before you confirm.</span>
                 </div>
               )}
 
@@ -1234,12 +1234,12 @@ export default function DashboardPage() {
                           isExecutable ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              &lt; 5% Impact • Live in Frontier
+                              Basket enabled
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1D2332] text-[#8F9CAE] border border-[#262D3D]">
                               <Lock className="w-3 h-3 text-[#8F9CAE]" />
-                              Directory Mode (Liquidity Gated)
+                              Direct purchase only
                             </span>
                           )
                         ) : (
@@ -1283,7 +1283,7 @@ export default function DashboardPage() {
             <div className="p-4 bg-[#0B0E14] border-t border-[#262D3D] text-xs text-[#8F9CAE] flex items-center gap-2">
               <Info className="w-4 h-4 text-[#8D8AFF] shrink-0" />
               <span>
-                <strong>Slyz Liquidity Protection Protocol:</strong> Only PreStocks mints with confirmed &lt; 5% price impact on Jupiter Lite AMM pools are active for automated multi-leg execution in v1. Remaining assets will unlock as decentralized pool depth expands beyond $10k USDC.
+                <strong>Slyz Execution Policy:</strong> basket mode is available for a curated set of PreStocks assets. Every listed asset can be purchased directly or gifted, and basket coverage expands as execution improves.
               </span>
             </div>
           )}
