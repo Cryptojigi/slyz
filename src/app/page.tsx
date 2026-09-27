@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   ShieldCheck,
@@ -60,7 +61,12 @@ export default function LandingPage() {
   return (
     <div className="space-y-24 pb-12">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] px-4 py-7 sm:p-10 lg:p-14 shadow-2xl">
+      <motion.section
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] px-4 py-7 sm:p-10 lg:p-14 shadow-2xl"
+      >
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#CDE06A]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8D8AFF]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
@@ -109,10 +115,17 @@ export default function LandingPage() {
 
         {/* Sliding Tech & Infrastructure Showcase */}
         <TechLogosMarquee />
-      </section>
+      </motion.section>
 
       {/* 2. How It Works Section (White Background with Dark Tiles) */}
-      <section id="how-it-works" className="scroll-mt-24 rounded-2xl bg-white border border-slate-200 p-8 sm:p-12 lg:p-14 shadow-2xl shadow-slate-950/20 space-y-10 relative overflow-hidden">
+      <motion.section
+        id="how-it-works"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="scroll-mt-24 rounded-2xl bg-white border border-slate-200 p-8 sm:p-12 lg:p-14 shadow-2xl shadow-slate-950/20 space-y-10 relative overflow-hidden"
+      >
         {/* Subtle decorative background blur for depth */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
@@ -132,7 +145,13 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
           {/* Step 1 - Dark Tile */}
-          <div className="bento-card relative overflow-hidden group shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card relative overflow-hidden group shadow-xl"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center font-semibold text-sm text-[#CDE06A] mb-4">
               01
             </div>
@@ -144,10 +163,16 @@ export default function LandingPage() {
               <Layers className="w-3.5 h-3.5" />
               <span>5 Curated Pies or Custom 2–4 Mix</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Step 2 - Dark Tile */}
-          <div className="bento-card relative overflow-hidden group shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card relative overflow-hidden group shadow-xl"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center font-semibold text-sm text-[#8D8AFF] mb-4">
               02
             </div>
@@ -159,10 +184,16 @@ export default function LandingPage() {
               <Sliders className="w-3.5 h-3.5" />
               <span>Exact Dollar Allocations (No Dust)</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Step 3 - Dark Tile */}
-          <div className="bento-card relative overflow-hidden group shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card relative overflow-hidden group shadow-xl"
+          >
             <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-semibold text-sm text-white mb-4">
               03
             </div>
@@ -174,12 +205,19 @@ export default function LandingPage() {
               <ShieldCheck className="w-3.5 h-3.5 text-[#CDE06A]" />
               <span>100% Non-Custodial & Solscan Verified</span>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 3. Curated Themes Spotlight Showcase */}
-      <section id="themes" className="scroll-mt-24 space-y-10">
+      <motion.section
+        id="themes"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.12 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="scroll-mt-24 space-y-10"
+      >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-2">
             <span className="pill-badge pill-badge-periwinkle">Thematic Strategies</span>
@@ -200,9 +238,13 @@ export default function LandingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {previewBaskets.map((basket) => (
-            <div
+          {previewBaskets.map((basket, bIdx) => (
+            <motion.div
               key={basket.id}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.5, delay: bIdx * 0.12, ease: [0.22, 1, 0.36, 1] }}
               className="bento-card flex flex-col justify-between hover:border-[#8D8AFF]/40 transition-all duration-200"
             >
               <div className="space-y-4">
@@ -267,13 +309,20 @@ export default function LandingPage() {
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* 4. Security & Architecture Pillars */}
-      <section id="security" className="scroll-mt-24 space-y-10">
+      <motion.section
+        id="security"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.12 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="scroll-mt-24 space-y-10"
+      >
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="pill-badge pill-badge-lime">Solana Native</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
@@ -285,7 +334,13 @@ export default function LandingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
               <Zap className="w-5 h-5" />
             </div>
@@ -293,9 +348,15 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Every swap and liquidation is built using exact on-chain base units (`u64` string amounts) rather than lossy IEEE-754 floating points. Zero residual dust left in your token accounts.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
               <Lock className="w-5 h-5" />
             </div>
@@ -303,9 +364,15 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Slyz never holds your keys, deposits, or share balances. Transactions are signed directly in your wallet standard adapter, with immediate Solscan verifiable signatures.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
               <TrendingUp className="w-5 h-5 text-[#CDE06A]" />
             </div>
@@ -313,9 +380,15 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               As individual assets outpace or lag behind their target weights, our Smart Top-Up engine directs fresh deposits solely to underweight legs, bringing your portfolio back into balance without taxable sales.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -323,12 +396,19 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Every leg is inspected against Jupiter's live fraction impact before prompting your signature. Trades exceeding 5% impact are automatically blocked to protect your capital.
             </p>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 5. Roadmap: What's Next */}
-      <section id="roadmap" className="scroll-mt-24 space-y-10">
+      <motion.section
+        id="roadmap"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.12 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="scroll-mt-24 space-y-10"
+      >
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="pill-badge pill-badge-lime">Roadmap</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
@@ -341,7 +421,13 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card 1 */}
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
               <Layers className="w-5 h-5" />
             </div>
@@ -349,10 +435,16 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Blend public and pre-IPO in a single pie - MSFTx + GOOGLx + OpenAI + Anthropic. Today the Custom Pie Builder covers the 10 public xStocks and private exposure runs through the curated Frontier basket. Next: both, together. No retail brokerage can put a public stalwart and its private challenger in one basket.
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 2 */}
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
               <Coins className="w-5 h-5" />
             </div>
@@ -360,10 +452,16 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Stream $20 a week into OpenAI, SpaceX and Anduril. Pre-IPO access stops being a one-off purchase and becomes a habit.
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 3 */}
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white">
               <TrendingUp className="w-5 h-5 text-[#CDE06A]" />
             </div>
@@ -371,10 +469,16 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Official mark price vs live token price is already live. Next: implied valuation against the last funding round, backer tags, and a spread gauge against late-stage secondary pricing.
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 4 */}
-          <div className="bento-card space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/20 flex items-center justify-center text-[#8D8AFF]">
               <Sparkles className="w-5 h-5" />
             </div>
@@ -382,10 +486,16 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Segment the PreStocks set by narrative, not sector: IPO Watchlist • Frontier Robotics & Physical AI (Figure AI, SpaceX, Anduril) • Truth & Prediction (Kalshi, Polymarket).
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 5 */}
-          <div className="bento-card space-y-3 md:col-span-2 lg:col-span-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="bento-card space-y-3 md:col-span-2 lg:col-span-2"
+          >
             <div className="w-10 h-10 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/20 flex items-center justify-center text-[#CDE06A]">
               <Gift className="w-5 h-5" />
             </div>
@@ -393,7 +503,7 @@ export default function LandingPage() {
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
               Claim links already work with no wallet setup and no fees for the recipient. Next: productize them for hackathon prizes, contributor rewards, and founder milestone gifts.
             </p>
-          </div>
+          </motion.div>
         </div>
 
         {/* Closing trust blocks */}
@@ -424,10 +534,17 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 6. Frequently Asked Questions */}
-      <section id="faq" className="scroll-mt-24 space-y-6 max-w-4xl mx-auto">
+      <motion.section
+        id="faq"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.12 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="scroll-mt-24 space-y-6 max-w-4xl mx-auto"
+      >
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="pill-badge pill-badge-periwinkle">Clear by Design</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
@@ -444,8 +561,12 @@ export default function LandingPage() {
             const answerId = `faq-answer-${index}`;
 
             return (
-              <article
+              <motion.article
                 key={item.question}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.08 }}
+                transition={{ duration: 0.4, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
                 className={`overflow-hidden rounded-xl border transition-colors duration-200 ${
                   isOpen
                     ? "bg-[#161B26] border-[#8D8AFF]/50 shadow-lg shadow-[#8D8AFF]/5"
@@ -473,14 +594,20 @@ export default function LandingPage() {
                     </p>
                   </div>
                 </div>
-              </article>
+              </motion.article>
             );
           })}
         </div>
+      </motion.section>
 
-      </section>
       {/* 6. Bottom Call to Action Banner (White Theme) */}
-      <section className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xl shadow-slate-950/20 text-[#0B0E14]">
+      <motion.section
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xl shadow-slate-950/20 text-[#0B0E14]"
+      >
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-100/50 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none -ml-16 -mb-16" />
 
@@ -505,7 +632,7 @@ export default function LandingPage() {
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-      </section>
+      </motion.section>
 
       {/* 7. Footer - Exclusively rendered on Landing Page */}
       <Footer />

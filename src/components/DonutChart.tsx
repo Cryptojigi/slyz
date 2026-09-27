@@ -39,18 +39,19 @@ export const DonutChart: React.FC<Props> = ({
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius="65%"
-            outerRadius="92%"
-            paddingAngle={3}
+            innerRadius="72%"
+            outerRadius="89%"
+            paddingAngle={2.5}
             dataKey="value"
-            stroke="none"
+            stroke="#0B0E14"
+            strokeWidth={2.5}
             animationDuration={600}
           >
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={entry.color || DONUT_COLORS[index % DONUT_COLORS.length]}
-                className="transition-opacity duration-150 hover:opacity-85 cursor-pointer"
+                className="transition-all duration-200 hover:opacity-80 cursor-pointer"
               />
             ))}
           </Pie>
