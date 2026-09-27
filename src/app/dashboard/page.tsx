@@ -472,7 +472,7 @@ export default function DashboardPage() {
             <Globe className="w-3.5 h-3.5 shrink-0" />
             <span>Public (xStocks)</span>
             <span className="hidden md:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/20">
-              5 Themes • 10 Assets
+              {CURATED_BASKETS.filter((b) => b.market === "public").length} Themes • {PUBLIC_XSTOCK_COUNT} Assets
             </span>
           </button>
 
