@@ -232,7 +232,7 @@ export default function LandingPage() {
             href="/dashboard"
             className="btn-secondary text-xs flex items-center gap-2 self-start sm:self-auto hover:border-[#CDE06A] hover:text-[#CDE06A]"
           >
-            <span>View All 5 Themes in Dashboard</span>
+            <span>View All Preset Themes in Dashboard</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -415,7 +415,7 @@ export default function LandingPage() {
             What's Next
           </h2>
           <p className="text-sm sm:text-base text-[#8F9CAE]">
-            Slyz is live today with 10 verified public xStocks, 8 PreStocks pre-IPO assets, and non-custodial gift links. Here is what we are building on top of that.
+            Slyz is live today with curated public xStocks, 8 PreStocks pre-IPO assets, and non-custodial gift links. Here is what we are building on top of that.
           </p>
         </div>
 
@@ -433,7 +433,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-white">Hybrid Public + Private Baskets</h3>
             <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Blend public and pre-IPO in a single pie - MSFTx + GOOGLx + OpenAI + Anthropic. Today the Custom Pie Builder covers the 10 public xStocks and private exposure runs through the curated Frontier basket. Next: both, together. No retail brokerage can put a public stalwart and its private challenger in one basket.
+              Blend public and pre-IPO in a single pie - MSFTx + GOOGLx + OpenAI + Anthropic. Today the Custom Pie Builder covers the curated public xStocks and private exposure runs through the curated Frontier basket. Next: both, together. No retail brokerage can put a public stalwart and its private challenger in one basket.
             </p>
           </motion.div>
 
@@ -524,7 +524,7 @@ export default function LandingPage() {
               Already working today
             </h4>
             <div className="flex flex-wrap gap-1.5 text-[11px] font-mono text-slate-300">
-              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">10 verified public xStocks routed through Jupiter</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">curated public xStocks routed through Jupiter</span>
               <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">8 PreStocks assets with live mark-vs-token pricing</span>
               <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">Sequential multi-leg execution with preflight price-impact checks</span>
               <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D]">Token-2022: dynamic capability resolution, scaledUiAmount multipliers, 100 bps transfer-fee withholding in escrow math</span>
@@ -619,7 +619,7 @@ export default function LandingPage() {
             Ready to Slice the Market?
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-            Launch the Slyz Dashboard Terminal to explore all 10 verified US stocks, customize thematic pies, and track on-chain performance.
+            Launch the Slyz Dashboard Terminal to explore the curated US stocks, customize thematic pies, and track on-chain performance.
           </p>
         </div>
 

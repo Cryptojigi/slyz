@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     title: "Slyz — Thematic Stock Basket Investing on Solana",
     description:
       "Non-custodial fractional US equities, 1-click curated baskets, and zero-fee stock gifting on Solana.",
-    url: "https://useslyz.com",
+    url: "https://useslyz.vercel.app",
     siteName: "Slyz",
     images: [
       {

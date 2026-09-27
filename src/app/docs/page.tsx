@@ -603,7 +603,7 @@ export default function DocsPage() {
               <span>Slyz Protocol Roadmap: What's Next</span>
             </h2>
             <p className="leading-relaxed">
-              Slyz is live today on Solana mainnet with 10 verified public xStocks, 8 PreStocks pre-IPO assets,
+              Slyz is live today on Solana mainnet with curated public xStocks, 8 PreStocks pre-IPO assets,
               and non-custodial gift links. Here is what we are actively engineering and shipping next on top of our
               existing foundation.
             </p>
@@ -623,7 +623,7 @@ export default function DocsPage() {
                 </span>
                 <h4 className="text-sm font-bold text-white">Unified Venture Barbell Execution</h4>
                 <p className="text-xs text-[#8F9CAE] leading-relaxed">
-                  Blend public equities and pre-IPO venture assets in a single thematic pie — such as holding MSFTx, GOOGLx, OpenAI, and Anthropic together. While the Custom Pie Builder currently covers the 10 public xStocks and private exposure runs through curated baskets like Frontier, our next milestone enables users to assemble both sleeves together in custom proportions. No retail brokerage can put a public incumbent and its private challenger into a single execution ticket.
+                  Blend public equities and pre-IPO venture assets in a single thematic pie — such as holding MSFTx, GOOGLx, OpenAI, and Anthropic together. While the Custom Pie Builder currently covers the curated public xStocks and private exposure runs through curated baskets like Frontier, our next milestone enables users to assemble both sleeves together in custom proportions. No retail brokerage can put a public incumbent and its private challenger into a single execution ticket.
                 </p>
               </div>
 
@@ -687,7 +687,7 @@ export default function DocsPage() {
                 <span>Already Working Today</span>
               </h4>
               <div className="flex flex-wrap gap-1.5 text-[11px] font-mono text-slate-300">
-                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">10 verified public xStocks routed through Jupiter</span>
+                <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">curated public xStocks routed through Jupiter</span>
                 <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">8 PreStocks assets with live mark-vs-token pricing</span>
                 <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">Sequential multi-leg execution with preflight checks</span>
                 <span className="px-2 py-1 rounded-md bg-[#0B0E14] border border-[#262D3D]">Token-2022: dynamic capability resolution, scaled multipliers, 100 bps fee withholding</span>

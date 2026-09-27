@@ -34,6 +34,7 @@ import { useWalletBalances } from "@/context/WalletBalanceContext";
 import {
   CURATED_BASKETS,
   VERIFIED_STOCKS,
+  PUBLIC_XSTOCK_COUNT,
   Basket,
   BasketComponent,
   MIN_SOL_BALANCE,
@@ -847,10 +848,10 @@ export default function DashboardPage() {
             }`}
           >
             <Briefcase className="w-3.5 h-3.5 shrink-0 hidden xs:block" />
-            <span className="sm:hidden">Directory ({marketFilter === "public" ? "10" : "8"})</span>
+            <span className="sm:hidden">Directory ({marketFilter === "public" ? PUBLIC_XSTOCK_COUNT : "8"})</span>
             <span className="hidden sm:inline">
               {marketFilter === "public"
-                ? "All Verified xStocks (10)"
+                ? `Curated xStocks (${PUBLIC_XSTOCK_COUNT})`
                 : "PreStocks Directory (8)"}
             </span>
           </button>
@@ -1106,7 +1107,7 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-xl font-bold text-white">
                 {marketFilter === "public"
-                  ? "All Verified xStock Equities"
+                  ? "Curated xStock Equities"
                   : "Official PreStocks Pre-IPO Directory"}
               </h2>
               <p className="text-xs text-[#8F9CAE] mt-0.5">
@@ -1120,7 +1121,7 @@ export default function DashboardPage() {
                 marketFilter === "public" ? "pill-badge-lime" : "pill-badge-purple"
               }`}
             >
-              {marketFilter === "public" ? "10 Verified xStocks" : "8 Verified PreStocks"}
+              {marketFilter === "public" ? `${PUBLIC_XSTOCK_COUNT} Curated xStocks` : "8 Verified PreStocks"}
             </span>
           </div>
 
@@ -1298,7 +1299,7 @@ export default function DashboardPage() {
           </div>
           <h3 className="text-xl font-bold text-white">Custom Studio is Configured for Public Equities</h3>
           <p className="text-xs text-[#8F9CAE] leading-relaxed">
-            In v1, the Custom Pie Builder supports all 10 verified Public xStocks. For private pre-IPO exposure, invest directly in the curated <strong>Frontier</strong> basket (OpenAI, Anthropic, SpaceX).
+            In v1, the Custom Pie Builder supports all curated Public xStocks. For private pre-IPO exposure, invest directly in the curated <strong>Frontier</strong> basket (OpenAI, Anthropic, SpaceX).
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <button

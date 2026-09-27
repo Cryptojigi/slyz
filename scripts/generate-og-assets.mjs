@@ -207,7 +207,7 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- Top Bar: Clean, No glowing-dot pill badge -->
   <div class="top-bar">
-    <div class="domain-tag">useslyz.com</div>
+    <div class="domain-tag">useslyz.vercel.app</div>
   </div>
 
   <!-- Center Hero Brand Section -->
@@ -332,7 +332,7 @@ const svgContent = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="
 
   <!-- Top Bar: Clean, Domain only -->
   <g transform="translate(56, 48)">
-    <text x="1088" y="16" text-anchor="end" class="txt" font-size=\"15\" font-weight="600" fill="#7B8CA3" letter-spacing="0.5">useslyz.com</text>
+    <text x="1088" y="16" text-anchor="end" class="txt" font-size=\"15\" font-weight="600" fill="#7B8CA3" letter-spacing="0.5">useslyz.vercel.app</text>
   </g>
 
   <!-- Center Brand Hero -->

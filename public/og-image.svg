@@ -46,7 +46,7 @@
 
   <!-- Top Bar: Clean, Domain only -->
   <g transform="translate(56, 48)">
-    <text x="1088" y="16" text-anchor="end" class="txt" font-size="15" font-weight="600" fill="#7B8CA3" letter-spacing="0.5">useslyz.com</text>
+    <text x="1088" y="16" text-anchor="end" class="txt" font-size="15" font-weight="600" fill="#7B8CA3" letter-spacing="0.5">useslyz.vercel.app</text>
   </g>
 
   <!-- Center Brand Hero -->
