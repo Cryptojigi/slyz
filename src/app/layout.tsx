@@ -23,17 +23,17 @@ export const metadata: Metadata = {
     apple: "/slyzlogo.png",
   },
   openGraph: {
-    title: "Slyz — Thematic Stock Basket Investing on Solana",
+    title: "Slyz",
     description:
       "Non-custodial fractional US equities, 1-click curated baskets, and zero-fee stock gifting on Solana.",
     url: "https://useslyz.vercel.app",
     siteName: "Slyz",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.png?v=4",
         width: 1200,
         height: 630,
-        alt: "Slyz — Thematic Stock Basket Investing on Solana",
+        alt: "Slyz",
       },
     ],
     locale: "en_US",
@@ -43,10 +43,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@UseSlyz",
     creator: "@UseSlyz",
-    title: "Slyz — Thematic Stock Basket Investing on Solana",
+    title: "Slyz",
     description:
       "Non-custodial fractional US equities, 1-click curated baskets, and zero-fee stock gifting on Solana.",
-    images: ["/og-image.png"],
+    images: ["/og-image.png?v=4"],
   },
 };
 
