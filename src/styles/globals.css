@@ -94,6 +94,15 @@
   background: #384257;
 }
 
+/* Hide scrollbar utility for touch/swipe carousels */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Solana wallet button styling (scoped to trigger in navbar) */
 .slyz-wallet-btn .wallet-adapter-button {
   font-family: inherit !important;

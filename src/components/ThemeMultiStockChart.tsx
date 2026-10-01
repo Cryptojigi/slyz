@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -41,6 +41,11 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
   loading = false,
 }) => {
   const [viewMode, setViewMode] = useState<ChartViewMode>("composite");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Extract the stocks in this theme
   const stocks = useMemo(() => {
@@ -227,14 +232,15 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
             </span>
           </div>
 
-          <div className="flex items-baseline gap-3 mt-1">
+          <div className="flex items-baseline gap-3 mt-1" suppressHydrationWarning>
             {activeSingleStock ? (
               <>
-                <h2 className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight" suppressHydrationWarning>
                   ${activeSingleStock.currentPrice.toFixed(2)}
                 </h2>
 
                 <div
+                  suppressHydrationWarning
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold font-mono ${
                     stats.isPositive
                       ? "bg-[#CDE06A]/15 text-[#CDE06A] border border-[#CDE06A]/30"
@@ -247,17 +253,23 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
                     <TrendingDown className="w-3.5 h-3.5" />
                   )}
                   <span>
-                    {stats.isPositive ? "+" : ""}
-                    {stats.changePct.toFixed(2)}%
+                    {mounted ? `${stats.isPositive ? "+" : ""}${stats.changePct.toFixed(2)}%` : "+0.00%"}
                   </span>
                   <span className="text-[10px] font-normal opacity-75">({timeframe})</span>
                 </div>
               </>
             ) : (
               <div className="flex items-baseline gap-2.5">
-                <h2 className={`text-2xl sm:text-3xl font-bold font-mono tracking-tight ${stats.isPositive ? "text-[#CDE06A]" : "text-rose-400"}`}>
-                  {stats.isPositive ? "+" : ""}
-                  {stats.changePct.toFixed(2)}%
+                <h2
+                  className={`text-2xl sm:text-3xl font-bold font-mono tracking-tight ${
+                    mounted
+                      ? stats.isPositive
+                        ? "text-[#CDE06A]"
+                        : "text-rose-400"
+                      : "text-[#CDE06A]"
+                  }`}
+                >
+                  {mounted ? `${stats.isPositive ? "+" : ""}${stats.changePct.toFixed(2)}%` : "+0.00%"}
                 </h2>
                 <span className="text-xs font-semibold text-[#8F9CAE]">
                   {timeframe} Theme Performance

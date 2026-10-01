@@ -16,6 +16,7 @@ import {
   Lock,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   Flame,
   Coins,
@@ -55,8 +56,42 @@ const FAQ_ITEMS = [
 ] as const;
 
 export default function LandingPage() {
-  const previewBaskets = CURATED_BASKETS.slice(0, 3); // The Mag 3, The Index, AI Frontier
   const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(0);
+  const carouselRef = React.useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(true);
+  const [activeScrollIndex, setActiveScrollIndex] = React.useState(0);
+
+  const checkScroll = React.useCallback(() => {
+    if (!carouselRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    const cardWidth = 360;
+    const currentIndex = Math.round(scrollLeft / cardWidth);
+    setActiveScrollIndex(Math.min(CURATED_BASKETS.length - 1, Math.max(0, currentIndex)));
+  }, []);
+
+  React.useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll]);
+
+  const scrollByAmount = (direction: "left" | "right") => {
+    if (!carouselRef.current) return;
+    const scrollAmount = carouselRef.current.clientWidth * 0.8;
+    carouselRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
 
   return (
     <div className="space-y-24 pb-12">
@@ -212,7 +247,7 @@ export default function LandingPage() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.12 }}
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-        className="scroll-mt-24 space-y-10"
+        className="scroll-mt-24 space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-2">
@@ -224,89 +259,170 @@ export default function LandingPage() {
               Diversify into pre-assembled baskets built around high-conviction macroeconomic and technology theses.
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="btn-secondary text-xs flex items-center gap-2 self-start sm:self-auto hover:border-[#CDE06A] hover:text-[#CDE06A]"
-          >
-            <span>View All Preset Themes in Dashboard</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            {/* Desktop Navigation Arrows */}
+            <div className="hidden sm:flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => scrollByAmount("left")}
+                disabled={!canScrollLeft}
+                aria-label="Previous themes"
+                className="w-9 h-9 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center justify-center text-white hover:border-[#CDE06A] hover:text-[#CDE06A] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollByAmount("right")}
+                disabled={!canScrollRight}
+                aria-label="Next themes"
+                className="w-9 h-9 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center justify-center text-white hover:border-[#CDE06A] hover:text-[#CDE06A] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <Link
+              href="/dashboard"
+              className="btn-secondary text-xs flex items-center gap-2 hover:border-[#CDE06A] hover:text-[#CDE06A]"
+            >
+              <span>View Terminal</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {previewBaskets.map((basket, bIdx) => (
+        {/* Horizontally Swipeable Carousel Track */}
+        <div
+          ref={carouselRef}
+          className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-5 pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth items-stretch"
+        >
+          {CURATED_BASKETS.map((basket, bIdx) => (
             <motion.div
               key={basket.id}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.5, delay: bIdx * 0.12, ease: [0.22, 1, 0.36, 1] }}
-              className="bento-card flex flex-col justify-between hover:border-[#8D8AFF]/40 transition-all duration-200"
+              transition={{ duration: 0.45, delay: Math.min(bIdx * 0.08, 0.4), ease: [0.22, 1, 0.36, 1] }}
+              className="w-[84vw] max-w-[340px] sm:w-[350px] shrink-0 snap-start bento-card !p-0 overflow-hidden flex flex-col justify-between group hover:border-[#8D8AFF]/50 transition-all duration-200"
             >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-lg bg-[#1D2332] text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
-                    {basket.category}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-bold text-[#CDE06A]">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>Active Theme</span>
-                  </span>
-                </div>
+              <div className="flex flex-col h-full">
+                {/* Thematic Banner Artwork */}
+                {basket.image && (
+                  <div className="relative w-full h-36 overflow-hidden bg-[#0B0E14] shrink-0">
+                    <Image
+                      src={basket.image}
+                      alt={basket.name}
+                      fill
+                      sizes="(max-width: 640px) 84vw, 350px"
+                      className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#161B26] via-[#161B26]/30 to-transparent pointer-events-none" />
 
-                <div>
-                  <h3 className="text-xl font-bold text-white">{basket.name}</h3>
-                  <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">
-                    {basket.description}
-                  </p>
-                </div>
+                    {/* Floating Badges */}
+                    <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2 z-10">
+                      <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14]/85 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider text-white border border-white/10 shadow-sm">
+                        {basket.category}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#CDE06A] px-2.5 py-1 rounded-lg bg-[#0B0E14]/85 backdrop-blur-md border border-[#CDE06A]/30 shadow-sm">
+                        <TrendingUp className="w-3 h-3" />
+                        <span>{basket.market === "private" ? "Pre-IPO" : "Active Theme"}</span>
+                      </span>
+                    </div>
+                  </div>
+                )}
 
-                {/* Holdings Preview */}
-                <div className="space-y-2 pt-2 border-t border-[#262D3D]">
-                  {basket.components.map((c) => {
-                    const asset = VERIFIED_STOCKS[c.symbol];
-                    return (
-                      <div
-                        key={c.symbol}
-                        className="flex items-center justify-between text-xs py-1"
-                      >
-                        <div className="flex items-center gap-2">
-                          {asset?.logo ? (
-                            <Image
-                              src={asset.logo}
-                              alt={c.symbol}
-                              width={18}
-                              height={18}
-                              className="rounded-full bg-white/10"
-                            />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-white/10" />
-                          )}
-                          <span className="font-bold text-white">{c.symbol}</span>
-                          <span className="text-[10px] text-[#8F9CAE] hidden sm:inline">
-                            {asset?.underlying}
-                          </span>
-                        </div>
-                        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#1D2332] text-[#8D8AFF]">
-                          {c.targetWeight}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-white tracking-tight group-hover:text-[#CDE06A] transition-colors">
+                      {basket.name}
+                    </h3>
+                    <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 min-h-[36px] leading-relaxed">
+                      {basket.description}
+                    </p>
 
-              <div className="pt-6 mt-4 border-t border-[#262D3D]">
-                <Link
-                  href="/dashboard"
-                  className="btn-primary w-full flex items-center justify-center gap-2 text-xs !py-3"
-                >
-                  <span>Trade in Terminal</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                    {/* Holdings Preview Chips */}
+                    <div className="mt-4 space-y-2">
+                      {basket.components.map((c) => {
+                        const asset = VERIFIED_STOCKS[c.symbol];
+                        return (
+                          <div
+                            key={c.symbol}
+                            className="flex items-center justify-between p-2 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D]/60 text-xs"
+                          >
+                            <div className="flex items-center gap-2">
+                              {asset?.logo ? (
+                                <Image
+                                  src={asset.logo}
+                                  alt={c.symbol}
+                                  width={20}
+                                  height={20}
+                                  className="rounded-full bg-white/10 object-cover"
+                                  unoptimized
+                                />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold">
+                                  {c.symbol.slice(0, 2)}
+                                </div>
+                              )}
+                              <span className="font-bold text-white">{asset?.underlying || c.symbol}</span>
+                              <span className="text-[10px] text-[#8F9CAE] uppercase">
+                                {basket.market === "private" ? "PreStock" : "xStock"}
+                              </span>
+                            </div>
+                            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-[#8D8AFF]/10 text-[#8D8AFF] border border-[#8D8AFF]/20">
+                              {c.targetWeight}%
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Card Footer CTA */}
+                  <div className="pt-4 mt-5 border-t border-[#262D3D]/80 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-[#8F9CAE] uppercase tracking-wider">
+                      {basket.components.length}-Asset Pie
+                    </span>
+                    <Link
+                      href={`/dashboard`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#CDE06A] text-[#0B0E14] hover:bg-[#B5C856] active:scale-95 transition-all shadow-sm"
+                    >
+                      <span>Slyz In</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
               </div>
             </motion.div>
           ))}
+        </div>
+
+        {/* Mobile Swipe Cue & Dots Indicator */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-1.5">
+            {CURATED_BASKETS.map((b, idx) => (
+              <button
+                key={b.id}
+                onClick={() => {
+                  if (!carouselRef.current) return;
+                  const cardWidth = 360;
+                  carouselRef.current.scrollTo({ left: idx * cardWidth, behavior: "smooth" });
+                }}
+                aria-label={`Jump to ${b.name}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  idx === activeScrollIndex
+                    ? "w-6 bg-[#CDE06A]"
+                    : "w-2 bg-[#262D3D] hover:bg-[#8F9CAE]"
+                }`}
+              />
+            ))}
+          </div>
+
+          <span className="text-[11px] font-mono text-[#8F9CAE] flex items-center gap-1">
+            <span>Swipe or click arrows ({activeScrollIndex + 1}/{CURATED_BASKETS.length})</span>
+          </span>
         </div>
       </motion.section>
 

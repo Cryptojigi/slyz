@@ -29,6 +29,7 @@ export interface Basket {
   category: string;
   themeColor: string;
   market: MarketKind;
+  image?: string;
   components: BasketComponent[];
 }
 
@@ -634,6 +635,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Big Tech",
     themeColor: "#CDE06A",
     market: "public",
+    image: "/images/themes/mag-3.jpg",
     components: [
       { symbol: "NVDAx", targetWeight: 40 },
       { symbol: "AAPLx", targetWeight: 30 },
@@ -648,6 +650,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Foundational",
     themeColor: "#8D8AFF",
     market: "public",
+    image: "/images/themes/the-index.jpg",
     components: [
       { symbol: "SPYx", targetWeight: 50 },
       { symbol: "QQQx", targetWeight: 30 },
@@ -662,6 +665,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "AI & Future",
     themeColor: "#CDE06A",
     market: "public",
+    image: "/images/themes/ai-frontier.jpg",
     components: [
       { symbol: "NVDAx", targetWeight: 40 },
       { symbol: "MSFTx", targetWeight: 30 },
@@ -676,6 +680,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Risk-On",
     themeColor: "#8D8AFF",
     market: "public",
+    image: "/images/themes/high-beta.jpg",
     components: [
       { symbol: "TSLAx", targetWeight: 40 },
       { symbol: "NVDAx", targetWeight: 30 },
@@ -690,6 +695,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Consumer Tech",
     themeColor: "#CDE06A",
     market: "public",
+    image: "/images/themes/big-commerce.jpg",
     components: [
       { symbol: "AMZNx", targetWeight: 40 },
       { symbol: "METAx", targetWeight: 30 },
@@ -704,6 +710,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Payments",
     themeColor: "#8D8AFF",
     market: "public",
+    image: "/images/themes/payments.jpg",
     components: [
       { symbol: "Vx", targetWeight: 40 },
       { symbol: "JPMx", targetWeight: 30 },
@@ -718,6 +725,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Consumer",
     themeColor: "#CDE06A",
     market: "public",
+    image: "/images/themes/consumer.jpg",
     components: [
       { symbol: "WMTx", targetWeight: 40 },
       { symbol: "KOx", targetWeight: 30 },
@@ -732,6 +740,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Hard Assets",
     themeColor: "#8D8AFF",
     market: "public",
+    image: "/images/themes/hard-assets.jpg",
     components: [
       { symbol: "GLDx", targetWeight: 40 },
       { symbol: "SPYx", targetWeight: 30 },
@@ -748,6 +757,7 @@ export const CURATED_BASKETS: Basket[] = [
     category: "Pre-IPO",
     themeColor: "#8D8AFF",
     market: "private",
+    image: "/images/themes/frontier.jpg",
     components: [
       { symbol: "OPENAI", targetWeight: 40 },
       { symbol: "ANTHROPIC", targetWeight: 35 },

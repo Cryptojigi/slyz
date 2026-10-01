@@ -19,6 +19,8 @@ import {
   Copy,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
+  LayoutGrid,
   RefreshCw,
   SlidersHorizontal,
   ArrowRight,
@@ -143,6 +145,44 @@ export default function DashboardPage() {
 
   // Copy notification state
   const [copiedMint, setCopiedMint] = useState<string | null>(null);
+
+  // Curated Themes Horizontal Carousel / Grid Layout State
+  const curatedCarouselRef = React.useRef<HTMLDivElement>(null);
+  const [canScrollCuratedLeft, setCanScrollCuratedLeft] = useState(false);
+  const [canScrollCuratedRight, setCanScrollCuratedRight] = useState(true);
+  const [curatedScrollIdx, setCuratedScrollIdx] = useState(0);
+  const [curatedLayout, setCuratedLayout] = useState<"carousel" | "grid">("carousel");
+
+  const checkCuratedScroll = React.useCallback(() => {
+    if (!curatedCarouselRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = curatedCarouselRef.current;
+    setCanScrollCuratedLeft(scrollLeft > 10);
+    setCanScrollCuratedRight(scrollLeft < scrollWidth - clientWidth - 10);
+    const cardWidth = 360;
+    const idx = Math.round(scrollLeft / cardWidth);
+    setCuratedScrollIdx(Math.max(0, idx));
+  }, []);
+
+  useEffect(() => {
+    const el = curatedCarouselRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkCuratedScroll, { passive: true });
+    checkCuratedScroll();
+    window.addEventListener("resize", checkCuratedScroll);
+    return () => {
+      el.removeEventListener("scroll", checkCuratedScroll);
+      window.removeEventListener("resize", checkCuratedScroll);
+    };
+  }, [checkCuratedScroll, activeTab, curatedLayout]);
+
+  const scrollCurated = (direction: "left" | "right") => {
+    if (!curatedCarouselRef.current) return;
+    const amount = curatedCarouselRef.current.clientWidth * 0.8;
+    curatedCarouselRef.current.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
+  };
 
   // Load live Jupiter prices
   useEffect(() => {
@@ -881,8 +921,87 @@ export default function DashboardPage() {
 
       {/* 5. Tab 1: Curated Theme Pies */}
       {activeTab === "curated" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4 sm:space-y-6">
+          {/* Header Controls for Curated Tab */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-white tracking-tight">
+                  {marketFilter === "public" ? "Curated Equity Themes" : "Curated Pre-IPO Pies"}
+                </h3>
+                <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-[#1D2332] text-[#8D8AFF] border border-[#262D3D]">
+                  {curatedBasketsList.length} Pies
+                </span>
+              </div>
+              <p className="text-xs text-[#8F9CAE] mt-0.5 hidden sm:block">
+                Pre-assembled multi-asset baskets. Select any pie to preview performance and execute allocations.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Desktop View Switcher (Carousel vs Grid) */}
+              <div className="hidden md:flex items-center p-0.5 rounded-xl bg-[#161B26] border border-[#262D3D]">
+                <button
+                  type="button"
+                  onClick={() => setCuratedLayout("carousel")}
+                  title="Horizontal Carousel View"
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                    curatedLayout === "carousel"
+                      ? "bg-[#CDE06A] text-[#0B0E14]"
+                      : "text-[#8F9CAE] hover:text-white"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Carousel</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCuratedLayout("grid")}
+                  title="Grid View"
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                    curatedLayout === "grid"
+                      ? "bg-[#CDE06A] text-[#0B0E14]"
+                      : "text-[#8F9CAE] hover:text-white"
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Grid</span>
+                </button>
+              </div>
+
+              {/* Navigation Arrows for Carousel */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => scrollCurated("left")}
+                  disabled={!canScrollCuratedLeft}
+                  aria-label="Previous theme"
+                  className="w-8 h-8 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center justify-center text-white hover:border-[#CDE06A] hover:text-[#CDE06A] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollCurated("right")}
+                  disabled={!canScrollCuratedRight}
+                  aria-label="Next theme"
+                  className="w-8 h-8 rounded-xl bg-[#161B26] border border-[#262D3D] flex items-center justify-center text-white hover:border-[#CDE06A] hover:text-[#CDE06A] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Swipeable Carousel Track or Responsive Grid */}
+          <div
+            ref={curatedCarouselRef}
+            className={
+              curatedLayout === "carousel"
+                ? "flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-5 pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth items-stretch"
+                : "flex md:grid md:grid-cols-2 lg:grid-cols-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none no-scrollbar gap-5 pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth items-stretch"
+            }
+          >
             {curatedBasketsList.map((basket) => {
               const isSelected = basket.id === selectedThemeId;
               const cardAmt = cardAmounts[basket.id] ?? "";
@@ -892,7 +1011,11 @@ export default function DashboardPage() {
                 <div
                   key={basket.id}
                   onClick={() => setSelectedThemeId(basket.id)}
-                  className={`bento-card flex flex-col justify-between transition-all duration-200 cursor-pointer ${
+                  className={`bento-card !p-0 overflow-hidden flex flex-col justify-between transition-all duration-200 cursor-pointer h-full ${
+                    curatedLayout === "carousel"
+                      ? "w-[84vw] max-w-[340px] sm:w-[350px] md:w-[360px] shrink-0 snap-start"
+                      : "w-[84vw] max-w-[340px] sm:w-[350px] md:w-auto shrink-0 md:shrink snap-start md:snap-align-none"
+                  } ${
                     isSelected
                       ? basket.market === "private"
                         ? "border-[#8D8AFF] ring-1 ring-[#8D8AFF]/40 shadow-xl shadow-[#8D8AFF]/5"
@@ -900,194 +1023,237 @@ export default function DashboardPage() {
                       : "hover:border-[#8D8AFF]/40"
                   }`}
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                          basket.market === "private"
-                            ? "bg-[#8D8AFF]/20 text-[#8D8AFF] border border-[#8D8AFF]/30"
-                            : "bg-[#1D2332] text-[#8F9CAE]"
-                        }`}
-                      >
-                        {basket.category}
-                      </span>
-                      {isSelected ? (
-                        <span
-                          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg ${
-                            basket.market === "private"
-                              ? "bg-[#8D8AFF]/20 text-[#8D8AFF]"
-                              : "bg-[#CDE06A]/20 text-[#CDE06A]"
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Active in Spotlight</span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-[#8F9CAE] group-hover:text-white transition-colors">
-                          <TrendingUp className="w-3 h-3 text-[#CDE06A]" />
-                          <span>Click to Select</span>
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex flex-col h-full">
+                    {/* Thematic Banner Artwork */}
+                    {basket.image && (
+                      <div className="relative w-full h-32 sm:h-36 overflow-hidden bg-[#0B0E14] shrink-0">
+                        <Image
+                          src={basket.image}
+                          alt={basket.name}
+                          fill
+                          sizes="(max-width: 640px) 84vw, 360px"
+                          className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#161B26] via-[#161B26]/30 to-transparent pointer-events-none" />
 
-                    <div>
-                      <h3 className="text-xl font-bold text-white">{basket.name}</h3>
-                      <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 leading-relaxed">
-                        {basket.description}
-                      </p>
-                    </div>
-
-                    {/* Components breakdown with live prices */}
-                    <div className="space-y-2 pt-2 border-t border-[#262D3D]">
-                      {basket.components.map((c) => {
-                        const asset = VERIFIED_STOCKS[c.symbol];
-                        const isPrivate = isPreStock(c.symbol);
-                        const livePrice = getAssetPrice(c.symbol);
-                        const preData = isPrivate
-                          ? preStocksLive[c.symbol] || PRESTOCKS_FALLBACK[c.symbol]
-                          : null;
-                        return (
-                          <div
-                            key={c.symbol}
-                            className="flex items-center justify-between text-xs py-1"
+                        {/* Floating Badges */}
+                        <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2 z-10">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-sm ${
+                              basket.market === "private"
+                                ? "bg-[#0B0E14]/85 text-[#8D8AFF] border border-[#8D8AFF]/30"
+                                : "bg-[#0B0E14]/85 text-white/90 border border-white/10"
+                            }`}
                           >
-                            <div className="flex items-center gap-2">
-                              {asset?.logo ? (
-                                <Image
-                                  src={asset.logo}
-                                  alt={c.symbol}
-                                  width={18}
-                                  height={18}
-                                  className="rounded-full bg-white/10"
-                                  unoptimized
-                                />
-                              ) : (
-                                <div className="w-4 h-4 rounded-full bg-white/10" />
-                              )}
-                              <div>
-                                <span className="font-bold text-white block">
-                                  {asset?.underlying || c.symbol}
-                                </span>
-                                <span className="text-[10px] text-[#8F9CAE]">
-                                  {livePrice ? `$${livePrice.toFixed(2)}` : "..."}
-                                  {isPrivate && preData && (
-                                    <span className="text-[#8D8AFF] ml-1">
-                                      (Mark: ${preData.markPrice.toFixed(0)})
-                                    </span>
+                            {basket.category}
+                          </span>
+                          {isSelected ? (
+                            <span
+                              className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg backdrop-blur-md shadow-sm ${
+                                basket.market === "private"
+                                  ? "bg-[#0B0E14]/90 text-[#8D8AFF] border border-[#8D8AFF]/40"
+                                  : "bg-[#0B0E14]/90 text-[#CDE06A] border border-[#CDE06A]/40"
+                              }`}
+                            >
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Active</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-[#8F9CAE] group-hover:text-white px-2 py-0.5 rounded-lg bg-[#0B0E14]/85 backdrop-blur-md border border-white/10 transition-colors shadow-sm">
+                              <TrendingUp className="w-3 h-3 text-[#CDE06A]" />
+                              <span>Select</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-5 sm:p-6 pt-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold text-white tracking-tight">{basket.name}</h3>
+                        <p className="text-xs text-[#8F9CAE] mt-1 line-clamp-2 min-h-[36px] leading-relaxed">
+                          {basket.description}
+                        </p>
+
+                        {/* Components breakdown with live prices */}
+                        <div className="space-y-2 pt-3 mt-3 border-t border-[#262D3D]">
+                          {basket.components.map((c) => {
+                            const asset = VERIFIED_STOCKS[c.symbol];
+                            const isPrivate = isPreStock(c.symbol);
+                            const livePrice = getAssetPrice(c.symbol);
+                            const preData = isPrivate
+                              ? preStocksLive[c.symbol] || PRESTOCKS_FALLBACK[c.symbol]
+                              : null;
+                            return (
+                              <div
+                                key={c.symbol}
+                                className="flex items-center justify-between text-xs py-1"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {asset?.logo ? (
+                                    <Image
+                                      src={asset.logo}
+                                      alt={c.symbol}
+                                      width={18}
+                                      height={18}
+                                      className="rounded-full bg-white/10"
+                                      unoptimized
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 rounded-full bg-white/10" />
                                   )}
+                                  <div>
+                                    <span className="font-bold text-white block">
+                                      {asset?.underlying || c.symbol}
+                                    </span>
+                                    <span className="text-[10px] text-[#8F9CAE]">
+                                      {livePrice ? `$${livePrice.toFixed(2)}` : "..."}
+                                      {isPrivate && preData && (
+                                        <span className="text-[#8D8AFF] ml-1">
+                                          (Mark: ${preData.markPrice.toFixed(0)})
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                                <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#1D2332] text-[#8D8AFF]">
+                                  {c.targetWeight}%
                                 </span>
                               </div>
-                            </div>
-                            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[#1D2332] text-[#8D8AFF]">
-                              {c.targetWeight}%
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 mt-4 border-t border-[#262D3D] space-y-3" onClick={(e) => e.stopPropagation()}>
+                        {/* Wallet-driven custom amount input */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-[#8F9CAE]">USDC Amount</span>
+                            <span className="font-mono text-[#8F9CAE] flex items-center gap-1.5">
+                              <Image
+                                src="/usdc-logo.svg"
+                                alt="USDC"
+                                width={13}
+                                height={13}
+                                className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                              />
+                              <span>Wallet: ${balances.usdcBalance.toFixed(2)}</span>
                             </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-[#262D3D] space-y-3" onClick={(e) => e.stopPropagation()}>
-                    {/* Wallet-driven custom amount input */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-[#8F9CAE]">USDC Amount</span>
-                        <span className="font-mono text-[#8F9CAE] flex items-center gap-1.5">
-                          <Image
-                            src="/usdc-logo.svg"
-                            alt="USDC"
-                            width={13}
-                            height={13}
-                            className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
-                          />
-                          <span>Wallet: ${balances.usdcBalance.toFixed(2)}</span>
-                        </span>
-                      </div>
-                      <div className="relative">
-                        <DollarSign className="w-3.5 h-3.5 text-[#8F9CAE] absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="number"
-                          min="1"
-                          step="any"
-                          placeholder="0.00"
-                          value={cardAmt}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setCardAmounts((prev) => ({ ...prev, [basket.id]: val }));
-                            if (cardErrors[basket.id]) {
-                              setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
-                            }
-                          }}
-                          className="w-full pl-8 pr-14 py-2 bg-[#0B0E14] border border-[#262D3D] rounded-xl text-xs font-mono font-bold text-white focus:outline-none focus:border-[#CDE06A]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const maxVal = basket.market === "private"
-                              ? Math.min(25, Math.floor(balances.usdcBalance))
-                              : Math.floor(balances.usdcBalance);
-                            setCardAmounts((prev) => ({
-                              ...prev,
-                              [basket.id]: maxVal > 0 ? maxVal.toString() : "",
-                            }));
-                            if (cardErrors[basket.id]) {
-                              setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
-                            }
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#CDE06A] px-2 py-0.5 rounded bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20"
-                        >
-                          MAX
-                        </button>
-                      </div>
-
-                      {cardErr && (
-                        <div className="p-2 rounded-xl bg-rose-950/40 border border-rose-800 text-[11px] text-rose-300 flex items-center gap-1.5">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                          <span>{cardErr}</span>
-                        </div>
-                      )}
-
-                      {cardAmt !== "" && Number(cardAmt) > 0 && balances.usdcBalance < Number(cardAmt) && balances.solBalance >= 0.02 && (
-                        <button
-                          type="button"
-                          onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(Number(cardAmt) - balances.usdcBalance))}
-                          className="w-full p-2 rounded-xl bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[11px] text-[#CDE06A] flex items-center justify-between font-bold transition-colors"
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <Image
-                              src="/sol-logo.svg"
-                              alt="SOL"
-                              width={14}
-                              height={14}
-                              className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                          <div className="relative">
+                            <DollarSign className="w-3.5 h-3.5 text-[#8F9CAE] absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                              type="number"
+                              min="1"
+                              step="any"
+                              placeholder="0.00"
+                              value={cardAmt}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCardAmounts((prev) => ({ ...prev, [basket.id]: val }));
+                                if (cardErrors[basket.id]) {
+                                  setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
+                                }
+                              }}
+                              className="w-full pl-8 pr-14 py-2 bg-[#0B0E14] border border-[#262D3D] rounded-xl text-xs font-mono font-bold text-white focus:outline-none focus:border-[#CDE06A]"
                             />
-                            <span>Swap SOL to USDC</span>
-                          </span>
-                          <span className="underline flex items-center gap-1">
-                            Convert <ArrowRight className="w-3 h-3" />
-                          </span>
-                        </button>
-                      )}
-                    </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const maxVal = basket.market === "private"
+                                  ? Math.min(25, Math.floor(balances.usdcBalance))
+                                  : Math.floor(balances.usdcBalance);
+                                setCardAmounts((prev) => ({
+                                  ...prev,
+                                  [basket.id]: maxVal > 0 ? maxVal.toString() : "",
+                                }));
+                                if (cardErrors[basket.id]) {
+                                  setCardErrors((prev) => ({ ...prev, [basket.id]: null }));
+                                }
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#CDE06A] px-2 py-0.5 rounded bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20"
+                            >
+                              MAX
+                            </button>
+                          </div>
 
-                    <button
-                      onClick={() => handleInvestWithValidation(basket, cardAmt, false)}
-                      className="btn-primary w-full flex items-center justify-center gap-2 text-xs !py-3"
-                    >
-                      <span>Invest in {basket.name}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => openWeightCustomizer(basket)}
-                      className="btn-secondary w-full flex items-center justify-center gap-2 text-xs !py-2 text-[#8F9CAE] hover:text-white"
-                    >
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-[#8D8AFF]" />
-                      <span>Customize Weights</span>
-                    </button>
+                          {cardErr && (
+                            <div className="p-2 rounded-xl bg-rose-950/40 border border-rose-800 text-[11px] text-rose-300 flex items-center gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span>{cardErr}</span>
+                            </div>
+                          )}
+
+                          {cardAmt !== "" && Number(cardAmt) > 0 && balances.usdcBalance < Number(cardAmt) && balances.solBalance >= 0.02 && (
+                            <button
+                              type="button"
+                              onClick={() => openQuickSwap("SOL_TO_USDC", Math.ceil(Number(cardAmt) - balances.usdcBalance))}
+                              className="w-full p-2 rounded-xl bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 text-[11px] text-[#CDE06A] flex items-center justify-between font-bold transition-colors"
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <Image
+                                  src="/sol-logo.svg"
+                                  alt="SOL"
+                                  width={14}
+                                  height={14}
+                                  className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
+                                />
+                                <span>Swap SOL to USDC</span>
+                              </span>
+                              <span className="underline flex items-center gap-1">
+                                Convert <ArrowRight className="w-3 h-3" />
+                              </span>
+                            </button>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleInvestWithValidation(basket, cardAmt, false)}
+                          className="btn-primary w-full flex items-center justify-center gap-2 text-xs !py-3"
+                        >
+                          <span>Invest in {basket.name}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => openWeightCustomizer(basket)}
+                          className="btn-secondary w-full flex items-center justify-center gap-2 text-xs !py-2 text-[#8F9CAE] hover:text-white"
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-[#8D8AFF]" />
+                          <span>Customize Weights</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+
+          {/* Swipe Indicator & Pagination Dots */}
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-1.5">
+              {curatedBasketsList.map((b, idx) => (
+                <button
+                  key={b.id}
+                  onClick={() => {
+                    if (!curatedCarouselRef.current) return;
+                    const cardWidth = 360;
+                    curatedCarouselRef.current.scrollTo({ left: idx * cardWidth, behavior: "smooth" });
+                  }}
+                  aria-label={`Jump to ${b.name}`}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    idx === curatedScrollIdx
+                      ? "w-6 bg-[#CDE06A]"
+                      : "w-2 bg-[#262D3D] hover:bg-[#8F9CAE]"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <span className="text-[11px] font-mono text-[#8F9CAE]">
+              Swipe to explore ({curatedScrollIdx + 1}/{curatedBasketsList.length})
+            </span>
           </div>
         </div>
       )}
