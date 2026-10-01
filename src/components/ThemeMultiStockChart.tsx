@@ -81,6 +81,19 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
     return totalWeight > 0 ? weightedChange / totalWeight : 0;
   }, [stocks]);
 
+  // Real weighted unit price of 1 basket share based on constituent weights & live prices
+  const weightedBasketPrice = useMemo(() => {
+    let totalWeight = 0;
+    let weightedSum = 0;
+    stocks.forEach((s) => {
+      if (s.hasPrice && s.currentPrice > 0) {
+        weightedSum += s.weight * s.currentPrice;
+        totalWeight += s.weight;
+      }
+    });
+    return totalWeight > 0 ? Number((weightedSum / totalWeight).toFixed(2)) : 100;
+  }, [stocks]);
+
   // Generate realistic, non-game financial time-series data
   const chartData = useMemo(() => {
     const pointsCount = 20;
@@ -126,8 +139,8 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       return x - Math.floor(x);
     };
 
-    // Calculate baseline normalized starting point
-    const baseIndexValue = 1000; // Base $1,000 portfolio index
+    // Calculate baseline starting point based on the real weighted unit price
+    const baseIndexValue = weightedBasketPrice;
     const totalNetChangePct = (composite24hChangePct * tfConfig.scale) / 100;
     const startIndexValue = baseIndexValue / (1 + totalNetChangePct);
 
@@ -176,7 +189,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
     }
 
     return data;
-  }, [stocks, composite24hChangePct, timeframe]);
+  }, [stocks, composite24hChangePct, timeframe, weightedBasketPrice]);
 
   // Selected single stock if in single stock mode
   const activeSingleStock = useMemo(() => {
@@ -202,17 +215,17 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       };
     }
 
-    const vals = chartData.map((d) => d.composite || 1000);
+    const vals = chartData.map((d) => d.composite || weightedBasketPrice);
     const high = Math.max(...vals);
     const low = Math.min(...vals);
     return {
-      current: 1000,
+      current: weightedBasketPrice,
       changePct: composite24hChangePct,
       high,
       low,
       isPositive: composite24hChangePct >= 0,
     };
-  }, [chartData, activeSingleStock, composite24hChangePct]);
+  }, [chartData, activeSingleStock, composite24hChangePct, weightedBasketPrice]);
 
   const primaryColor = stats.isPositive ? "#CDE06A" : "#F43F5E";
 
@@ -223,9 +236,8 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
-              {basket.category} Portfolio Index
+              {basket.category} Thematic Basket Unit Price
             </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#CDE06A] animate-pulse" />
           </div>
 
           <div className="flex items-baseline gap-3 mt-1">
@@ -233,7 +245,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
               {activeSingleStock ? (
                 `$${activeSingleStock.currentPrice.toFixed(2)}`
               ) : (
-                `$1,000.00`
+                `$${weightedBasketPrice.toFixed(2)}`
               )}
             </h2>
 
