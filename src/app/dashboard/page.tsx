@@ -520,8 +520,6 @@ export default function DashboardPage() {
         ) : (
           /* Left: PreStocks Private Market Valuation Radar Deck */
           <div className="lg:col-span-8 bento-card relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#8D8AFF]/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-
             <div className="space-y-4 relative z-10">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#262D3D]">
                 <div className="flex items-center gap-2.5">
@@ -652,13 +650,7 @@ export default function DashboardPage() {
         )}
 
         {/* Right: Featured Theme Spotlight Card (Synced with Selected Theme) */}
-        <div className="lg:col-span-4 rounded-xl bg-gradient-to-br from-[#1E2536] via-[#161B26] to-[#0F131D] border border-[#262D3D] p-6 flex flex-col justify-between shadow-xl relative overflow-hidden">
-          <div
-            className={`absolute top-0 right-0 w-36 h-36 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10 ${
-              marketFilter === "private" ? "bg-[#8D8AFF]/10" : "bg-[#CDE06A]/10"
-            }`}
-          />
-
+        <div className="lg:col-span-4 bento-card flex flex-col justify-between relative overflow-hidden">
           <div className="space-y-3 relative z-10">
             <div className="flex items-center justify-between">
               <span

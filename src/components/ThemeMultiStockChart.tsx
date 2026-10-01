@@ -81,20 +81,8 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
     return totalWeight > 0 ? weightedChange / totalWeight : 0;
   }, [stocks]);
 
-  // Real weighted unit price of 1 basket share based on constituent weights & live prices
-  const weightedBasketPrice = useMemo(() => {
-    let totalWeight = 0;
-    let weightedSum = 0;
-    stocks.forEach((s) => {
-      if (s.hasPrice && s.currentPrice > 0) {
-        weightedSum += s.weight * s.currentPrice;
-        totalWeight += s.weight;
-      }
-    });
-    return totalWeight > 0 ? Number((weightedSum / totalWeight).toFixed(2)) : 100;
-  }, [stocks]);
 
-  // Generate realistic, non-game financial time-series data
+  // Generate realistic, non-game financial time-series data (Option 2: Pure % Return)
   const chartData = useMemo(() => {
     const pointsCount = 20;
     const data = [];
@@ -139,10 +127,8 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       return x - Math.floor(x);
     };
 
-    // Calculate baseline starting point based on the real weighted unit price
-    const baseIndexValue = weightedBasketPrice;
-    const totalNetChangePct = (composite24hChangePct * tfConfig.scale) / 100;
-    const startIndexValue = baseIndexValue / (1 + totalNetChangePct);
+    // Calculate percentage progression for the composite theme
+    const totalNetChangePct = composite24hChangePct * tfConfig.scale;
 
     for (let i = 0; i < pointsCount; i++) {
       const progress = i / (pointsCount - 1); // 0 to 1
@@ -150,12 +136,12 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
         time: tfConfig.labels[i] || `P${i}`,
       };
 
-      // 1. Realistic composite index trajectory
-      const macroTrend = startIndexValue + (baseIndexValue - startIndexValue) * Math.pow(progress, 0.95);
-      const volatility = 0.006 * (1 - progress * 0.4);
-      const noise = (pseudoRandom(i * 13 + 7) - 0.5) * volatility * macroTrend;
-      const compositeVal = Number((macroTrend + noise).toFixed(2));
-      pointObj["composite"] = compositeVal;
+      // 1. Realistic composite percentage trajectory (Pure Percentage Hero)
+      const macroTrend = totalNetChangePct * Math.pow(progress, 0.95);
+      const volatility = 0.08 * (1 - progress * 0.4);
+      const noise = (pseudoRandom(i * 13 + 7) - 0.5) * volatility;
+      const compositePct = Number((macroTrend + noise).toFixed(2));
+      pointObj["composite_pct"] = compositePct;
 
       // 2. Individual stock paths & normalized percentage changes
       stocks.forEach((stock, sIdx) => {
@@ -175,10 +161,10 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       data.push(pointObj);
     }
 
-    // Force the final point to exactly match current prices
+    // Force the final point to exactly match current performance
     if (data.length > 0) {
       const last = data[data.length - 1];
-      last["composite"] = baseIndexValue;
+      last["composite_pct"] = Number(totalNetChangePct.toFixed(2));
       stocks.forEach((stock) => {
         if (stock.hasPrice) {
           last[stock.underlying] = Number(stock.currentPrice.toFixed(2));
@@ -189,7 +175,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
     }
 
     return data;
-  }, [stocks, composite24hChangePct, timeframe, weightedBasketPrice]);
+  }, [stocks, composite24hChangePct, timeframe]);
 
   // Selected single stock if in single stock mode
   const activeSingleStock = useMemo(() => {
@@ -197,7 +183,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
     return stocks.find((s) => s.underlying === viewMode || s.symbol === viewMode) || null;
   }, [viewMode, stocks]);
 
-  // Stats for the active view
+  // Stats for the active view (Option 2: Pure % return for theme, dollar price for single stock)
   const stats = useMemo(() => {
     if (chartData.length === 0) return { current: 0, changePct: 0, high: 0, low: 0, isPositive: true };
 
@@ -215,17 +201,18 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
       };
     }
 
-    const vals = chartData.map((d) => d.composite || weightedBasketPrice);
+    const themeChangePct = composite24hChangePct * (timeframe === "24H" ? 1.0 : timeframe === "7D" ? 2.4 : timeframe === "30D" ? 4.8 : 8.5);
+    const vals = chartData.map((d) => (typeof d.composite_pct === "number" ? d.composite_pct : themeChangePct));
     const high = Math.max(...vals);
     const low = Math.min(...vals);
     return {
-      current: weightedBasketPrice,
-      changePct: composite24hChangePct,
+      current: themeChangePct,
+      changePct: themeChangePct,
       high,
       low,
-      isPositive: composite24hChangePct >= 0,
+      isPositive: themeChangePct >= 0,
     };
-  }, [chartData, activeSingleStock, composite24hChangePct, weightedBasketPrice]);
+  }, [chartData, activeSingleStock, composite24hChangePct, timeframe]);
 
   const primaryColor = stats.isPositive ? "#CDE06A" : "#F43F5E";
 
@@ -236,37 +223,47 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#8F9CAE]">
-              {basket.category} Thematic Basket Unit Price
+              {activeSingleStock ? `${activeSingleStock.name} (${activeSingleStock.underlying})` : `${basket.category} Portfolio Index`}
             </span>
           </div>
 
           <div className="flex items-baseline gap-3 mt-1">
-            <h2 className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight">
-              {activeSingleStock ? (
-                `$${activeSingleStock.currentPrice.toFixed(2)}`
-              ) : (
-                `$${weightedBasketPrice.toFixed(2)}`
-              )}
-            </h2>
+            {activeSingleStock ? (
+              <>
+                <h2 className="text-xl sm:text-2xl font-bold font-mono text-white tracking-tight">
+                  ${activeSingleStock.currentPrice.toFixed(2)}
+                </h2>
 
-            <div
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold font-mono ${
-                stats.isPositive
-                  ? "bg-[#CDE06A]/15 text-[#CDE06A] border border-[#CDE06A]/30"
-                  : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-              }`}
-            >
-              {stats.isPositive ? (
-                <TrendingUp className="w-3.5 h-3.5" />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5" />
-              )}
-              <span>
-                {stats.isPositive ? "+" : ""}
-                {stats.changePct.toFixed(2)}%
-              </span>
-              <span className="text-[10px] font-normal opacity-75">({timeframe})</span>
-            </div>
+                <div
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold font-mono ${
+                    stats.isPositive
+                      ? "bg-[#CDE06A]/15 text-[#CDE06A] border border-[#CDE06A]/30"
+                      : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                  }`}
+                >
+                  {stats.isPositive ? (
+                    <TrendingUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <TrendingDown className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {stats.isPositive ? "+" : ""}
+                    {stats.changePct.toFixed(2)}%
+                  </span>
+                  <span className="text-[10px] font-normal opacity-75">({timeframe})</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-baseline gap-2.5">
+                <h2 className={`text-2xl sm:text-3xl font-bold font-mono tracking-tight ${stats.isPositive ? "text-[#CDE06A]" : "text-rose-400"}`}>
+                  {stats.isPositive ? "+" : ""}
+                  {stats.changePct.toFixed(2)}%
+                </h2>
+                <span className="text-xs font-semibold text-[#8F9CAE]">
+                  {timeframe} Theme Performance
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -284,7 +281,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
               }`}
             >
               <Activity className="w-3 h-3 text-[#CDE06A]" />
-              <span>Theme NAV</span>
+              <span>Theme Performance</span>
             </button>
 
             <button
@@ -327,21 +324,20 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
           <span>
             Range High:{" "}
             <strong className="text-white font-mono">
-              ${stats.high.toFixed(2)}
+              {activeSingleStock ? `$${stats.high.toFixed(2)}` : `${stats.high >= 0 ? "+" : ""}${stats.high.toFixed(2)}%`}
             </strong>
           </span>
           <span className="text-[#262D3D]">•</span>
           <span>
             Range Low:{" "}
             <strong className="text-white font-mono">
-              ${stats.low.toFixed(2)}
+              {activeSingleStock ? `$${stats.low.toFixed(2)}` : `${stats.low >= 0 ? "+" : ""}${stats.low.toFixed(2)}%`}
             </strong>
           </span>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px]">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span>Jupiter Lite AMM • Solana Mainnet</span>
+        <div className="text-[10px] text-[#8F9CAE]">
+          Jupiter Lite AMM • Solana Mainnet
         </div>
       </div>
 
@@ -426,10 +422,10 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
               ))}
             </LineChart>
           ) : (
-            /* Institutional AreaChart (Composite Portfolio NAV or Single Stock) */
+            /* Institutional AreaChart (Composite % Return or Single Stock Dollar Price) */
             <AreaChart
               data={chartData}
-              margin={{ top: 12, right: 12, left: activeSingleStock ? -14 : -6, bottom: 0 }}
+              margin={{ top: 12, right: 12, left: activeSingleStock ? -14 : -8, bottom: 0 }}
             >
               <defs>
                 <linearGradient id="themeAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -450,9 +446,12 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
                 fontSize={10}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `$${v.toFixed(0)}`}
+                tickFormatter={(v) => activeSingleStock ? `$${v.toFixed(0)}` : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`}
                 domain={["auto", "auto"]}
               />
+              {!activeSingleStock && (
+                <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
+              )}
               <Tooltip
                 cursor={{ stroke: "#475569", strokeWidth: 1, strokeDasharray: "3 3" }}
                 content={({ active, payload, label }) => {
@@ -465,10 +464,10 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
                         </span>
                         <div className="flex items-center justify-between gap-4">
                           <span className="text-xs text-white font-medium">
-                            {activeSingleStock ? activeSingleStock.underlying : "Basket NAV"}
+                            {activeSingleStock ? activeSingleStock.underlying : "Theme Return"}
                           </span>
-                          <span className="text-sm font-mono font-bold text-white">
-                            ${val.toFixed(2)}
+                          <span className={`text-sm font-mono font-bold ${activeSingleStock ? "text-white" : val >= 0 ? "text-[#CDE06A]" : "text-rose-400"}`}>
+                            {activeSingleStock ? `$${val.toFixed(2)}` : `${val >= 0 ? "+" : ""}${val.toFixed(2)}%`}
                           </span>
                         </div>
                         {!activeSingleStock && (
@@ -494,7 +493,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
               />
               <Area
                 type="monotone"
-                dataKey={activeSingleStock ? activeSingleStock.underlying : "composite"}
+                dataKey={activeSingleStock ? activeSingleStock.underlying : "composite_pct"}
                 stroke={primaryColor}
                 strokeWidth={2.4}
                 fill="url(#themeAreaGrad)"

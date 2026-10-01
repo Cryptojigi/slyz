@@ -117,27 +117,23 @@ export default function LandingPage() {
         <TechLogosMarquee />
       </motion.section>
 
-      {/* 2. How It Works Section (White Background with Dark Tiles) */}
+      {/* 2. How It Works Section */}
       <motion.section
         id="how-it-works"
         initial={{ opacity: 0, y: 36 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-        className="scroll-mt-24 rounded-2xl bg-white border border-slate-200 p-8 sm:p-12 lg:p-14 shadow-2xl shadow-slate-950/20 space-y-10 relative overflow-hidden"
+        className="scroll-mt-24 rounded-2xl bg-[#161B26] border border-[#262D3D] p-8 sm:p-12 lg:p-14 shadow-2xl space-y-10 relative overflow-hidden"
       >
-        {/* Subtle decorative background blur for depth */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
-
         <div className="text-center max-w-2xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider border border-[#262D3D]">
             Streamlined Workflow
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#0B0E14] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             How Slyz Works
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-medium">
+          <p className="text-sm sm:text-base text-[#8F9CAE] leading-relaxed font-normal">
             Traditional brokerages force you into fractional order queues and manual rebalancing.
             Slyz packs thematic portfolio management into three sequential Solana signatures.
           </p>
@@ -600,25 +596,22 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* 6. Bottom Call to Action Banner (White Theme) */}
+      {/* 6. Bottom Call to Action Banner */}
       <motion.section
         initial={{ opacity: 0, y: 36 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-        className="relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-8 sm:p-14 text-center space-y-6 shadow-2xl shadow-slate-950/20 text-[#0B0E14]"
+        className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] p-8 sm:p-14 text-center space-y-6 shadow-2xl text-white"
       >
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-100/50 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none -ml-16 -mb-16" />
-
         <div className="max-w-xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider border border-[#262D3D]">
             Launch Platform
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#0B0E14] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Ready to Slice the Market?
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#8F9CAE] font-normal leading-relaxed">
             Launch the Slyz Dashboard Terminal to explore the curated US stocks, customize thematic pies, and track on-chain performance.
           </p>
         </div>
@@ -626,7 +619,7 @@ export default function LandingPage() {
         <div className="flex justify-center pt-2 relative z-10">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm px-8 py-4 font-semibold rounded-xl bg-[#0B0E14] hover:bg-[#161B26] text-[#CDE06A] shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
+            className="btn-primary inline-flex items-center gap-2 text-sm !px-8 !py-4 font-semibold shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
           >
             <span>Launch Dashboard Terminal</span>
             <ArrowRight className="w-4 h-4" />
