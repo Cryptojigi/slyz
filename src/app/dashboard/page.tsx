@@ -1500,31 +1500,44 @@ export default function DashboardPage() {
                 const asset = VERIFIED_STOCKS[c.symbol];
                 const price = asset ? prices[asset.mint]?.usdPrice : undefined;
                 const legDollar = (c.targetWeight / 100) * customDepositUsd;
+                const sliceColor = DONUT_COLORS[index % DONUT_COLORS.length];
                 return (
                   <div
                     key={c.symbol}
-                    className="p-4 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D] space-y-3"
+                    className="p-3.5 sm:p-4 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D] space-y-3 transition-all"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         {asset?.logo && (
-                          <Image
-                            src={asset.logo}
-                            alt={c.symbol}
-                            width={24}
-                            height={24}
-                            className="rounded-full bg-white/10"
-                          />
+                          <div
+                            className="w-7 h-7 rounded-full overflow-hidden shrink-0 border bg-[#161B26] p-0.5 flex items-center justify-center shadow-sm"
+                            style={{ borderColor: sliceColor }}
+                          >
+                            <Image
+                              src={asset.logo}
+                              alt={c.symbol}
+                              width={24}
+                              height={24}
+                              className="rounded-full object-contain"
+                              unoptimized
+                            />
+                          </div>
                         )}
-                        <div>
-                          <span className="font-bold text-sm text-white block">{asset?.underlying || c.symbol}</span>
-                          <span className="text-[10px] text-[#8F9CAE] block">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-sm text-white truncate">{asset?.underlying || c.symbol}</span>
+                            <span
+                              className="w-2 h-2 rounded-full inline-block shrink-0"
+                              style={{ backgroundColor: sliceColor }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-[#8F9CAE] block font-mono truncate">
                             {price ? `$${price.toFixed(2)}` : "..."} • ${legDollar.toFixed(2)} USDC
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         {/* Direct Numeric Input */}
                         <div className="flex items-center gap-1 bg-[#1D2332] px-2.5 py-1 rounded-lg border border-[#262D3D]">
                           <input
@@ -1540,7 +1553,7 @@ export default function DashboardPage() {
                                 setCustomComponents
                               )
                             }
-                            className="w-10 bg-transparent text-right font-mono font-bold text-sm text-white focus:outline-none"
+                            className="w-9 sm:w-10 bg-transparent text-right font-mono font-bold text-sm text-white focus:outline-none"
                           />
                           <span className="text-xs text-[#8F9CAE] font-bold">%</span>
                         </div>
@@ -1553,6 +1566,7 @@ export default function DashboardPage() {
                               equalizeWeights(nextList, setCustomComponents);
                             }}
                             className="p-1.5 rounded-lg text-[#8F9CAE] hover:text-rose-400 hover:bg-rose-950/20 transition-colors"
+                            aria-label={`Remove ${c.symbol}`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1560,7 +1574,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    {/* Proportional Range Slider */}
+                    {/* Proportional Range Slider with Stock's Distinct Color */}
                     <input
                       type="range"
                       min={5}
@@ -1574,7 +1588,8 @@ export default function DashboardPage() {
                           setCustomComponents
                         )
                       }
-                      className="w-full accent-[#CDE06A] cursor-pointer"
+                      style={{ accentColor: sliceColor }}
+                      className="w-full cursor-pointer h-2 bg-[#161B26] rounded-lg touch-manipulation"
                     />
                   </div>
                 );
@@ -1587,7 +1602,7 @@ export default function DashboardPage() {
                 <span className="text-xs text-[#8F9CAE] font-semibold block mb-2">
                   Add Stock to Basket:
                 </span>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
                   {Object.keys(VERIFIED_STOCKS)
                     .filter((sym) => !customComponents.some((c) => c.symbol === sym))
                     .map((sym) => (
@@ -1606,18 +1621,41 @@ export default function DashboardPage() {
           </div>
 
           {/* Right: Allocation Donut & Launch Trigger */}
-          <div className="lg:col-span-5 bento-card space-y-6">
+          <div className="lg:col-span-5 bento-card space-y-5">
             <h3 className="text-lg font-bold text-white border-b border-[#262D3D] pb-3">
               Target Allocation Preview
             </h3>
 
-            <div className="flex justify-center py-4">
+            <div className="flex justify-center py-2">
               <DonutChart
                 data={customDonutData}
-                height={240}
+                height={230}
                 centerLabel={`$${customDepositUsd}`}
                 centerSublabel="Total USDC"
               />
+            </div>
+
+            {/* Allocation Legend Breakdown (Matching Image 2 Style) */}
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#262D3D]/80">
+              {customDonutData.map((item) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between p-2 rounded-xl bg-[#0B0E14]/60 border border-[#262D3D]/60 text-xs"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="font-semibold text-white truncate text-[11px]">
+                      {item.name}
+                    </span>
+                  </div>
+                  <span className="font-mono font-bold text-white text-[11px] shrink-0">
+                    {item.value}%
+                  </span>
+                </div>
+              ))}
             </div>
 
             {/* Deposit Amount Input */}

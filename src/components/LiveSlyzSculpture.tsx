@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import Image from "next/image";
-import { TrendingUp, ShieldCheck, Zap, Layers, ArrowUpRight } from "lucide-react";
+import { TrendingUp, Zap } from "lucide-react";
 
 interface Props {
   className?: string;
@@ -59,48 +58,6 @@ export const LiveSlyzSculpture: React.FC<Props> = ({ className = "" }) => {
         }`}
       />
 
-      {/* Floating Micro-Card Top-Left: Live Token-2022 Status */}
-      <div
-        className={`absolute top-4 left-2 z-30 flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-[#161B26]/90 border border-[#262D3D] shadow-2xl backdrop-blur-md transition-all duration-700 delay-300 ${
-          hasMounted
-            ? "opacity-100 translate-y-0 translate-x-0 scale-100"
-            : "opacity-0 -translate-y-6 translate-x-12 scale-90"
-        }`}
-      >
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#CDE06A] opacity-75" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#CDE06A]" />
-        </span>
-        <div className="leading-tight">
-          <span className="text-[11px] font-bold text-white block">
-            Token-2022 xStocks
-          </span>
-          <span className="text-[9px] font-semibold text-[#8F9CAE] block">
-            24/7 Solana Equities
-          </span>
-        </div>
-      </div>
-
-      {/* Floating Micro-Card Bottom-Right: 3 Signatures Guarantee */}
-      <div
-        className={`absolute bottom-4 right-2 z-30 flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-[#161B26]/90 border border-[#262D3D] shadow-2xl backdrop-blur-md transition-all duration-700 delay-500 ${
-          hasMounted
-            ? "opacity-100 translate-y-0 translate-x-0 scale-100"
-            : "opacity-0 translate-y-6 translate-x-12 scale-90"
-        }`}
-      >
-        <div className="w-6 h-6 rounded-lg bg-[#8D8AFF]/20 flex items-center justify-center">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#8D8AFF]" />
-        </div>
-        <div className="leading-tight">
-          <span className="text-[11px] font-bold text-white block">
-            Non-Custodial
-          </span>
-          <span className="text-[9px] font-semibold text-[#8F9CAE] block">
-            Three Signatures, One Theme
-          </span>
-        </div>
-      </div>
 
       {/* 3D Container for Logo Slices */}
       <div

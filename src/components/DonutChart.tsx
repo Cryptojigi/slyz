@@ -18,11 +18,16 @@ interface Props {
 }
 
 export const DONUT_COLORS = [
-  "#CDE06A", // Volt Lime
-  "#8D8AFF", // Electric Periwinkle
-  "#6361CE", // Deep Periwinkle
-  "#B5C856", // Pear Green
-  "#4FACFE", // Electric Cyan
+  "#CDE06A", // 0: Slyz Volt Lime
+  "#8D8AFF", // 1: Slyz Electric Periwinkle
+  "#36A18B", // 2: Sage Emerald Teal
+  "#6B8AFD", // 3: Cornflower Slate Blue
+  "#E58B88", // 4: Dusty Rose / Muted Coral
+  "#E8AF9D", // 5: Warm Apricot / Peach
+  "#A08AD6", // 6: Wisteria / Soft Lavender
+  "#6EBDA6", // 7: Soft Seafoam Mint
+  "#5D82D1", // 8: Slate Cobalt
+  "#D99B43", // 9: Warm Amber Ochre
 ];
 
 export const DonutChart: React.FC<Props> = ({
@@ -68,7 +73,10 @@ export const DonutChart: React.FC<Props> = ({
                       ></span>
                       {item.name}
                     </p>
-                    <p className="text-[#CDE06A] font-mono mt-0.5 font-bold">
+                    <p
+                      className="font-mono mt-0.5 font-bold"
+                      style={{ color: item.color || "#CDE06A" }}
+                    >
                       {item.value.toFixed(1)}%
                       {item.usdAmount !== undefined && (
                         <span className="text-[#8F9CAE] font-normal ml-1">

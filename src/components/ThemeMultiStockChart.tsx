@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
+import Image from "next/image";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -26,9 +27,14 @@ interface Props {
 }
 
 export const STOCK_LINE_COLORS = [
-  "#CDE06A", // Volt Lime
-  "#8D8AFF", // Electric Periwinkle
-  "#38BDF8", // Sky Blue
+  "#CDE06A", // 0: Volt Lime
+  "#8D8AFF", // 1: Electric Periwinkle
+  "#36A18B", // 2: Sage Emerald Teal
+  "#6B8AFD", // 3: Cornflower Slate Blue
+  "#E58B88", // 4: Dusty Rose / Muted Coral
+  "#E8AF9D", // 5: Warm Apricot / Peach
+  "#A08AD6", // 6: Wisteria / Soft Lavender
+  "#6EBDA6", // 7: Soft Seafoam Mint
 ];
 
 type ChartViewMode = "composite" | "compare" | string; // "composite" | "compare" | stock symbol
@@ -67,6 +73,7 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
         change24hPct,
         color,
         mint: asset?.mint,
+        logo: asset?.logo,
       };
     });
   }, [basket, prices]);
@@ -394,25 +401,44 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
                         <span className="text-[10px] font-bold text-[#8F9CAE] uppercase block pb-1 border-b border-[#262D3D]">
                           Interval: {label}
                         </span>
-                        {payload.map((entry: any, i: number) => (
-                          <div key={i} className="flex items-center justify-between gap-3 text-xs">
-                            <div className="flex items-center gap-1.5">
+                        {payload.map((entry: any, i: number) => {
+                          const stock = stocks.find((s) => s.underlying === entry.name);
+                          return (
+                            <div key={i} className="flex items-center justify-between gap-3 text-xs">
+                              <div className="flex items-center gap-2">
+                                {stock?.logo ? (
+                                  <div
+                                    className="relative w-4 h-4 rounded-full overflow-hidden shrink-0 border bg-[#0B0E14] p-0.5 flex items-center justify-center"
+                                    style={{ borderColor: entry.color }}
+                                  >
+                                    <Image
+                                      src={stock.logo}
+                                      alt={entry.name}
+                                      width={16}
+                                      height={16}
+                                      className="w-full h-full object-contain rounded-full"
+                                      unoptimized
+                                    />
+                                  </div>
+                                ) : (
+                                  <span
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                )}
+                                <span className="font-semibold text-white">{entry.name}</span>
+                              </div>
                               <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span className="font-semibold text-white">{entry.name}</span>
+                                className={`font-mono font-bold ${
+                                  Number(entry.value) >= 0 ? "text-[#CDE06A]" : "text-rose-400"
+                                }`}
+                              >
+                                {Number(entry.value) >= 0 ? "+" : ""}
+                                {Number(entry.value).toFixed(2)}%
+                              </span>
                             </div>
-                            <span
-                              className={`font-mono font-bold ${
-                                Number(entry.value) >= 0 ? "text-[#CDE06A]" : "text-rose-400"
-                              }`}
-                            >
-                              {Number(entry.value) >= 0 ? "+" : ""}
-                              {Number(entry.value).toFixed(2)}%
-                            </span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     );
                   }
@@ -488,8 +514,30 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
                               Weights:
                             </span>
                             {stocks.map((s) => (
-                              <div key={s.symbol} className="flex justify-between text-[10px]">
-                                <span className="text-[#8F9CAE]">{s.underlying} ({s.weight}%):</span>
+                              <div key={s.symbol} className="flex justify-between items-center text-[10px]">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  {s.logo ? (
+                                    <div
+                                      className="relative w-3.5 h-3.5 rounded-full overflow-hidden shrink-0 border bg-[#0B0E14] p-0.5 flex items-center justify-center"
+                                      style={{ borderColor: s.color }}
+                                    >
+                                      <Image
+                                        src={s.logo}
+                                        alt={s.underlying}
+                                        width={14}
+                                        height={14}
+                                        className="w-full h-full object-contain rounded-full"
+                                        unoptimized
+                                      />
+                                    </div>
+                                  ) : (
+                                    <span
+                                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: s.color }}
+                                    />
+                                  )}
+                                  <span className="text-[#8F9CAE] truncate">{s.underlying} ({s.weight}%):</span>
+                                </div>
                                 <span className="font-mono text-white">
                                   ${s.currentPrice > 0 ? s.currentPrice.toFixed(2) : "--"}
                                 </span>
@@ -534,11 +582,27 @@ export const ThemeMultiStockChart: React.FC<Props> = ({
               }`}
             >
               <div className="flex items-center justify-between gap-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: stock.color }}
-                  />
+                <div className="flex items-center gap-2 min-w-0">
+                  {stock.logo ? (
+                    <div
+                      className="relative w-5 h-5 rounded-full overflow-hidden shrink-0 border bg-[#161B26] p-0.5 flex items-center justify-center shadow-sm"
+                      style={{ borderColor: stock.color }}
+                    >
+                      <Image
+                        src={stock.logo}
+                        alt={stock.underlying}
+                        width={20}
+                        height={20}
+                        className="w-full h-full object-contain rounded-full"
+                        unoptimized
+                      />
+                    </div>
+                  ) : (
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: stock.color }}
+                    />
+                  )}
                   <span className="text-xs font-bold text-white truncate">{stock.underlying}</span>
                 </div>
                 <span className="text-[10px] font-mono font-semibold text-[#8F9CAE] shrink-0">

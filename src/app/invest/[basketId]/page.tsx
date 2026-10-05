@@ -241,7 +241,7 @@ function InvestPageContent() {
 
           {/* Quick Wallet Balance Pill */}
           {wallet.connected && (
-            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] text-xs font-mono">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 p-2.5 rounded-2xl bg-[#161B26] border border-[#262D3D] text-xs font-mono w-full sm:w-auto justify-between sm:justify-start">
               <div className="flex items-center gap-2">
                 <Image
                   src="/usdc-logo.svg"
