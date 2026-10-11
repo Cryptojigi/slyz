@@ -45,15 +45,25 @@ export const Navbar = () => {
       const scrollY = window.scrollY;
       setIsScrolled(scrollY > 20);
 
-      // Check if user has reached the footer or bottom section
-      const footer = document.querySelector("footer") || document.querySelector(".slyz-footer");
-      if (footer) {
-        const footerRect = footer.getBoundingClientRect();
-        // Fades out as the footer enters the viewport (top reaches within 100px of viewport bottom)
-        setIsNearBottom(footerRect.top <= window.innerHeight - 60);
+      // Never fade out at or near the top of the page
+      if (scrollY < 200) {
+        setIsNearBottom(false);
+        return;
+      }
+
+      // Target the bottom section (Closing CTA banner or Footer)
+      const bottomSection =
+        document.querySelector(".slyz-closing-cta") ||
+        document.querySelector("footer") ||
+        document.querySelector(".slyz-footer");
+
+      if (bottomSection) {
+        const rect = bottomSection.getBoundingClientRect();
+        // Fades out as soon as the bottom section scrolls into view
+        setIsNearBottom(rect.top <= window.innerHeight * 0.75);
       } else {
         const scrollBottom = document.documentElement.scrollHeight - (scrollY + window.innerHeight);
-        setIsNearBottom(scrollBottom < 120);
+        setIsNearBottom(scrollBottom < 250);
       }
     };
 
@@ -72,18 +82,19 @@ export const Navbar = () => {
   }, [pathname]);
 
   return (
-    <header
-      className={`sticky top-0 z-40 transition-all duration-300 ease-in-out ${
-        isNearBottom && !isMobileMenuOpen
-          ? "opacity-0 pointer-events-none -translate-y-2"
-          : "opacity-100 pointer-events-auto translate-y-0"
-      } ${
-        isScrolled
-          ? "bg-[#0B0E14]/90 backdrop-blur-md border-b border-[#262D3D]"
-          : "bg-transparent border-b border-transparent"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+          isNearBottom && !isMobileMenuOpen
+            ? "opacity-0 pointer-events-none -translate-y-4"
+            : "opacity-100 pointer-events-auto translate-y-0"
+        } ${
+          isScrolled
+            ? "bg-[#0B0E14]/90 backdrop-blur-md border-b border-[#262D3D]"
+            : "bg-[#0B0E14]/70 backdrop-blur-sm border-b border-transparent"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo & Name */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -476,5 +487,8 @@ export const Navbar = () => {
           in a phone browser (Safari/Chrome). Renders nothing on desktop. */}
       <MobileWalletLink />
     </header>
+    {/* Fixed Navbar Spacer to maintain natural page flow */}
+    <div className="h-16 w-full shrink-0" aria-hidden="true" />
+  </>
   );
 };
