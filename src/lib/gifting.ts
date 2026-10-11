@@ -633,11 +633,19 @@ export async function executeClaimGift(params: {
 
   updateSentGiftStatus(payload.id, "claimed");
   if (typeof window !== "undefined") {
-    fetch("/api/gifts", {
+    const res = await fetch("/api/gifts", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: payload.id, status: "claimed", signature }),
-    }).catch(() => {});
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const err = new Error(
+        body.error || "Claim landed on-chain, but the gift status was not saved. Refresh Sent Gifts."
+      ) as any;
+      err.signature = signature;
+      throw err;
+    }
   }
   return signature;
 }
@@ -790,11 +798,17 @@ export async function executeReclaimGift(params: {
 
   updateSentGiftStatus(giftRecord.id, "reclaimed");
   if (typeof window !== "undefined") {
-    fetch("/api/gifts", {
+    const res = await fetch("/api/gifts", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: giftRecord.id, status: "reclaimed", signature }),
-    }).catch(() => {});
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(
+        body.error || "Reclaim landed on-chain, but the gift status was not saved. Refresh Sent Gifts."
+      );
+    }
   }
   return signature;
 }

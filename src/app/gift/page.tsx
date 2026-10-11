@@ -127,7 +127,6 @@ export default function GiftHubPage() {
             deliveryType: "link",
             claimUrl: g.claimUrl,
             vaultPublicKey: g.vault,
-            secretKeyBase58: g.secretKeyBase58,
             txSignature: g.signature || "",
             createdAt: new Date(g.createdAt).getTime(),
             unlockTimestamp: g.unlockAt ? Math.floor(new Date(g.unlockAt).getTime() / 1000) : 0,

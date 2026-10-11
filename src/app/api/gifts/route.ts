@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabaseServer";
 import { encryptGiftSecret, decryptGiftSecret } from "@/lib/crypto";
 import { verifyWalletSignature } from "@/lib/walletAuth";
 import { generateGiftClaimUrl, GiftClaimPayload } from "@/lib/gifting";
+import { getSolanaConnection } from "@/lib/solana";
 
 /**
  * POST /api/gifts
@@ -84,6 +85,39 @@ export async function POST(req: NextRequest) {
 }
 
 /**
+ * Verifies on-chain that a transaction signature actually moved the vault's tokens.
+ */
+async function claimSignatureIsReal(opts: {
+  signature: string;
+  vault: string;
+  mint: string;
+}): Promise<boolean> {
+  try {
+    const connection = getSolanaConnection();
+    const tx = await connection.getTransaction(opts.signature, {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0,
+    });
+    if (!tx || tx.meta?.err) return false;
+
+    const pre = tx.meta?.preTokenBalances ?? [];
+    const post = tx.meta?.postTokenBalances ?? [];
+    const before = pre.find(
+      (b) => b.owner === opts.vault && b.mint === opts.mint
+    );
+    const after = post.find(
+      (b) => b.owner === opts.vault && b.mint === opts.mint
+    );
+    const beforeRaw = BigInt(before?.uiTokenAmount.amount ?? "0");
+    const afterRaw = BigInt(after?.uiTokenAmount.amount ?? "0");
+    return beforeRaw > 0n && afterRaw < beforeRaw;
+  } catch (err) {
+    console.error("Error verifying on-chain claim signature:", err);
+    return false;
+  }
+}
+
+/**
  * PATCH /api/gifts
  * Updates gift status (e.g. submitted, funded, claimed, reclaimed, failed, unknown) and tx signature.
  */
@@ -110,37 +144,63 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
     }
 
-    const walletAddress = req.headers.get("x-wallet-address") || "";
-    const signatureBase58 = req.headers.get("x-wallet-signature") || "";
-    const timestampStr = req.headers.get("x-wallet-timestamp") || "";
+    const supabase = getSupabaseAdminClient();
+    let giftRow: any = null;
 
-    const isClaimStatusWithTxSignature =
-      status === "claimed" && typeof signature === "string" && signature.length >= 64;
+    if (status === "claimed") {
+      if (!signature || typeof signature !== "string" || signature.length < 64) {
+        return NextResponse.json({ error: "Missing or invalid claim signature" }, { status: 400 });
+      }
+      const { data: gift, error: fetchError } = await supabase
+        .from("gifts")
+        .select("id, sender, status, vault, mint")
+        .eq("id", id)
+        .single();
+      if (fetchError || !gift) {
+        return NextResponse.json({ error: "Gift record not found" }, { status: 404 });
+      }
+      if (gift.status === "claimed") {
+        return NextResponse.json({ success: true, id, status: "claimed" });
+      }
+      const real = await claimSignatureIsReal({
+        signature,
+        vault: gift.vault,
+        mint: gift.mint,
+      });
+      if (!real) {
+        return NextResponse.json(
+          { error: "Signature did not move this vault's token" },
+          { status: 400 }
+        );
+      }
+      giftRow = gift;
+    } else {
+      const walletAddress = req.headers.get("x-wallet-address") || "";
+      const signatureBase58 = req.headers.get("x-wallet-signature") || "";
+      const timestampStr = req.headers.get("x-wallet-timestamp") || "";
 
-    if (!isClaimStatusWithTxSignature) {
       const auth = verifyWalletSignature({ walletAddress, signatureBase58, timestampStr });
       if (!auth.isValid) {
         return NextResponse.json({ error: auth.error || "Unauthorized wallet signature" }, { status: 401 });
       }
-    }
 
-    const supabase = getSupabaseAdminClient();
-    const { data: existing, error: fetchError } = await supabase
-      .from("gifts")
-      .select("id, sender, status")
-      .eq("id", id)
-      .single();
+      const { data: gift, error: fetchError } = await supabase
+        .from("gifts")
+        .select("id, sender, status, vault, mint")
+        .eq("id", id)
+        .single();
 
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: "Gift record not found" }, { status: 404 });
-    }
+      if (fetchError || !gift) {
+        return NextResponse.json({ error: "Gift record not found" }, { status: 404 });
+      }
 
-    // Sender permissions
-    const isSender = walletAddress
-      ? existing.sender.toLowerCase() === walletAddress.toLowerCase()
-      : false;
-    if (!isSender && status !== "claimed") {
-      return NextResponse.json({ error: "Only the gift sender can perform this status transition" }, { status: 403 });
+      const isSender = walletAddress
+        ? gift.sender.toLowerCase() === walletAddress.toLowerCase()
+        : false;
+      if (!isSender) {
+        return NextResponse.json({ error: "Only the gift sender can perform this status transition" }, { status: 403 });
+      }
+      giftRow = gift;
     }
 
     const updatePayload: Record<string, any> = { status };
@@ -263,13 +323,11 @@ export async function GET(req: NextRequest) {
 
     const results = (rows || []).map((row: any) => {
       let claimUrl: string | undefined = undefined;
-      let secretKeyBase58: string | undefined = undefined;
 
       // Only decrypt for submitted or funded gifts where secret is still needed by sender
       if ((row.status === "submitted" || row.status === "funded") && row.secret_encrypted) {
         try {
           const decrypted = decryptGiftSecret(row.secret_encrypted);
-          secretKeyBase58 = decrypted;
           const payload: GiftClaimPayload = {
             id: row.id,
             symbol: row.symbol,
@@ -306,7 +364,6 @@ export async function GET(req: NextRequest) {
         status: row.status,
         createdAt: row.created_at,
         claimUrl,
-        secretKeyBase58: row.status === "funded" || row.status === "submitted" ? secretKeyBase58 : undefined,
       };
     });
 

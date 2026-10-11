@@ -77,7 +77,13 @@ export default function GiftClaimPage() {
 
   // Pre-flight simulation check when wallet is connected
   useEffect(() => {
-    if (!wallet.publicKey || !payload || isExpired || claimStatus === "claimed") {
+    if (
+      !wallet.publicKey ||
+      !payload ||
+      isExpired ||
+      claimStatus === "claimed" ||
+      claimStatus === "reclaimed"
+    ) {
       setSimulationError(null);
       setIsSimulating(false);
       return;
@@ -113,7 +119,9 @@ export default function GiftClaimPage() {
   }, [connection, wallet.publicKey, payload, isExpired, claimStatus]);
 
   const handleExpireEvent = () => {
-    setIsExpired(true);
+    if (claimStatus !== "claimed" && claimStatus !== "reclaimed") {
+      setIsExpired(true);
+    }
   };
 
   const handleClaim = async () => {
@@ -155,12 +163,18 @@ export default function GiftClaimPage() {
       });
     } catch (err: any) {
       console.error("Error executing gift claim:", err);
-      setErrorMessage(
-        err?.message?.includes("custom program error: 0x1")
-          ? "This gift has already been claimed or is no longer available in the vault."
-          : err?.message || "Failed to claim gift. Please try again."
-      );
-      setClaimStatus("failed");
+      if (err?.signature) {
+        setClaimTxSig(err.signature);
+        setClaimStatus("claimed");
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage(
+          err?.message?.includes("custom program error: 0x1")
+            ? "This gift has already been claimed or is no longer available in the vault."
+            : err?.message || "Failed to claim gift. Please try again."
+        );
+        setClaimStatus("failed");
+      }
     }
   };
 
@@ -216,6 +230,8 @@ export default function GiftClaimPage() {
     },
   }[payload.theme || (isPrivate ? "gold" : "lime")];
 
+  const isEffectivelyExpired = isExpired && claimStatus !== "claimed" && claimStatus !== "reclaimed";
+
   return (
     <div className="max-w-lg mx-auto py-4 sm:py-6 px-4">
       <div className="rounded-3xl bg-[#161B26] border border-[#262D3D] p-6 sm:p-8 space-y-6">
@@ -231,7 +247,7 @@ export default function GiftClaimPage() {
         </div>
 
         {/* Central Visual: Expired vs Active Gift Card */}
-        {isExpired ? (
+        {isEffectivelyExpired ? (
           <div className="text-center space-y-4 py-4">
             <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
               <Clock className="w-8 h-8" />
@@ -300,8 +316,8 @@ export default function GiftClaimPage() {
               )}
             </div>
 
-            {/* Live Expiration Countdown Clock (Sender-Set UX Window) */}
-            {payload.expiryTimestamp > 0 && (
+            {/* Live Expiration Countdown Clock (Sender-Set UX Window) - Only for active un-claimed links */}
+            {payload.expiryTimestamp > 0 && claimStatus !== "claimed" && claimStatus !== "reclaimed" && (
               <div className="pt-1 space-y-2">
                 <div className="flex items-center justify-center gap-1.5 text-xs text-[#F5A623] font-bold">
                   <Clock className="w-3.5 h-3.5" />
@@ -321,7 +337,7 @@ export default function GiftClaimPage() {
         )}
 
         {/* Error Notice */}
-        {(errorMessage || simulationError) && (
+        {(errorMessage || simulationError) && claimStatus !== "claimed" && claimStatus !== "reclaimed" && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage || simulationError}</span>
@@ -371,6 +387,11 @@ export default function GiftClaimPage() {
                   <ExternalLink className="w-3 h-3" />
                 </a>
               )}
+              {errorMessage && (
+                <p className="text-xs text-amber-300 font-medium">
+                  {errorMessage}
+                </p>
+              )}
               <div className="pt-2 flex gap-2">
                 <Link
                   href="/portfolio"
@@ -381,7 +402,7 @@ export default function GiftClaimPage() {
                 </Link>
               </div>
             </div>
-          ) : isExpired ? (
+          ) : isEffectivelyExpired ? (
             <div className="text-center space-y-3">
               <button
                 disabled
