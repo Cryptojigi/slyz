@@ -42,7 +42,7 @@ Traditional investing is gated by geographic borders, accredited investor requir
 ## Key Highlights
 
 1. **1-Click Thematic Baskets**: Invest in full market sectors (such as Big Tech, AI Infrastructure, or US Indices) in a single click. Slyz calculates target weights, executes sequential swaps through Jupiter, and delivers the underlying assets directly into your wallet.
-2. **Pre-IPO Private Market Access**: Access secondary market exposure to leading private companies like SpaceX, OpenAI, Anthropic, Anduril, and Stripe before they go public.
+2. **Pre-IPO Private Market Access**: Access secondary market exposure to late-stage pre-IPO venture companies on-chain.
 3. **Non-Custodial Stock Gifting**: Create an expiring claim link to gift any public or private stock. The recipient can claim their shares into any Solana wallet without needing any SOL for network fees.
 4. **Token-2022 Native Math**: Handles Solana Token-2022 transfer fee hooks, 9-decimal precision, and dynamic scaled UI multipliers automatically so balances and receipts always match on-chain reality.
 5. **Smart Rebalancing and Exits**: Track portfolio drift against target weights in real time. Rebalance using top-up water-filling without triggering taxable selling events, or liquidate holdings back into USDC with sequential routing.
@@ -62,7 +62,7 @@ Instead of manually researching individual tickers and making repeated trades, u
 | **AI Frontier** | Public (xStocks) | NVDA 40%, MSFT 30%, GOOGL 30% | Full-stack artificial intelligence exposure across compute and hyperscalers. |
 | **High Beta** | Public (xStocks) | TSLA 40%, NVDA 30%, COIN 30% | High-volatility market momentum across electric vehicles, chips, and crypto. |
 | **Big Commerce** | Public (xStocks) | AMZN 40%, META 30%, GOOGL 30% | Global digital advertising leaders and e-commerce logistics networks. |
-| **Frontier** | Private (PreStocks) | OpenAI 40%, Anthropic 35%, SpaceX 25% | Direct exposure to the world's most valuable private technology leaders. |
+| **Frontier** | Private (PreStocks) | OpenAI 40%, Anthropic 35%, SpaceX 25% | Direct exposure to leading pre-IPO venture technology companies. |
 
 Users can also open the **Custom Studio** to design their own pie with custom weights and live allocation donut charts.
 
@@ -72,7 +72,7 @@ Users can also open the **Custom Studio** to design their own pie with custom we
 
 Slyz integrates the PreStocks protocol on Solana, making secondary private markets accessible to everyday Web3 users.
 
-- **Verified Mint Contracts**: All 8 private equity mints are verified against official protocol contracts (OpenAI, Anthropic, SpaceX, Anduril, Figure AI, Kalshi, Neuralink, and Polymarket).
+- **Verified Mint Contracts**: All 8 private equity mints are verified against official protocol contracts directly on Solana.
 - **Transfer Fee Awareness**: Token-2022 enforces a 1% (100 bps) transfer fee hook on PreStocks transactions. Slyz computes these net fee deductions upfront before any swap or transfer is confirmed.
 - **Dynamic Multiplier Resolution**: The app dynamically queries live mint extensions (`scaledUiAmountConfig`) directly from the Solana runtime to prevent multiplier drift.
 - **Liquidity Impact Guard**: To protect users from thin AMM liquidity pools, orders enforce slippage checks and per-leg size limits.
