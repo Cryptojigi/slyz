@@ -490,7 +490,7 @@
     padding: 1rem;
   }
 
-  /* Labels and auxiliary text that use arbitrary 10–11px sizes: bump to 12px minimum */
+  /* Labels and auxiliary text that use arbitrary 10-11px sizes: bump to 12px minimum */
   .text-\[10px\],
   .text-\[11px\] {
     font-size: 0.75rem !important; /* 12px */
@@ -529,4 +529,86 @@
   div.font-mono {
     font-size: 0.8125rem !important;
   }
+
+  /* ─── Overflow Prevention ─── */
+  /* Clamp hero heading for narrow screens (< 375px especially) */
+  h1 {
+    font-size: clamp(2rem, 8vw, 2.65rem) !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* CTA section heading */
+  .slyz-closing-cta h2 {
+    font-size: clamp(1.75rem, 7vw, 2.25rem) !important;
+  }
+
+  /* Prevent any long word or URL from pushing the layout wide */
+  p, span, a, li, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Footer: stack all columns vertically on mobile */
+  .slyz-footer .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;
+  }
+
+  /* Footer sub-footer: stack vertically */
+  .slyz-footer > div:last-child {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  /* Carousel cards: fit inside viewport with padding */
+  .snap-start {
+    max-width: calc(100vw - 3rem) !important;
+  }
+
+  /* Hero section: tighten padding on smallest screens */
+  .slyz-liquid-hero {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-radius: 1rem;
+  }
+
+  /* Closing CTA: tighten on mobile */
+  .slyz-closing-cta {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  /* Gifting section: ensure full containment on mobile */
+  #gifting {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
 }
+
+/* Extra-small screens (< 360px) */
+@media (max-width: 359px) {
+  h1 {
+    font-size: 1.75rem !important;
+  }
+
+  .slyz-closing-cta h2 {
+    font-size: 1.5rem !important;
+  }
+
+  /* Reduce main container padding */
+  main {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  #gifting {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+

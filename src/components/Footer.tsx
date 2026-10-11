@@ -107,6 +107,11 @@ export const Footer = () => {
                 My Portfolio
               </Link>
             </li>
+            <li>
+              <Link href="/gift" className="hover:text-white transition-colors">
+                Gift Stocks
+              </Link>
+            </li>
           </ul>
         </div>
 

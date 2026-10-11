@@ -88,11 +88,11 @@ export const Navbar = () => {
               <a href="#themes" className="hover:text-white transition-colors">
                 Curated Themes
               </a>
+              <a href="#gifting" className="hover:text-white transition-colors">
+                Stock Gifting
+              </a>
               <a href="#security" className="hover:text-white transition-colors">
                 Security
-              </a>
-              <a href="#roadmap" className="hover:text-white transition-colors">
-                Roadmap
               </a>
               <a href="#faq" className="hover:text-white transition-colors">
                 FAQ
@@ -267,18 +267,18 @@ export const Navbar = () => {
                 Curated Themes
               </a>
               <a
+                href="#gifting"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white"
+              >
+                Stock Gifting
+              </a>
+              <a
                 href="#security"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white"
               >
                 Security
-              </a>
-              <a
-                href="#roadmap"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white"
-              >
-                Roadmap
               </a>
               <a
                 href="#faq"
