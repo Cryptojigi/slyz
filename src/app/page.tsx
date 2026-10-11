@@ -24,7 +24,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CURATED_BASKETS, VERIFIED_STOCKS } from "@/lib/constants";
-import { LiveSlyzSculpture } from "@/components/LiveSlyzSculpture";
 import { Footer } from "@/components/Footer";
 import { TechLogosMarquee } from "@/components/TechLogosMarquee";
 
@@ -100,56 +99,52 @@ export default function LandingPage() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] px-4 py-7 sm:p-10 lg:p-14 shadow-2xl"
+        className="slyz-liquid-hero relative isolate overflow-hidden rounded-[1.75rem] border border-[#31394b] px-5 py-14 sm:px-10 sm:py-20 lg:px-14 lg:py-28 shadow-2xl"
       >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#CDE06A]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8D8AFF]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+        <div className="slyz-liquid-hero__ripple slyz-liquid-hero__ripple--top" aria-hidden="true" />
+        <div className="slyz-liquid-hero__ripple slyz-liquid-hero__ripple--middle" aria-hidden="true" />
+        <div className="slyz-liquid-hero__ripple slyz-liquid-hero__ripple--bottom" aria-hidden="true" />
 
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
-          {/* Left Column: Headline, Value Proposition & CTAs */}
-          <div className="lg:col-span-7 space-y-4 sm:space-y-6">
-            <p className="text-[11px] sm:text-xs md:text-sm font-bold uppercase tracking-wider text-[#CDE06A]">
+        <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
+          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#CDE06A] sm:mb-7 sm:text-xs">
               Non-Custodial Thematic Stock Baskets on Solana
             </p>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.12]">
-              Slice the Market.
+            <h1 className="max-w-4xl text-[2.65rem] font-bold tracking-[-0.06em] text-white leading-[0.96] sm:text-6xl lg:text-8xl">
+              Slice the market.
               <br />
-              <span className="text-[#CDE06A]">Own the Theme.</span>
+              <span className="text-[#CDE06A]">Own the theme.</span>
             </h1>
 
-            <p className="text-sm sm:text-base lg:text-lg text-[#8F9CAE] leading-relaxed max-w-2xl font-normal">
+            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-[#D6DCEA] sm:mt-8 sm:text-base lg:text-lg">
               Invest in curated baskets of tokenized US equities and pre-IPO venture companies on Solana - three signatures, one theme.
               Non-custodial, fractional shares powered by Jupiter, xStocks Token-2022, and PreStocks.
             </p>
 
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-4 pt-2">
+            <div className="mt-7 flex flex-col items-center gap-3 sm:mt-9 sm:flex-row sm:justify-center">
               <Link
                 href="/dashboard"
-                className="btn-primary flex items-center justify-center gap-1.5 !px-3 sm:!px-6 !py-2.5 sm:!py-3 text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
+                className="group inline-flex min-h-14 items-center gap-3 rounded-full bg-[#0B0E14] py-1.5 pl-5 pr-1.5 text-sm font-semibold text-white shadow-[0_14px_36px_rgba(4,7,14,0.32)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#CDE06A]"
               >
-                <span className="sm:hidden">Explore Pies</span>
-                <span className="hidden sm:inline">Explore Thematic Pies</span>
-                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                Explore thematic pies
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-[#CDE06A] text-[#0B0E14] transition-transform duration-200 group-hover:translate-x-0.5">
+                  <ArrowRight className="h-4 w-4" />
+                </span>
               </Link>
               <a
                 href="#how-it-works"
-                className="btn-secondary flex items-center justify-center gap-1.5 !px-3 sm:!px-6 !py-2.5 sm:!py-3 text-xs sm:text-sm font-semibold hover:border-[#8D8AFF] hover:text-white text-center"
+                className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-full border border-white/20 px-5 py-2.5 text-sm font-semibold text-white/90 transition-colors hover:border-[#CDE06A]/70 hover:bg-white/10 hover:text-white"
               >
                 <span>How It Works</span>
-                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8F9CAE] shrink-0" />
+                <ChevronRight className="h-4 w-4 text-[#CDE06A]" />
               </a>
             </div>
-          </div>
-
-          {/* Right Column: Live Slyz Logo Sculpture (slides in on reload, desktop only) */}
-          <div className="hidden lg:flex lg:col-span-5 justify-center lg:justify-end">
-            <LiveSlyzSculpture />
-          </div>
         </div>
 
         {/* Sliding Tech & Infrastructure Showcase */}
-        <TechLogosMarquee />
+        <div className="relative z-10 mx-auto mt-10 max-w-4xl sm:mt-14">
+          <TechLogosMarquee />
+        </div>
       </motion.section>
 
       {/* 2. How It Works Section */}
@@ -711,25 +706,38 @@ export default function LandingPage() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-        className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] p-8 sm:p-14 text-center space-y-6 shadow-2xl text-white"
+        className="slyz-closing-cta relative isolate overflow-hidden rounded-[1.75rem] border border-[#30394d] px-6 py-12 text-center text-white shadow-2xl sm:px-12 sm:py-16 lg:py-20"
       >
-        <div className="max-w-xl mx-auto space-y-3 relative z-10">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+        <div className="slyz-closing-cta__orb slyz-closing-cta__orb--left" aria-hidden="true" />
+        <div className="slyz-closing-cta__orb slyz-closing-cta__orb--right" aria-hidden="true" />
+        <div className="slyz-closing-cta__grid" aria-hidden="true" />
+
+        <div className="relative z-10 mx-auto max-w-2xl">
+          <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.18em] text-[#CDE06A] sm:mb-5">
+            Built for self-custody
+          </p>
+          <h2 className="text-4xl font-bold tracking-[-0.05em] text-white sm:text-5xl">
             Ready to Slice the Market?
           </h2>
-          <p className="text-xs sm:text-sm text-[#8F9CAE] font-normal leading-relaxed">
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[#AAB6CA] sm:mt-5 sm:text-base">
             Launch the Slyz Dashboard Terminal to explore the curated US stocks, customize thematic pies, and track on-chain performance.
           </p>
-        </div>
 
-        <div className="flex justify-center pt-2 relative z-10">
-          <Link
-            href="/dashboard"
-            className="btn-primary inline-flex items-center gap-2 text-sm !px-8 !py-4 font-semibold shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5"
-          >
-            <span>Launch Dashboard Terminal</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="mt-8 flex justify-center sm:mt-10">
+            <Link
+              href="/dashboard"
+              className="group inline-flex min-h-14 items-center gap-3 rounded-full bg-[#CDE06A] py-1.5 pl-6 pr-1.5 text-sm font-bold text-[#0B0E14] shadow-[0_16px_40px_rgba(205,224,106,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#D8EA7D] hover:shadow-[0_20px_45px_rgba(205,224,106,0.25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#CDE06A]"
+            >
+              <span>Launch Dashboard Terminal</span>
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#0B0E14] text-[#CDE06A] transition-transform duration-200 group-hover:translate-x-0.5">
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          </div>
+
+          <p className="mt-6 text-xs text-[#8F9CAE] sm:mt-7">
+            No deposits. Your wallet signs every transaction.
+          </p>
         </div>
       </motion.section>
 

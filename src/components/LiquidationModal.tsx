@@ -366,16 +366,7 @@ export function LiquidationModal({
                   ? `Liquidate ${singleAssetStock?.underlying || targetSymbol || steps[0]?.symbol || "Stock"} to`
                   : "Liquidate Positions to"}
               </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-[#2775CA]/15 border border-[#2775CA]/30 text-white text-[11px]">
-                <Image
-                  src="/usdc-logo.svg"
-                  alt="USDC"
-                  width={13}
-                  height={13}
-                  className="w-3.5 h-3.5 rounded-full object-contain shrink-0"
-                />
-                <span>USDC</span>
-              </span>
+              <span className="text-[#CDE06A]">USDC</span>
             </h3>
             <p className="text-[11px] text-[#8F9CAE]">
               {isSingleAsset

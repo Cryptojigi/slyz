@@ -5,7 +5,7 @@ import { ExternalLink, ShieldCheck, Scale, FileText, BookOpen, Mail } from "luci
 
 export const Footer = () => {
   return (
-    <footer className="border-t border-[#262D3D] pt-6 pb-2 space-y-4 mt-6 text-xs text-[#8F9CAE]">
+    <footer className="slyz-footer border-t border-[#262D3D] pt-8 pb-3 space-y-6 mt-8 text-xs text-[#8F9CAE]">
       <div className="grid grid-cols-2 md:grid-cols-12 gap-8 lg:gap-12">
         {/* Brand Column */}
         <div className="col-span-2 md:col-span-5 space-y-4">
