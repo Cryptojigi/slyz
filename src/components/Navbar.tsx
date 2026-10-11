@@ -35,17 +35,36 @@ export const Navbar = () => {
   const wallet = useWallet();
   const { solBalance, usdcBalance, hasSufficientGas, openQuickSwap } = useWalletBalances();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isNearBottom, setIsNearBottom] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isLandingPage = pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 20);
+
+      // Check if user has reached the footer or bottom section
+      const footer = document.querySelector("footer") || document.querySelector(".slyz-footer");
+      if (footer) {
+        const footerRect = footer.getBoundingClientRect();
+        // Fades out as the footer enters the viewport (top reaches within 100px of viewport bottom)
+        setIsNearBottom(footerRect.top <= window.innerHeight - 60);
+      } else {
+        const scrollBottom = document.documentElement.scrollHeight - (scrollY + window.innerHeight);
+        setIsNearBottom(scrollBottom < 120);
+      }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    handleScroll();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [pathname]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -54,7 +73,11 @@ export const Navbar = () => {
 
   return (
     <header
-      className={`sticky top-0 z-40 transition-all duration-200 ${
+      className={`sticky top-0 z-40 transition-all duration-300 ease-in-out ${
+        isNearBottom && !isMobileMenuOpen
+          ? "opacity-0 pointer-events-none -translate-y-2"
+          : "opacity-100 pointer-events-auto translate-y-0"
+      } ${
         isScrolled
           ? "bg-[#0B0E14]/90 backdrop-blur-md border-b border-[#262D3D]"
           : "bg-transparent border-b border-transparent"
