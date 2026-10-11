@@ -228,7 +228,7 @@ function InvestPageContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="pill-badge pill-badge-lime">{basket.category}</span>
+              <span className="px-2.5 py-1 rounded-lg bg-[#161B26] border border-[#262D3D] text-[#8F9CAE] text-[10px] font-semibold uppercase tracking-wider">{basket.category}</span>
               <span className="text-xs text-[#8F9CAE] font-mono">
                 {components.length} Asset Pie
               </span>
@@ -296,7 +296,7 @@ function InvestPageContent() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Donut & Visual Allocation */}
         <div className="lg:col-span-5 bento-card flex flex-col items-center">
-          <span className="pill-badge bg-[#0B0E14] text-[#8F9CAE] border border-[#262D3D] mb-2">
+          <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] text-[#8F9CAE] border border-[#262D3D] text-[10px] font-semibold uppercase tracking-wider mb-2">
             Target Allocation
           </span>
           <DonutChart

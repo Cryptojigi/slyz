@@ -49,7 +49,7 @@ export default function DocsPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 pb-24 pt-4 px-2 sm:px-0">
+    <div className="max-w-6xl mx-auto space-y-10 pb-4 pt-4 px-2 sm:px-0">
       {/* Top Breadcrumb */}
       <div className="flex items-center justify-between text-xs font-semibold text-[#8F9CAE]">
         <Link
@@ -582,7 +582,7 @@ export default function DocsPage() {
                   Best Security Practices
                 </span>
                 <ul className="text-xs space-y-1.5 list-disc pl-4 text-slate-300">
-                  <li>Always verify the URL in your browser address bar: <strong className="text-white">useslyz.vercel.app</strong>.</li>
+                  <li>Always verify the URL in your browser address bar: <strong className="text-white">www.useslyz.xyz</strong>.</li>
                   <li>Bookmark the official link and never click unverified search ads.</li>
                   <li>Cross-reference token mint addresses against our Verified Contract Directory.</li>
                   <li>Review transaction simulation outputs in Phantom or Solflare before approving.</li>

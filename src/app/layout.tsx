@@ -12,8 +12,7 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+    process.env.NEXT_PUBLIC_APP_URL || "https://www.useslyz.xyz"
   ),
   title: "Slyz — Thematic Stock Basket Investing on Solana",
   description:
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
     title: "Slyz",
     description:
       "Non-custodial fractional US equities, 1-click curated baskets, and zero-fee stock gifting on Solana.",
-    url: "https://useslyz.vercel.app",
+    url: "https://www.useslyz.xyz",
     siteName: "Slyz",
     images: [
       {
@@ -60,7 +59,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-[#0B0E14] text-white selection:bg-[#CDE06A] selection:text-[#0B0E14]">
         <WalletContextProvider>
           <Navbar />
-          <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-3 pb-8 sm:pt-4 sm:pb-8 overflow-x-hidden">
+          <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-3 pb-2 sm:pt-4 sm:pb-3 overflow-x-hidden">
             {children}
           </main>
         </WalletContextProvider>

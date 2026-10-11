@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   Shield,
+  ShieldCheck,
   Lock,
   EyeOff,
-  Database,
   Server,
   Trash2,
   CheckCircle2,
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-20 pt-4 px-2 sm:px-0">
+    <div className="max-w-4xl mx-auto space-y-12 pb-4 pt-4 px-2 sm:px-0">
       {/* Top Breadcrumb */}
       <div className="flex items-center justify-between text-xs font-semibold text-[#8F9CAE]">
         <Link
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
           </h1>
           <p className="text-sm sm:text-base text-[#8F9CAE] leading-relaxed">
             Slyz is built on a zero-knowledge, non-custodial foundation. We collect no personal identification,
-            maintain no user database, and track zero off-chain behavioral profiles.
+            maintain no custodial user registries, and track zero off-chain behavioral profiles.
           </p>
         </div>
       </div>
@@ -81,11 +81,11 @@ export default function PrivacyPage() {
 
         <div className="rounded-xl bg-[#161B26] border border-[#262D3D] p-5 space-y-2">
           <div className="w-8 h-8 rounded-lg bg-[#8D8AFF]/10 text-[#8D8AFF] flex items-center justify-center">
-            <Database className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4" />
           </div>
-          <h2 className="text-sm font-bold text-white">No Centralized Database</h2>
+          <h2 className="text-sm font-bold text-white">No Custodial User Registries</h2>
           <p className="text-xs text-[#8F9CAE] leading-relaxed">
-            We operate zero central user registries. Your portfolio positions exist strictly on the public Solana blockchain.
+            We operate zero custodial accounts. Your portfolio positions exist strictly on the public Solana blockchain.
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
           <p>
             At Slyz, we believe financial sovereignty begins with user privacy. Traditional platforms collect extensive
             personal identifying records (KYC), track browsing behaviors, and store confidential information in central
-            vulnerable databases.
+            vulnerable servers.
           </p>
           <p>
             Slyz replaces centralized account models with client-side cryptographic wallet authentication (Phantom, Solflare,
@@ -261,7 +261,14 @@ export default function PrivacyPage() {
             <li>Your on-chain transactions remain permanent on the decentralized Solana ledger by design.</li>
           </ul>
           <p className="pt-2 text-xs">
-            For questions regarding our privacy architecture, open an issue on our official GitHub repository.
+            For questions regarding our privacy architecture or security notices, contact our team at{" "}
+            <a href="mailto:support@useslyz.xyz" className="text-[#CDE06A] hover:underline font-medium">
+              support@useslyz.xyz
+            </a>{" "}
+            or connect with us on Telegram at{" "}
+            <a href="https://t.me/Useslyz" target="_blank" rel="noopener noreferrer" className="text-[#0088cc] hover:underline font-medium">
+              @Useslyz
+            </a>.
           </p>
         </div>
       </div>

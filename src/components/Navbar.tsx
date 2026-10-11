@@ -17,6 +17,7 @@ import {
   BookOpen,
   ArrowUpDown,
   Gift,
+  MessageSquare,
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletBalances } from "@/context/WalletBalanceContext";
@@ -96,6 +97,9 @@ export const Navbar = () => {
               <a href="#faq" className="hover:text-white transition-colors">
                 FAQ
               </a>
+              <Link href="/feedback" className="hover:text-white transition-colors">
+                Feedback
+              </Link>
               <Link href="/docs" className="hover:text-white transition-colors flex items-center gap-1">
                 <span>Docs</span>
               </Link>
@@ -145,6 +149,17 @@ export const Navbar = () => {
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 Docs
+              </Link>
+              <Link
+                href="/feedback"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  pathname === "/feedback"
+                    ? "bg-[#CDE06A] text-[#0B0E14]"
+                    : "text-[#8F9CAE] hover:text-white"
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Feedback
               </Link>
             </nav>
           )}
@@ -197,7 +212,7 @@ export const Navbar = () => {
                     {/* SOL Status Indicator */}
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        hasSufficientGas ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-amber-400 animate-ping"
+                        hasSufficientGas ? "bg-emerald-400" : "bg-amber-400 animate-ping"
                       }`}
                       title={hasSufficientGas ? "SOL healthy (> 0.015 SOL)" : "Low SOL balance (< 0.015 SOL)"}
                     />
@@ -275,14 +290,15 @@ export const Navbar = () => {
               <Link
                 href="/docs"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white flex items-center justify-between"
+                className="px-3 py-2 rounded-lg hover:bg-[#161B26] hover:text-white block"
               >
-                <span>Documentation</span>
-                <span className="text-[10px] font-bold text-[#CDE06A] tracking-wider">
-                  NEW
-                </span>
+                Documentation
               </Link>
               <div className="pt-2 border-t border-[#262D3D] flex items-center gap-4 text-xs text-[#8F9CAE] px-3">
+                <Link href="/feedback" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">
+                  Support & Feedback
+                </Link>
+                <span>•</span>
                 <Link href="/terms" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">
                   Terms
                 </Link>
@@ -402,6 +418,17 @@ export const Navbar = () => {
               >
                 <BookOpen className="w-4 h-4" />
                 Documentation Hub
+              </Link>
+              <Link
+                href="/feedback"
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold ${
+                  pathname === "/feedback"
+                    ? "bg-[#CDE06A] text-[#0B0E14]"
+                    : "bg-[#161B26] text-white"
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Feedback & Support
               </Link>
               <div className="flex items-center gap-4 text-xs text-[#8F9CAE] px-4 py-1">
                 <Link href="/terms" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white">

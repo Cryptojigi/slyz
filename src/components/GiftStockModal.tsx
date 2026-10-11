@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PublicKey, Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
 import {
   Gift,
   Clock,
@@ -28,12 +29,11 @@ import confetti from "canvas-confetti";
 import {
   VERIFIED_STOCKS,
   TOKEN_2022_PROGRAM_ID,
+  USDC_MINT,
   StockAsset,
   displaySharesToRawUnits,
   rawUnitsToDisplayShares,
   calculateNetShares,
-  getEffectiveMultiplier,
-  getTransferFeeBps,
   resolveMintCapabilities,
 } from "@/lib/constants";
 import { PortfolioPosition } from "@/lib/portfolio";
@@ -48,6 +48,9 @@ import {
   buildDirectGiftTransferTransaction,
   simulateAndValidateTransaction,
 } from "@/lib/gifting";
+import { getJupiterQuote } from "@/lib/jupiter";
+import { getOrSignWalletAuth } from "@/lib/walletAuthClient";
+import { waitForTransactionConfirmation } from "@/lib/confirmTransaction";
 import { GiftCountdownClock } from "./GiftCountdownClock";
 
 interface GiftStockModalProps {
@@ -74,19 +77,26 @@ export function GiftStockModal({
   const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState<"configure" | "funding" | "completed">("configure");
 
+  // Public xStocks only for this sprint
+  const publicStocks = Object.values(VERIFIED_STOCKS).filter((s) => s.market === "public");
+  const defaultSymbol = initialSymbol && VERIFIED_STOCKS[initialSymbol]?.market === "public" ? initialSymbol : "NVDAx";
+
   // Selection state
-  const [selectedSymbol, setSelectedSymbol] = useState<string>(
-    initialSymbol || "SPACEX"
-  );
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(defaultSymbol);
   const [deliveryType, setDeliveryType] = useState<GiftDeliveryType>("link");
   const [amountUsd, setAmountUsd] = useState<string>("");
   const [recipientAddress, setRecipientAddress] = useState<string>("");
 
-  // Expiration state: Presets from 7mins to 30mins (30min is highest preset), or custom duration up to 24hrs
-  type ExpiryPreset = "7mins" | "10mins" | "15mins" | "30mins" | "custom";
-  const [expiryMode, setExpiryMode] = useState<ExpiryPreset>("15mins");
-  const [customHours, setCustomHours] = useState<number>(1);
-  const [customMinutes, setCustomMinutes] = useState<number>(0);
+  // Live Quote state
+  const [quotedRawUnits, setQuotedRawUnits] = useState<string>("0");
+  const [quotedShares, setQuotedShares] = useState<number>(0);
+  const [isQuoting, setIsQuoting] = useState<boolean>(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [priceImpactPct, setPriceImpactPct] = useState<number>(0);
+
+  // Expiration state: Presets from 1 hour to 7 days, or No Expiry
+  type ExpiryPreset = "1h" | "24h" | "7d" | "none";
+  const [expiryMode, setExpiryMode] = useState<ExpiryPreset>("24h");
 
   // Personalization state
   const [senderName, setSenderName] = useState<string>("");
@@ -99,90 +109,112 @@ export function GiftStockModal({
   const [generatedClaimUrl, setGeneratedClaimUrl] = useState<string>("");
   const [fundedTxSig, setFundedTxSig] = useState<string>("");
   const [copied, setCopied] = useState(false);
-  const [capsVersion, setCapsVersion] = useState(0); // bump to recompute
-
-  useEffect(() => {
-    if (!connection || !selectedSymbol) return;
-    let cancelled = false;
-    resolveMintCapabilities(connection, selectedSymbol)
-      .then(() => { if (!cancelled) setCapsVersion((v) => v + 1); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [selectedSymbol, connection]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (initialSymbol && VERIFIED_STOCKS[initialSymbol]) {
+    if (initialSymbol && VERIFIED_STOCKS[initialSymbol]?.market === "public") {
       setSelectedSymbol(initialSymbol);
-      const isPriv = VERIFIED_STOCKS[initialSymbol].market === "private";
-      setTheme(isPriv ? "gold" : "lime");
     }
   }, [initialSymbol]);
 
+  const currentAsset: StockAsset = VERIFIED_STOCKS[selectedSymbol] || publicStocks[0];
+
+  // Live quote calculation: convert USD to raw base units via Jupiter quote
+  useEffect(() => {
+    let active = true;
+    const parsed = parseFloat(amountUsd) || 0;
+
+    if (parsed < 0.1) {
+      setQuotedRawUnits("0");
+      setQuotedShares(0);
+      setQuoteError(null);
+      setPriceImpactPct(0);
+      setIsQuoting(false);
+      return;
+    }
+
+    setIsQuoting(true);
+    setQuoteError(null);
+
+    const timer = setTimeout(async () => {
+      try {
+        const quote = await getJupiterQuote({
+          inputMint: USDC_MINT,
+          outputMint: currentAsset.mint,
+          amount: Math.round(parsed * 1_000_000), // USDC base units
+          slippageBps: 50, // 0.5% default
+        });
+
+        if (!active) return;
+
+        const impact = Math.abs(Number(quote.priceImpactPct || 0));
+        setPriceImpactPct(impact);
+
+        if (impact > 5) {
+          setQuoteError(`Price impact (${impact.toFixed(2)}%) exceeds the 5% threshold.`);
+          setQuotedRawUnits("0");
+          setQuotedShares(0);
+        } else {
+          setQuotedRawUnits(quote.outAmount);
+          // Decimals = 8 for xStocks. Never multiply uiAmount by scaledUiMultiplier.
+          setQuotedShares(Number(quote.outAmount) / Math.pow(10, currentAsset.decimals));
+          setQuoteError(null);
+        }
+      } catch (err: any) {
+        if (!active) return;
+        setQuoteError(err?.message || "Failed to fetch live quote for this amount.");
+        setQuotedRawUnits("0");
+        setQuotedShares(0);
+      } finally {
+        if (active) setIsQuoting(false);
+      }
+    }, 350);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [amountUsd, selectedSymbol, currentAsset.mint, currentAsset.decimals]);
+
   if (!mounted || !isOpen) return null;
 
-  const currentAsset: StockAsset =
-    VERIFIED_STOCKS[selectedSymbol] || VERIFIED_STOCKS["SPACEX"];
-
-  // Calculate expiration timestamp in unix seconds
+  // Calculate expiration timestamp in unix seconds (0 = no expiration)
   const calculateExpiryTimestamp = (): number => {
     const now = Math.floor(Date.now() / 1000);
     switch (expiryMode) {
-      case "7mins":
-        return now + 7 * 60;
-      case "10mins":
-        return now + 10 * 60;
-      case "15mins":
-        return now + 15 * 60;
-      case "30mins":
-        return now + 30 * 60;
-      case "custom": {
-        // Enforce maximum duration of 24 hours (1440 minutes)
-        const clampedH = Math.min(24, Math.max(0, customHours));
-        const clampedM = clampedH === 24 ? 0 : Math.min(59, Math.max(0, customMinutes));
-        const totalMinutes = Math.min(24 * 60, Math.max(1, clampedH * 60 + clampedM));
-        return now + totalMinutes * 60;
-      }
+      case "1h":
+        return now + 3600;
+      case "24h":
+        return now + 86400;
+      case "7d":
+        return now + 7 * 86400;
+      case "none":
       default:
-        return now + 15 * 60;
+        return 0;
     }
   };
 
-  // Find matching user position if user already holds shares
+  // Find matching user position in wallet
   const userPosition = positions.find((p) => p.symbol === selectedSymbol);
   const availableShares = userPosition ? userPosition.rawBalance : 0;
-  const hasPosition = Boolean(userPosition && userPosition.rawBalance > 0.00001);
 
   // Form validation & parsing
   const parsedAmount = parseFloat(amountUsd) || 0;
-  const hasValidAmount = parsedAmount >= 1;
-  const hasValidRecipient =
-    deliveryType === "link" || recipientAddress.trim().length >= 32;
-
-  // Approximate share calculation (fallback price for PreStocks or xStocks)
-  const estimatedPrice = userPosition?.usdPrice && userPosition.usdPrice > 0
-    ? userPosition.usdPrice
-    : currentAsset.market === "private"
-    ? 250 // Approximate benchmark mark price
-    : 150;
-  const estimatedShares = parsedAmount > 0 ? Math.max(0.0001, parsedAmount / estimatedPrice) : 0;
-
-  // Multiplier and transfer fee calculation (capsVersion forces recomputation after live capabilities resolve)
-  void capsVersion;
-  const netCalc = calculateNetShares(
-    estimatedShares,
-    selectedSymbol,
-    deliveryType === "link" ? 2 : 1
-  );
-  const minRequiredSol = deliveryType === "link" ? 0.0056 : 0.002;
-  const hasSufficientShares = availableShares >= estimatedShares && availableShares > 0;
+  const hasValidAmount = parsedAmount >= 0.1 && !quoteError && quotedRawUnits !== "0";
+  const hasValidRecipient = deliveryType === "link" || recipientAddress.trim().length >= 32;
+  const minRequiredSol = deliveryType === "link" ? 0.004 : 0.002;
+  const hasSufficientShares = availableShares >= quotedShares && availableShares > 0;
   const hasSufficientSol = solBalance >= minRequiredSol;
 
   const isFormValid =
-    hasValidAmount && hasValidRecipient && hasSufficientShares && hasSufficientSol;
+    hasValidAmount &&
+    hasValidRecipient &&
+    hasSufficientShares &&
+    hasSufficientSol &&
+    !isQuoting;
 
   const handleFundGift = async () => {
     if (!wallet.publicKey || !wallet.signTransaction) {
@@ -190,8 +222,13 @@ export function GiftStockModal({
       return;
     }
 
-    if (parsedAmount < 1) {
-      setExecutionError("Please enter a gift amount of at least $1.");
+    if (parsedAmount < 0.1) {
+      setExecutionError("Please enter a gift amount of at least $0.10.");
+      return;
+    }
+
+    if (quoteError || !quotedRawUnits || quotedRawUnits === "0") {
+      setExecutionError(quoteError || "Valid stock quote required before proceeding.");
       return;
     }
 
@@ -202,7 +239,7 @@ export function GiftStockModal({
 
     if (!hasSufficientShares) {
       setExecutionError(
-        `Insufficient ${currentAsset.name} balance. You hold ${availableShares.toFixed(4)} shares, but this gift requires ~${estimatedShares.toFixed(4)} shares.`
+        `Insufficient ${currentAsset.name} balance. You hold ${availableShares.toFixed(4)} shares, but this gift requires ~${quotedShares.toFixed(4)} shares.`
       );
       return;
     }
@@ -220,108 +257,236 @@ export function GiftStockModal({
 
     try {
       const expiryTs = calculateExpiryTimestamp();
-      const unlockTs = 0; // Immediately claimable!
+      const unlockTs = 0; // Immediately claimable
 
       if (deliveryType === "link") {
         // 1. Generate ephemeral keypair for the Gift Vault
         const vaultKeypair = Keypair.generate();
+        const giftId = `gift_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-        // 2. Build on-chain funding transaction
-        const { transaction, baseUnits, netBaseUnits, netShares, feeBps } =
+        // 2. Obtain wallet signature auth for secure Route Handler requests
+        const authHeaders = await getOrSignWalletAuth(wallet);
+        if (!authHeaders) {
+          throw new Error("Wallet signature is required to register and authenticate this gift draft.");
+        }
+
+        // 3. Pre-Broadcast Persistence: Insert row into Supabase BEFORE prompting wallet for transaction
+        const createRes = await fetch("/api/gifts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders,
+          },
+          body: JSON.stringify({
+            id: giftId,
+            sender: wallet.publicKey.toBase58(),
+            vault: vaultKeypair.publicKey.toBase58(),
+            secretKeyBase58: bs58.encode(vaultKeypair.secretKey),
+            symbol: selectedSymbol,
+            mint: currentAsset.mint,
+            rawAmount: quotedRawUnits,
+            estimatedUsd: parsedAmount,
+            note: note.trim(),
+            unlockAt: null,
+            expiresAt: expiryTs > 0 ? new Date(expiryTs * 1000).toISOString() : null,
+          }),
+        });
+
+        if (!createRes.ok) {
+          const errData = await createRes.json().catch(() => ({}));
+          throw new Error(
+            errData.error || "Unable to initialize gift session. The transaction prompt was safely aborted."
+          );
+        }
+
+        // 4. Build on-chain funding transaction
+        const { transaction, netBaseUnits, netShares, feeBps } =
           await buildFundGiftLinkTransaction({
             connection,
             senderPublicKey: wallet.publicKey,
             symbol: selectedSymbol,
-            shareAmount: estimatedShares,
+            shareAmount: quotedShares,
+            rawAmountString: quotedRawUnits,
             vaultKeypair,
           });
 
-        // 3. Preflight simulation to detect pause/freeze/hook/balance issues BEFORE prompting wallet
+        // 5. Preflight simulation
         await simulateAndValidateTransaction(connection, transaction, wallet.publicKey);
 
-        // 4. User signs and broadcasts
-        const signedTx = await wallet.signTransaction(transaction);
+        // 6. User signs in wallet
+        let signedTx;
+        try {
+          signedTx = await wallet.signTransaction(transaction);
+        } catch (signErr: any) {
+          // If user rejects the wallet prompt, discard the draft in Supabase
+          await fetch(`/api/gifts?id=${giftId}`, {
+            method: "DELETE",
+            headers: authHeaders,
+          }).catch(() => {});
+          throw new Error("Transaction signature was cancelled in wallet.");
+        }
+
+        // 7. Broadcast transaction to Solana
         const signature = await connection.sendRawTransaction(signedTx.serialize(), {
           skipPreflight: false,
           maxRetries: 3,
         });
 
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-        await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
-
-        // 5. Construct Gift Payload
-        const giftId = `gift_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        const payload: GiftClaimPayload = {
-          id: giftId,
-          symbol: selectedSymbol,
-          shareAmount: estimatedShares,
-          netShareAmount: netShares,
-          feeBps,
-          rawAmountString: baseUnits.toString(),
-          netRawAmountString: netBaseUnits.toString(),
-          estimatedUsd: parsedAmount,
-          senderName: senderName.trim() || "A Friend",
-          senderPublicKey: wallet.publicKey.toBase58(),
-          note: note.trim() || `Enjoy your ${currentAsset.name} gift!`,
-          unlockTimestamp: unlockTs,
-          expiryTimestamp: expiryTs,
-          theme,
-          secretKeyBase58: bs58Encode(vaultKeypair.secretKey),
-          vaultPublicKey: vaultKeypair.publicKey.toBase58(),
-        };
-
-        const claimUrl = generateGiftClaimUrl(payload);
-        setGeneratedClaimUrl(claimUrl);
         setFundedTxSig(signature);
 
-        // 6. Persist in sender's local sent gifts record
-        const sentRecord: SentGiftRecord = {
-          id: giftId,
-          symbol: selectedSymbol,
-          shareAmount: estimatedShares,
-          netShareAmount: netShares,
-          feeBps,
-          rawAmountString: baseUnits.toString(),
-          netRawAmountString: netBaseUnits.toString(),
-          estimatedUsd: parsedAmount,
-          senderName: senderName.trim() || "A Friend",
-          senderPublicKey: wallet.publicKey.toBase58(),
-          deliveryType: "link",
-          claimUrl,
-          vaultPublicKey: vaultKeypair.publicKey.toBase58(),
-          secretKeyBase58: bs58Encode(vaultKeypair.secretKey),
-          txSignature: signature,
-          createdAt: Date.now(),
-          unlockTimestamp: unlockTs,
-          expiryTimestamp: expiryTs,
-          status: "ready_to_claim",
-          theme,
-          note: note.trim(),
-        };
-        saveSentGift(sentRecord);
+        // 8. IMMEDIATELY update Supabase status to 'submitted' with the transaction signature
+        await fetch("/api/gifts", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders,
+          },
+          body: JSON.stringify({
+            id: giftId,
+            status: "submitted",
+            signature,
+          }),
+        }).catch((err) => console.warn("Failed to patch status to submitted:", err));
 
-        confetti({
-          particleCount: 90,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ["#F5A623", "#CDE06A", "#8D8AFF"],
+        // 9. Resilient Confirmation using buy-flow helper & fallback polling
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+        const confirmResult = await waitForTransactionConfirmation({
+          connection,
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+          maxPollAttempts: 15,
+          pollIntervalMs: 1500,
         });
 
-        setStep("completed");
-        if (onSuccess) onSuccess();
+        let isConfirmed = confirmResult.confirmed && !confirmResult.err;
+
+        // Fallback check on timeout or error
+        if (!isConfirmed) {
+          try {
+            const statusCheck = await connection.getSignatureStatus(signature, {
+              searchTransactionHistory: true,
+            });
+            if (statusCheck?.value) {
+              if (
+                !statusCheck.value.err &&
+                (statusCheck.value.confirmationStatus === "confirmed" ||
+                  statusCheck.value.confirmationStatus === "finalized")
+              ) {
+                isConfirmed = true;
+              } else if (statusCheck.value.err) {
+                throw new Error(`Transaction reverted on-chain: ${JSON.stringify(statusCheck.value.err)}`);
+              }
+            }
+          } catch (statusErr: any) {
+            console.warn("Fallback getSignatureStatus check:", statusErr);
+          }
+        }
+
+        if (isConfirmed) {
+          // Status updated to 'funded'
+          await fetch("/api/gifts", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeaders,
+            },
+            body: JSON.stringify({
+              id: giftId,
+              status: "funded",
+              signature,
+            }),
+          });
+
+          // Construct Gift Payload for the claim URL
+          const payload: GiftClaimPayload = {
+            id: giftId,
+            symbol: selectedSymbol,
+            shareAmount: quotedShares,
+            netShareAmount: netShares,
+            feeBps,
+            rawAmountString: quotedRawUnits,
+            netRawAmountString: netBaseUnits.toString(),
+            estimatedUsd: parsedAmount,
+            senderName: senderName.trim() || "A Friend",
+            senderPublicKey: wallet.publicKey.toBase58(),
+            note: note.trim() || `Enjoy your ${currentAsset.name} gift!`,
+            unlockTimestamp: unlockTs,
+            expiryTimestamp: expiryTs,
+            theme,
+            secretKeyBase58: bs58.encode(vaultKeypair.secretKey),
+            vaultPublicKey: vaultKeypair.publicKey.toBase58(),
+          };
+
+          const claimUrl = generateGiftClaimUrl(payload);
+          setGeneratedClaimUrl(claimUrl);
+
+          // Local backup caching
+          const sentRecord: SentGiftRecord = {
+            id: giftId,
+            symbol: selectedSymbol,
+            shareAmount: quotedShares,
+            netShareAmount: netShares,
+            feeBps,
+            rawAmountString: quotedRawUnits,
+            netRawAmountString: netBaseUnits.toString(),
+            estimatedUsd: parsedAmount,
+            senderName: senderName.trim() || "A Friend",
+            senderPublicKey: wallet.publicKey.toBase58(),
+            deliveryType: "link",
+            claimUrl,
+            vaultPublicKey: vaultKeypair.publicKey.toBase58(),
+            secretKeyBase58: bs58.encode(vaultKeypair.secretKey),
+            txSignature: signature,
+            createdAt: Date.now(),
+            unlockTimestamp: unlockTs,
+            expiryTimestamp: expiryTs,
+            status: "funded",
+            theme,
+            note: note.trim(),
+          };
+          saveSentGift(sentRecord);
+
+          confetti({
+            particleCount: 90,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ["#CDE06A", "#8D8AFF", "#FFFFFF"],
+          });
+
+          setStep("completed");
+          if (onSuccess) onSuccess();
+        } else {
+          // Marked unknown in Supabase so user can verify in Sent Gifts
+          await fetch("/api/gifts", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeaders,
+            },
+            body: JSON.stringify({
+              id: giftId,
+              status: "unknown",
+              signature,
+            }),
+          }).catch(() => {});
+
+          throw new Error(
+            `Transaction submitted (${signature.slice(0, 8)}...), but network confirmation is taking longer than usual. Your gift record is securely preserved. Please check 'Sent Gifts' once Solana finalizes.`
+          );
+        }
       } else {
         // Direct transfer
         const recipientPk = new PublicKey(recipientAddress.trim());
-        const { transaction, baseUnits, netBaseUnits, netShares, feeBps } =
-          await buildDirectGiftTransferTransaction({
-            connection,
-            senderPublicKey: wallet.publicKey,
-            recipientPublicKey: recipientPk,
-            symbol: selectedSymbol,
-            shareAmount: estimatedShares,
-          });
+        const { transaction } = await buildDirectGiftTransferTransaction({
+          connection,
+          senderPublicKey: wallet.publicKey,
+          recipientPublicKey: recipientPk,
+          symbol: selectedSymbol,
+          shareAmount: quotedShares,
+          rawAmountString: quotedRawUnits,
+        });
 
-        // Preflight simulation before signature
         await simulateAndValidateTransaction(connection, transaction, wallet.publicKey);
 
         const signedTx = await wallet.signTransaction(transaction);
@@ -331,7 +496,12 @@ export function GiftStockModal({
         });
 
         const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-        await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+        await waitForTransactionConfirmation({
+          connection,
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        });
 
         setFundedTxSig(signature);
         confetti({
@@ -344,7 +514,6 @@ export function GiftStockModal({
         if (onSuccess) onSuccess();
       }
     } catch (err: any) {
-      console.error("Gifting transaction error:", err);
       setExecutionError(err?.message || "Failed to process gift transfer.");
       setStep("configure");
     } finally {
@@ -360,107 +529,119 @@ export function GiftStockModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
+        onClick={() => {
+          if (!isExecuting) onClose();
+        }}
+      />
+
+      {/* Modal Container */}
+      <div className="relative w-full max-w-xl bg-[#161B26] border border-[#262D3D] rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#262D3D] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <motion.div
-              initial={{ scale: 0.5, rotate: -20, opacity: 0 }}
-              animate={{ scale: [0.5, 1.15, 1], rotate: [-20, 8, 0], opacity: 1 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white shrink-0 shadow-sm"
-            >
-              <motion.div
-                animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
-                transition={{ delay: 0.3, duration: 0.6, ease: "easeInOut" }}
-              >
-                <Gift className="w-4 h-4" />
-              </motion.div>
-            </motion.div>
+        <div className="p-5 sm:p-6 border-b border-[#262D3D] flex items-center justify-between shrink-0 bg-[#161B26]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/30 flex items-center justify-center text-[#CDE06A]">
+              <Gift className="w-5 h-5" />
+            </div>
             <div>
-              <h3 className="font-bold text-base sm:text-lg text-white">
-                {step === "completed" ? "Gift Ready to Deliver!" : "Gift Tokenized Stocks"}
+              <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <span>Gift Public Stocks</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#CDE06A]/10 border border-[#CDE06A]/30 text-[#CDE06A] font-semibold">
+                  xStocks
+                </span>
               </h3>
-              <p className="text-[11px] text-[#8F9CAE]">
+              <p className="text-xs text-[#8F9CAE]">
                 {step === "completed"
-                  ? "Share this link with your friend to claim"
-                  : "Send public equities or private pre-IPO shares with an expiring claim link"}
+                  ? "Gift Link Ready to Share"
+                  : "Send fractional shares of tokenized public stocks"}
               </p>
             </div>
           </div>
-          {!isExecuting && (
-            <button
-              onClick={onClose}
-              className="w-7 h-7 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+
+          <button
+            onClick={() => {
+              if (!isExecuting) onClose();
+            }}
+            disabled={isExecuting}
+            className="w-8 h-8 rounded-full bg-[#0B0E14] border border-[#262D3D] flex items-center justify-center text-[#8F9CAE] hover:text-white transition-all cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Modal Content */}
-        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+        {/* Body Content */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
           {executionError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{executionError}</span>
+            <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+              <div className="flex-1">
+                <span className="font-bold block mb-0.5">Execution Error</span>
+                <span className="leading-relaxed">{executionError}</span>
+              </div>
             </div>
           )}
 
-          {step === "configure" && (
-            <>
-              {/* Delivery Mode Toggle */}
-              <div className="grid grid-cols-2 gap-2 p-1 bg-[#0B0E14] rounded-xl border border-[#262D3D]">
+          {step === "funding" ? (
+            <div className="py-12 px-4 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#CDE06A]/10 border border-[#CDE06A]/30 text-[#CDE06A] mx-auto flex items-center justify-center animate-pulse">
+                <Loader2 className="w-7 h-7 animate-spin" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-bold text-base text-white">Securing & Broadcasting Gift Vault</h4>
+                <p className="text-xs text-[#8F9CAE] max-w-sm mx-auto">
+                  Initializing secure escrow vault, allocating rent exemption, and transferring shares...
+                </p>
+              </div>
+            </div>
+          ) : step === "configure" ? (
+            <div className="space-y-4">
+              {/* Delivery Type Selector */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-[#0B0E14] rounded-2xl border border-[#262D3D]">
                 <button
                   type="button"
                   onClick={() => setDeliveryType("link")}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                     deliveryType === "link"
-                      ? "bg-[#CDE06A] text-[#0B0E14] shadow-md"
+                      ? "bg-[#CDE06A] text-[#0B0E14] shadow-md font-bold"
                       : "text-[#8F9CAE] hover:text-white"
                   }`}
                 >
                   <LinkIcon className="w-3.5 h-3.5" />
-                  <span>Gift Claim Link</span>
+                  <span>Expiring Claim Link</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setDeliveryType("direct")}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
+                  className={`py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                     deliveryType === "direct"
-                      ? "bg-[#CDE06A] text-[#0B0E14] shadow-md"
+                      ? "bg-[#CDE06A] text-[#0B0E14] shadow-md font-bold"
                       : "text-[#8F9CAE] hover:text-white"
                   }`}
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Direct to Wallet</span>
+                  <span>Direct Wallet Transfer</span>
                 </button>
               </div>
 
-              {/* Stock Selector */}
+              {/* Stock Selector (Public xStocks only) */}
               <div>
                 <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase block mb-1.5">
-                  Select Stock or Pre-IPO Asset
+                  Select Public Stock (xStocks)
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {Object.values(VERIFIED_STOCKS).map((stk) => {
+                  {publicStocks.map((stk) => {
                     const isSelected = selectedSymbol === stk.symbol;
-                    const isPre = stk.market === "private";
-
                     return (
                       <button
                         key={stk.symbol}
                         type="button"
-                        onClick={() => {
-                          setSelectedSymbol(stk.symbol);
-                          setTheme(isPre ? "gold" : "lime");
-                        }}
-                        className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
+                        onClick={() => setSelectedSymbol(stk.symbol)}
+                        className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer ${
                           isSelected
-                            ? isPre
-                              ? "bg-[#F5A623]/15 border-[#F5A623] shadow-md shadow-[#F5A623]/10"
-                              : "bg-[#CDE06A]/15 border-[#CDE06A] shadow-md shadow-[#CDE06A]/10"
+                            ? "bg-[#CDE06A]/15 border-[#CDE06A] shadow-md shadow-[#CDE06A]/10"
                             : "bg-[#0B0E14] border-[#262D3D] hover:border-[#8F9CAE]/40"
                         }`}
                       >
@@ -482,8 +663,8 @@ export function GiftStockModal({
                           <span className="font-bold text-xs text-white block truncate">
                             {stk.underlying}
                           </span>
-                          <span className={`text-[9px] font-semibold ${isPre ? "text-[#F5A623]" : "text-[#CDE06A]"}`}>
-                            {isPre ? "Pre-IPO" : "xStock"}
+                          <span className="text-[9px] font-semibold text-[#CDE06A]">
+                            xStock
                           </span>
                         </div>
                       </button>
@@ -492,24 +673,27 @@ export function GiftStockModal({
                 </div>
               </div>
 
-              {/* Gift Amount Selector */}
+              {/* Gift Amount (USD Input) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase">
                     Gift Amount (USD)
                   </label>
-                  {parsedAmount > 0 ? (
-                    <span className="text-xs text-[#CDE06A] font-mono">
-                      ~{estimatedShares.toFixed(4)} {currentAsset.underlying}
+                  {isQuoting ? (
+                    <span className="text-xs text-[#8F9CAE] flex items-center gap-1 font-mono">
+                      <Loader2 className="w-3 h-3 animate-spin text-[#CDE06A]" />
+                      <span>Quoting live shares...</span>
+                    </span>
+                  ) : quotedShares > 0 ? (
+                    <span className="text-xs text-[#CDE06A] font-mono font-semibold">
+                      ~{quotedShares.toFixed(4)} {currentAsset.underlying}
                     </span>
                   ) : (
-                    <span className="text-xs text-[#8F9CAE] font-mono">
-                      Min. $1
-                    </span>
+                    <span className="text-xs text-[#8F9CAE] font-mono">Min. $0.10</span>
                   )}
                 </div>
 
-                {/* Connected Wallet Position Display */}
+                {/* User Balance */}
                 {wallet.connected && (
                   <div className="flex items-center justify-between text-[11px] mb-2 px-1">
                     <span className="text-[#8F9CAE]">Your {currentAsset.underlying} Balance:</span>
@@ -520,12 +704,12 @@ export function GiftStockModal({
                 )}
 
                 <div className="flex gap-2 mb-2">
-                  {["10", "25", "50", "100"].map((amt) => (
+                  {["0.3", "1", "5", "10"].map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => setAmountUsd(amt)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
+                      className={`flex-1 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                         amountUsd === amt
                           ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
                           : "bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white"
@@ -535,49 +719,53 @@ export function GiftStockModal({
                     </button>
                   ))}
                 </div>
+
                 <input
                   type="number"
-                  min="1"
+                  min="0.1"
                   step="any"
                   value={amountUsd}
                   onChange={(e) => setAmountUsd(e.target.value)}
                   className="w-full bg-[#0B0E14] border border-[#262D3D] rounded-xl px-3.5 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-[#CDE06A]"
-                  placeholder="Enter USD amount (e.g. 25)"
+                  placeholder="Enter USD amount (e.g. 0.30)"
                 />
 
-                {/* Net Breakdown with 1% Transfer Fee Handling */}
-                {parsedAmount > 0 && (
+                {/* Quote Breakdown */}
+                {parsedAmount > 0 && quotedShares > 0 && (
                   <div className="mt-2.5 p-2.5 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-1 text-xs">
                     <div className="flex justify-between items-center text-[#8F9CAE]">
-                      <span>Gross Gift:</span>
-                      <span className="text-white font-mono">~{estimatedShares.toFixed(4)} shares</span>
+                      <span>Quoted Transfer Amount:</span>
+                      <span className="text-white font-mono">~{quotedShares.toFixed(4)} {currentAsset.underlying}</span>
                     </div>
-                    {netCalc.hasFee && (
-                      <div className="flex justify-between items-center text-[#F5A623]">
-                        <span>1% Issuer Transfer Fee:</span>
-                        <span className="font-mono">-{netCalc.feeShares.toFixed(4)} shares</span>
+                    {priceImpactPct > 0.1 && (
+                      <div className="flex justify-between items-center text-[#8F9CAE]">
+                        <span>Price Impact:</span>
+                        <span className="text-white font-mono">{priceImpactPct.toFixed(2)}%</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center text-[#CDE06A] font-semibold pt-1 border-t border-[#262D3D]">
-                      <span>Recipient Receives (Net):</span>
-                      <span className="font-mono">~{netCalc.netShares.toFixed(4)} shares</span>
-                    </div>
                   </div>
                 )}
 
-                {/* Upfront Warning if user has insufficient token balance */}
+                {/* Quote Error Warning */}
+                {quoteError && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{quoteError}</span>
+                  </div>
+                )}
+
+                {/* Balance Warnings */}
                 {wallet.connected && parsedAmount > 0 && !hasSufficientShares && (
                   <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>
                       {availableShares === 0
-                        ? `You do not own any ${currentAsset.name} shares in this wallet. Please acquire shares on the Dashboard first.`
-                        : `Insufficient balance. You hold ${availableShares.toFixed(4)} shares, but this gift requires ~${estimatedShares.toFixed(4)} shares.`}
+                        ? `You do not own any ${currentAsset.name} shares in this wallet.`
+                        : `Insufficient balance. You hold ${availableShares.toFixed(4)} shares, but this gift requires ~${quotedShares.toFixed(4)} shares.`}
                     </span>
                   </div>
                 )}
 
-                {/* Upfront Warning if user has low SOL balance */}
                 {wallet.connected && !hasSufficientSol && (
                   <div className="mt-2.5 p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -589,240 +777,106 @@ export function GiftStockModal({
               </div>
 
               {/* Timing Selector (Only for Link mode) */}
-              {deliveryType === "link" ? (
+              {deliveryType === "link" && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-[#CDE06A]" />
-                      <span>Claim Link Expiration</span>
+                      <span>Link Expiration Window</span>
                     </label>
-                    <span className="text-[10px] text-[#8F9CAE] font-mono">
-                      Max 24 Hours
-                    </span>
+                    <span className="text-[10px] text-[#8F9CAE] font-mono">1 Hour Min</span>
                   </div>
 
-                  {/* Presets: 7mins to 30mins (30min is highest preset) */}
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[
-                      { id: "7mins", label: "7 Mins" },
-                      { id: "10mins", label: "10 Mins" },
-                      { id: "15mins", label: "15 Mins" },
-                      { id: "30mins", label: "30 Mins" },
-                    ].map((opt) => (
+                  <div className="grid grid-cols-4 gap-2">
+                    {(["1h", "24h", "7d", "none"] as const).map((mode) => (
                       <button
-                        key={opt.id}
+                        key={mode}
                         type="button"
-                        onClick={() => setExpiryMode(opt.id as ExpiryPreset)}
-                        className={`py-2 px-1 rounded-xl text-xs font-mono font-bold transition-all text-center ${
-                          expiryMode === opt.id
-                            ? "bg-[#CDE06A] text-[#0B0E14] shadow-sm"
+                        onClick={() => setExpiryMode(mode)}
+                        className={`py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                          expiryMode === mode
+                            ? "bg-[#CDE06A] text-[#0B0E14] font-bold shadow-sm"
                             : "bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] hover:text-white"
                         }`}
                       >
-                        {opt.label}
+                        {mode === "1h"
+                          ? "1 Hour"
+                          : mode === "24h"
+                          ? "24 Hours"
+                          : mode === "7d"
+                          ? "7 Days"
+                          : "No Expiry"}
                       </button>
                     ))}
                   </div>
-
-                  {/* Option to choose custom duration (Up to 24hrs) */}
-                  <button
-                    type="button"
-                    onClick={() => setExpiryMode("custom")}
-                    className={`w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-between border transition-all cursor-pointer ${
-                      expiryMode === "custom"
-                        ? "bg-[#CDE06A]/10 border-[#CDE06A] text-[#CDE06A]"
-                        : "bg-[#0B0E14] border-[#262D3D] text-[#8F9CAE] hover:text-white"
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Choose Custom Duration</span>
-                    </span>
-                    <span className="text-[11px] font-mono font-normal opacity-90">
-                      {expiryMode === "custom"
-                        ? `${customHours > 0 ? `${customHours}h ` : ""}${customMinutes > 0 ? `${customMinutes}m` : ""}`.trim() || "1h"
-                        : "Up to 24 hrs"}
-                    </span>
-                  </button>
-
-                  {/* Expanded Custom Duration Picker */}
-                  {expiryMode === "custom" && (
-                    <div className="p-3 rounded-xl bg-[#0B0E14] border border-[#262D3D] space-y-2.5 animate-in fade-in duration-150">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-white font-medium text-[11px]">Select duration (Max 24h):</span>
-                        <span className="text-[10px] text-[#CDE06A] font-mono font-bold">
-                          {customHours === 24 ? "24 Hours (Limit)" : `${customHours}h ${customMinutes}m`}
-                        </span>
-                      </div>
-
-                      {/* Quick duration chips */}
-                      <div className="grid grid-cols-5 gap-1">
-                        {[
-                          { label: "1h", h: 1, m: 0 },
-                          { label: "2h", h: 2, m: 0 },
-                          { label: "6h", h: 6, m: 0 },
-                          { label: "12h", h: 12, m: 0 },
-                          { label: "24h", h: 24, m: 0 },
-                        ].map((chip) => {
-                          const isChipSelected = customHours === chip.h && customMinutes === chip.m;
-                          return (
-                            <button
-                              key={chip.label}
-                              type="button"
-                              onClick={() => {
-                                setCustomHours(chip.h);
-                                setCustomMinutes(chip.m);
-                              }}
-                              className={`py-1 rounded-lg text-[11px] font-mono transition-all text-center ${
-                                isChipSelected
-                                  ? "bg-[#CDE06A] text-[#0B0E14] font-bold"
-                                  : "bg-[#161B26] border border-[#262D3D] text-[#8F9CAE] hover:text-white"
-                              }`}
-                            >
-                              {chip.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Numeric Pickers */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        <div>
-                          <label className="text-[10px] text-[#8F9CAE] uppercase block mb-1 font-semibold">
-                            Hours (0–24)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="24"
-                            value={customHours}
-                            onChange={(e) => {
-                              const val = Math.min(24, Math.max(0, parseInt(e.target.value) || 0));
-                              setCustomHours(val);
-                              if (val === 24) setCustomMinutes(0);
-                            }}
-                            className="w-full bg-[#161B26] border border-[#262D3D] rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#CDE06A]"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-[#8F9CAE] uppercase block mb-1 font-semibold">
-                            Minutes (0–59)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max={customHours === 24 ? 0 : 59}
-                            disabled={customHours === 24}
-                            value={customMinutes}
-                            onChange={(e) => {
-                              const maxM = customHours === 24 ? 0 : 59;
-                              const val = Math.min(maxM, Math.max(0, parseInt(e.target.value) || 0));
-                              setCustomMinutes(val);
-                            }}
-                            className="w-full bg-[#161B26] border border-[#262D3D] rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#CDE06A] disabled:opacity-40"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              ) : (
-                <div>
-                  <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase block mb-1.5">
-                    Recipient Solana Wallet Address
+              )}
+
+              {/* Direct Recipient Address Input (Only for Direct mode) */}
+              {deliveryType === "direct" && (
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase block">
+                    Recipient Solana Address
                   </label>
                   <input
                     type="text"
                     value={recipientAddress}
                     onChange={(e) => setRecipientAddress(e.target.value)}
-                    placeholder="Enter base58 Solana address (e.g. 7xKX...)"
-                    className="w-full bg-[#0B0E14] border border-[#262D3D] rounded-xl px-3.5 py-2 text-white font-mono text-xs focus:outline-none focus:border-[#CDE06A]"
+                    className="w-full bg-[#0B0E14] border border-[#262D3D] rounded-xl px-3.5 py-2.5 text-white font-mono text-xs focus:outline-none focus:border-[#CDE06A]"
+                    placeholder="Enter base58 Solana wallet address..."
                   />
                 </div>
               )}
 
-              {/* Personalization Note */}
-              <div className="space-y-2 pt-1 border-t border-[#262D3D]">
-                <div>
-                  <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase block mb-1">
-                    Your Name (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={senderName}
-                    onChange={(e) => setSenderName(e.target.value)}
-                    placeholder="e.g. Alex"
-                    className="w-full bg-[#0B0E14] border border-[#262D3D] rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#CDE06A]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase block mb-1">
-                    Greeting Card Note
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Write a message (e.g. Happy Birthday! Here is some SpaceX before the IPO)"
-                    className="w-full bg-[#0B0E14] border border-[#262D3D] rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#CDE06A] resize-none"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === "funding" && (
-            <div className="text-center py-10 space-y-4">
-              <Loader2 className="w-10 h-10 text-[#CDE06A] animate-spin mx-auto" />
-              <div className="space-y-1">
-                <h4 className="font-bold text-white text-base">
-                  {deliveryType === "link"
-                    ? "Funding Temporary Escrow..."
-                    : "Sending Stock to Wallet..."}
-                </h4>
-                <p className="text-xs text-[#8F9CAE] max-w-xs mx-auto">
-                  {deliveryType === "link"
-                    ? "Please approve the transaction in your Solana wallet to deposit the shares into a temporary non-custodial escrow for your link."
-                    : "Please approve the transaction in your Solana wallet to transfer the shares directly to your friend."}
-                </p>
+              {/* Note / Message */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-[#8F9CAE] uppercase block">
+                  Gift Note (Optional)
+                </label>
+                <input
+                  type="text"
+                  maxLength={100}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="w-full bg-[#0B0E14] border border-[#262D3D] rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-[#CDE06A]"
+                  placeholder="e.g. Happy birthday! Enjoy your Nvidia shares."
+                />
               </div>
             </div>
-          )}
-
-          {step === "completed" && (
-            <div className="space-y-4 py-2">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#12161F] to-[#0B0E14] border border-white/10 text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center mx-auto">
-                  <Gift className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="pill-badge pill-badge-purple text-[10px] mb-1">
-                    {deliveryType === "link" ? "Shareable Claim Link" : "Direct Transfer"}
-                  </span>
-                  <h4 className="font-bold text-lg text-white">
-                    ${parsedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} in {currentAsset.name}
-                  </h4>
-                  <p className="text-xs text-[#8F9CAE]">
-                    {deliveryType === "link"
-                      ? "Ready for your friend to claim! Send them the link below."
-                      : "Transferred directly to the recipient wallet."}
-                  </p>
-                </div>
-
-                {/* Live Countdown Clock showing expiration */}
-                {deliveryType === "link" && calculateExpiryTimestamp() > Math.floor(Date.now() / 1000) && (
-                  <div className="pt-2 space-y-1">
-                    <div className="flex items-center justify-center gap-1.5 text-xs text-[#CDE06A] font-bold">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>Link Expires In:</span>
-                    </div>
-                    <GiftCountdownClock
-                      targetTimestamp={calculateExpiryTimestamp()}
-                      theme={theme}
-                    />
-                  </div>
-                )}
+          ) : (
+            /* Completed Success State */
+            <div className="py-6 px-2 space-y-5 text-center">
+              <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center">
+                <Check className="w-8 h-8" />
               </div>
+
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-emerald-400 tracking-wide uppercase">
+                  {deliveryType === "link" ? "Shareable Claim Link" : "Direct Transfer"}
+                </span>
+                <h4 className="font-bold text-lg text-white">
+                  ${parsedAmount.toFixed(2)} in {currentAsset.name}
+                </h4>
+                <p className="text-xs text-[#8F9CAE]">
+                  {deliveryType === "link"
+                    ? "Vault funded and ready to claim! Share the secure link below with your recipient."
+                    : "Transferred directly to the recipient wallet."}
+                </p>
+              </div>
+
+              {/* Countdown Clock */}
+              {deliveryType === "link" && calculateExpiryTimestamp() > Math.floor(Date.now() / 1000) && (
+                <div className="pt-2 space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-[#CDE06A] font-bold">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Link Expires In:</span>
+                  </div>
+                  <GiftCountdownClock
+                    targetTimestamp={calculateExpiryTimestamp()}
+                    theme={theme}
+                  />
+                </div>
+              )}
 
               {/* Copy Claim Link Box */}
               {generatedClaimUrl && (
@@ -845,49 +899,6 @@ export function GiftStockModal({
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? "Copied!" : "Copy"}</span>
                     </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Social Sharing Shortcuts */}
-              {generatedClaimUrl && (
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-semibold text-[#8F9CAE] uppercase block">
-                    Share directly via:
-                  </span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <a
-                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                        `I just gifted someone tokenized ${currentAsset.name} on @useslyz! Check out the gift claim vault:`
-                      )}&url=${encodeURIComponent(generatedClaimUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE] hover:text-white hover:border-[#1DA1F2] flex items-center justify-center gap-1.5 transition-all"
-                    >
-                      <span>Twitter / X</span>
-                    </a>
-                    <a
-                      href={`https://t.me/share/url?url=${encodeURIComponent(
-                        generatedClaimUrl
-                      )}&text=${encodeURIComponent(
-                        `You have a tokenized stock gift waiting on Slyz!`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE] hover:text-white hover:border-[#0088cc] flex items-center justify-center gap-1.5 transition-all"
-                    >
-                      <span>Telegram</span>
-                    </a>
-                    <a
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                        `Here is your stock gift on Slyz: ${generatedClaimUrl}`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-[#0B0E14] border border-[#262D3D] text-xs font-semibold text-[#8F9CAE] hover:text-white hover:border-[#25D366] flex items-center justify-center gap-1.5 transition-all"
-                    >
-                      <span>WhatsApp</span>
-                    </a>
                   </div>
                 </div>
               )}
@@ -937,8 +948,12 @@ export function GiftStockModal({
                 >
                   <Gift className="w-4 h-4 opacity-50" />
                   <span>
-                    {!hasValidAmount
-                      ? "Enter Gift Amount"
+                    {isQuoting
+                      ? "Fetching Live Quote..."
+                      : quoteError
+                      ? "Invalid Quote"
+                      : !hasValidAmount
+                      ? "Enter Valid Amount ($0.10+)"
                       : !hasValidRecipient
                       ? "Enter Recipient Address"
                       : !hasSufficientShares
@@ -958,8 +973,8 @@ export function GiftStockModal({
                   <Gift className="w-4 h-4" />
                   <span>
                     {deliveryType === "link"
-                      ? `Create Gift Link ($${parsedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })})`
-                      : `Transfer Gift ($${parsedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })})`}
+                      ? `Create Gift Link ($${parsedAmount.toFixed(2)})`
+                      : `Transfer Gift ($${parsedAmount.toFixed(2)})`}
                   </span>
                 </button>
               )}
@@ -978,28 +993,4 @@ export function GiftStockModal({
     </div>,
     document.body
   );
-}
-
-function bs58Encode(bytes: Uint8Array): string {
-  const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-  let digits = [0];
-  for (let i = 0; i < bytes.length; i++) {
-    for (let j = 0; j < digits.length; j++) digits[j] <<= 8;
-    digits[0] += bytes[i];
-    let carry = 0;
-    for (let j = 0; j < digits.length; j++) {
-      digits[j] += carry;
-      carry = (digits[j] / 58) | 0;
-      digits[j] %= 58;
-    }
-    while (carry) {
-      digits.push(carry % 58);
-      carry = (carry / 58) | 0;
-    }
-  }
-  for (let i = 0; i < bytes.length && bytes[i] === 0; i++) digits.push(0);
-  return digits
-    .reverse()
-    .map((d) => ALPHABET[d])
-    .join("");
 }

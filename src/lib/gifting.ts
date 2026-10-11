@@ -21,10 +21,21 @@ import {
   calculateNetShares,
   resolveMintCapabilities,
 } from "./constants";
+import { waitForTransactionConfirmation } from "./confirmTransaction";
 
 export type GiftTheme = "gold" | "lime" | "purple";
 export type GiftDeliveryType = "link" | "direct";
-export type GiftStatus = "pending_unlock" | "ready_to_claim" | "claimed" | "expired" | "reclaimed";
+export type GiftStatus =
+  | "awaiting_signature"
+  | "submitted"
+  | "funded"
+  | "ready_to_claim"
+  | "claimed"
+  | "expired"
+  | "reclaimed"
+  | "failed"
+  | "unknown"
+  | "pending_unlock";
 
 export interface GiftClaimPayload {
   id: string;
@@ -136,7 +147,11 @@ const TOKEN_2022_PK = new PublicKey(TOKEN_2022_PROGRAM_ID);
  * so it is never sent to any server over HTTP.
  */
 export function generateGiftClaimUrl(payload: GiftClaimPayload): string {
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const baseUrl =
+    envUrl && !envUrl.includes("localhost")
+      ? envUrl.replace(/\/+$/, "")
+      : "https://www.useslyz.xyz";
   const rawJson = JSON.stringify(payload);
   const encoded = btoa(encodeURIComponent(rawJson));
   return `${baseUrl}/gift/claim#gift=${encoded}`;
@@ -263,12 +278,12 @@ export async function buildFundGiftLinkTransaction(params: {
 
   const transaction = new Transaction();
 
-  // 1. Fund the vault with 0.0035 SOL for claiming network fees & rent
+  // 1. Fund the vault with 0.00298 SOL for claiming network fees & rent (optimized)
   transaction.add(
     SystemProgram.transfer({
       fromPubkey: senderPublicKey,
       toPubkey: vaultKeypair.publicKey,
-      lamports: 3_500_000, // 0.0035 SOL
+      lamports: 2_980_000, // 0.00298 SOL
     })
   );
 
@@ -395,13 +410,23 @@ export async function buildDirectGiftTransferTransaction(params: {
  * Execute claiming a gift link into the recipient's wallet.
  * Signed entirely by the vault ephemeral keypair (the recipient doesn't even need SOL).
  */
-export async function executeClaimGift(params: {
+/**
+ * Build the claim transaction and validate conditions.
+ */
+export async function buildClaimGiftTransaction(params: {
   connection: Connection;
   payload: GiftClaimPayload;
   recipientPublicKey: PublicKey;
-}): Promise<string> {
+}): Promise<{
+  transaction: Transaction;
+  vaultKeypair: Keypair;
+  transferUnits: bigint;
+  decimals: number;
+  blockhash: string;
+  lastValidBlockHeight: number;
+}> {
   const { connection, payload, recipientPublicKey } = params;
- 
+
   // Validate link expiration
   if (payload.expiryTimestamp && payload.expiryTimestamp > 0) {
     const now = Math.floor(Date.now() / 1000);
@@ -441,6 +466,11 @@ export async function executeClaimGift(params: {
     TOKEN_2022_PK
   );
 
+  const vaultAtaInfo = await connection.getAccountInfo(vaultAta);
+  if (!vaultAtaInfo) {
+    throw new Error("This gift vault has already been claimed or does not exist.");
+  }
+
   // 1. Fetch vault ATA's actual on-chain available balance
   let transferUnits: bigint = BigInt(0);
   try {
@@ -471,8 +501,11 @@ export async function executeClaimGift(params: {
     throw new Error("This gift vault holds 0 shares or has already been claimed.");
   }
 
-  // Fetch vault SOL balance to sweep leftover rent back to recipient
+  // Fetch vault SOL balance and rent-exemption requirements
   const vaultSolBalance = await connection.getBalance(vaultKeypair.publicKey);
+  const recipientAtaInfo = await connection.getAccountInfo(recipientAta);
+  const ataRentNeeded = recipientAtaInfo ? 0 : await connection.getMinimumBalanceForRentExemption(250);
+  const minRentExempt = await connection.getMinimumBalanceForRentExemption(0);
 
   const transaction = new Transaction();
 
@@ -515,14 +548,16 @@ export async function executeClaimGift(params: {
     );
   }
 
-  // 4. Sweep remaining SOL lamports from vault to recipient (35,000 lamport reserve for priority fees)
-  const estimatedFee = 35_000;
-  if (vaultSolBalance > estimatedFee + 10_000) {
+  // 4. Sweep remaining SOL lamports from vault to recipient while leaving enough to cover
+  // ATA creation rent, network fee buffer, and the vault's mandatory rent-exemption minimum.
+  const safetyReserve = ataRentNeeded + minRentExempt + 100_000;
+  const sweepLamports = vaultSolBalance > safetyReserve ? vaultSolBalance - safetyReserve : 0;
+  if (sweepLamports > 10_000) {
     transaction.add(
       SystemProgram.transfer({
         fromPubkey: vaultKeypair.publicKey,
         toPubkey: recipientPublicKey,
-        lamports: vaultSolBalance - estimatedFee,
+        lamports: sweepLamports,
       })
     );
   }
@@ -534,6 +569,44 @@ export async function executeClaimGift(params: {
 
   transaction.sign(vaultKeypair);
 
+  return { transaction, vaultKeypair, transferUnits, decimals, blockhash, lastValidBlockHeight };
+}
+
+/**
+ * Pre-flight simulation for gift claiming to verify feasibility before wallet actions.
+ */
+export async function simulateClaimGift(params: {
+  connection: Connection;
+  payload: GiftClaimPayload;
+  recipientPublicKey: PublicKey;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { transaction, vaultKeypair } = await buildClaimGiftTransaction(params);
+    const sim = await params.connection.simulateTransaction(transaction, [vaultKeypair], true);
+    if (sim.value.err) {
+      const errStr =
+        typeof sim.value.err === "object" ? JSON.stringify(sim.value.err) : String(sim.value.err);
+      return { success: false, error: `Transaction simulation failed: ${errStr}` };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Simulation failed" };
+  }
+}
+
+/**
+ * Execute claiming a gift link into the recipient's wallet.
+ * Signed entirely by the vault ephemeral keypair (the recipient doesn't even need SOL).
+ */
+export async function executeClaimGift(params: {
+  connection: Connection;
+  payload: GiftClaimPayload;
+  recipientPublicKey: PublicKey;
+}): Promise<string> {
+  const { connection, payload } = params;
+  const { transaction, vaultKeypair, blockhash, lastValidBlockHeight } =
+    await buildClaimGiftTransaction(params);
+
   // Preflight simulation before broadcast to capture errors cleanly
   await simulateAndValidateTransaction(connection, transaction, vaultKeypair.publicKey);
 
@@ -542,16 +615,30 @@ export async function executeClaimGift(params: {
     maxRetries: 3,
   });
 
-  const confirm = await connection.confirmTransaction(
-    { signature, blockhash, lastValidBlockHeight },
-    "confirmed"
-  );
+  const confirmRes = await waitForTransactionConfirmation({
+    connection,
+    signature,
+    blockhash,
+    lastValidBlockHeight,
+  });
 
-  if (confirm.value.err) {
-    throw new Error(`Claim confirmation failed: ${JSON.stringify(confirm.value.err)}`);
+  if (!confirmRes.confirmed || confirmRes.err) {
+    const statusCheck = await connection.getSignatureStatus(signature, {
+      searchTransactionHistory: true,
+    });
+    if (!statusCheck?.value || statusCheck.value.err) {
+      throw new Error(`Claim confirmation failed: ${confirmRes.errorReason || "Transaction could not be confirmed"}`);
+    }
   }
 
   updateSentGiftStatus(payload.id, "claimed");
+  if (typeof window !== "undefined") {
+    fetch("/api/gifts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: payload.id, status: "claimed", signature }),
+    }).catch(() => {});
+  }
   return signature;
 }
 
@@ -612,6 +699,9 @@ export async function executeReclaimGift(params: {
   }
 
   const vaultSolBalance = await connection.getBalance(vaultKeypair.publicKey);
+  const senderAtaInfo = await connection.getAccountInfo(senderAta);
+  const ataRentNeeded = senderAtaInfo ? 0 : await connection.getMinimumBalanceForRentExemption(250);
+  const minRentExempt = await connection.getMinimumBalanceForRentExemption(0);
 
   const transaction = new Transaction();
 
@@ -653,14 +743,16 @@ export async function executeReclaimGift(params: {
     );
   }
 
-  // 4. Sweep remaining SOL back to sender (35,000 lamport reserve)
-  const estimatedFee = 35_000;
-  if (vaultSolBalance > estimatedFee + 10_000) {
+  // 4. Sweep remaining SOL back to sender while leaving enough to cover
+  // ATA creation rent, network fee buffer, and the vault's mandatory rent-exemption minimum.
+  const safetyReserve = ataRentNeeded + minRentExempt + 100_000;
+  const sweepLamports = vaultSolBalance > safetyReserve ? vaultSolBalance - safetyReserve : 0;
+  if (sweepLamports > 10_000) {
     transaction.add(
       SystemProgram.transfer({
         fromPubkey: vaultKeypair.publicKey,
         toPubkey: senderPublicKey,
-        lamports: vaultSolBalance - estimatedFee,
+        lamports: sweepLamports,
       })
     );
   }
@@ -680,11 +772,29 @@ export async function executeReclaimGift(params: {
     maxRetries: 3,
   });
 
-  await connection.confirmTransaction(
-    { signature, blockhash, lastValidBlockHeight },
-    "confirmed"
-  );
+  const confirmRes = await waitForTransactionConfirmation({
+    connection,
+    signature,
+    blockhash,
+    lastValidBlockHeight,
+  });
+
+  if (!confirmRes.confirmed || confirmRes.err) {
+    const statusCheck = await connection.getSignatureStatus(signature, {
+      searchTransactionHistory: true,
+    });
+    if (!statusCheck?.value || statusCheck.value.err) {
+      throw new Error(`Reclaim confirmation failed: ${confirmRes.errorReason || "Transaction could not be confirmed"}`);
+    }
+  }
 
   updateSentGiftStatus(giftRecord.id, "reclaimed");
+  if (typeof window !== "undefined") {
+    fetch("/api/gifts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: giftRecord.id, status: "reclaimed", signature }),
+    }).catch(() => {});
+  }
   return signature;
 }

@@ -94,7 +94,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="space-y-24 pb-12">
+    <div className="space-y-12 sm:space-y-16 pb-2">
       {/* 1. Hero Section */}
       <motion.section
         initial={{ opacity: 0, y: 24 }}
@@ -162,9 +162,6 @@ export default function LandingPage() {
         className="scroll-mt-24 rounded-2xl bg-[#161B26] border border-[#262D3D] p-8 sm:p-12 lg:p-14 shadow-2xl space-y-10 relative overflow-hidden"
       >
         <div className="text-center max-w-2xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider border border-[#262D3D]">
-            Streamlined Workflow
-          </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             How Slyz Works
           </h2>
@@ -251,7 +248,6 @@ export default function LandingPage() {
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-2">
-            <span className="pill-badge pill-badge-periwinkle">Thematic Strategies</span>
             <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
               Flagship Curated Pies
             </h2>
@@ -436,7 +432,6 @@ export default function LandingPage() {
         className="scroll-mt-24 space-y-10"
       >
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="pill-badge pill-badge-lime">Solana Native</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Built with Institutional Rigor
           </h2>
@@ -522,7 +517,6 @@ export default function LandingPage() {
         className="scroll-mt-24 space-y-10"
       >
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="pill-badge pill-badge-lime">Roadmap</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             What's Next
           </h2>
@@ -658,7 +652,6 @@ export default function LandingPage() {
         className="scroll-mt-24 space-y-6 max-w-4xl mx-auto"
       >
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="pill-badge pill-badge-periwinkle">Clear by Design</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Questions, Answered
           </h2>
@@ -721,9 +714,6 @@ export default function LandingPage() {
         className="relative overflow-hidden rounded-2xl bg-[#161B26] border border-[#262D3D] p-8 sm:p-14 text-center space-y-6 shadow-2xl text-white"
       >
         <div className="max-w-xl mx-auto space-y-3 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0B0E14] text-[#CDE06A] text-[10px] font-semibold uppercase tracking-wider border border-[#262D3D]">
-            Launch Platform
-          </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Ready to Slice the Market?
           </h2>

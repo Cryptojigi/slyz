@@ -300,7 +300,6 @@ export default function PortfolioPage() {
             <PieIcon className="w-8 h-8" />
           </div>
           <div className="space-y-2">
-            <span className="pill-badge pill-badge-lime">Clean Slate</span>
             <h3 className="text-2xl font-bold text-white">No Active Theme Pies Yet</h3>
             <p className="text-sm text-[#8F9CAE] max-w-md mx-auto leading-relaxed">
               This wallet doesn&apos;t hold any tokenized stock positions yet. Choose a curated theme or design your own custom basket with fractional shares from just $10 USDC.
@@ -486,9 +485,9 @@ export default function PortfolioPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left: Donut Chart Allocation */}
             <div className="lg:col-span-5 bento-card flex flex-col items-center">
-              <span className="pill-badge pill-badge-lime mb-2">
+              <h3 className="text-sm font-bold text-white mb-2">
                 {activeBasket.name}
-              </span>
+              </h3>
               <DonutChart
                 data={donutData}
                 centerLabel={`$${totalValueUsd.toFixed(0)}`}
@@ -653,7 +652,7 @@ export default function PortfolioPage() {
           <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-[#262D3D] pb-4">
               <div>
-                <span className="pill-badge pill-badge-lime mb-1">Smart Rebalancing</span>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#CDE06A] mb-1">Smart Rebalancing</p>
                 <h3 className="text-lg font-bold text-white">
                   Smart Top-Up Rebalance
                 </h3>

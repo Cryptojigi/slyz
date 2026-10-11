@@ -28,7 +28,7 @@ export default function TermsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20 pt-4 px-2 sm:px-0">
+    <div className="max-w-5xl mx-auto space-y-12 pb-4 pt-4 px-2 sm:px-0">
       {/* Top Breadcrumb / Back Link */}
       <div className="flex items-center justify-between text-xs font-semibold text-[#8F9CAE]">
         <Link
@@ -149,7 +149,7 @@ export default function TermsPage() {
             </h2>
             <p>
               By accessing, browsing, interacting with, or connecting a Solana digital asset wallet to the Slyz
-              interface (accessible via <strong className="text-white">useslyz.vercel.app</strong> or related domains),
+              interface (accessible via <strong className="text-white">www.useslyz.xyz</strong> or related domains),
               you explicitly agree to be bound by these Terms of Service (“Terms”).
             </p>
             <p>
@@ -385,8 +385,14 @@ export default function TermsPage() {
               publication of revised Terms constitutes your irrevocable acceptance of such changes.
             </p>
             <p>
-              For developer inquiries, technical auditing, or compliance queries, please consult our official open-source
-              repository on GitHub or reach out via official community channels.
+              For developer inquiries, technical auditing, or compliance queries, contact our operations desk at{" "}
+              <a href="mailto:support@useslyz.xyz" className="text-[#CDE06A] hover:underline font-medium">
+                support@useslyz.xyz
+              </a>{" "}
+              or connect with our core team on Telegram at{" "}
+              <a href="https://t.me/Useslyz" target="_blank" rel="noopener noreferrer" className="text-[#0088cc] hover:underline font-medium">
+                @Useslyz
+              </a>.
             </p>
           </section>
         </div>

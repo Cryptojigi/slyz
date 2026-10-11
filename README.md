@@ -5,7 +5,7 @@
   <p><em>Non-custodial thematic stock basket investing, Pre-IPO stock access, and on-chain stock gifting -- all on Solana.</em></p>
 
   <p>
-    <a href="https://useslyz.vercel.app"><img src="https://img.shields.io/badge/Live_App-useslyz.vercel.app-CDE06A?style=for-the-badge&logo=vercel&logoColor=0B0E14" alt="Live App" /></a>
+    <a href="https://www.useslyz.xyz"><img src="https://img.shields.io/badge/Live_App-www.useslyz.xyz-CDE06A?style=for-the-badge&logo=solana&logoColor=0B0E14" alt="Live App" /></a>
     <a href="https://youtu.be/pZI0qYkwNDg"><img src="https://img.shields.io/badge/Demo_Video-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Demo Video" /></a>
     <img src="https://img.shields.io/badge/Solana-Mainnet--Beta-8D8AFF?style=for-the-badge&logo=solana&logoColor=white" alt="Solana Mainnet" />
     <img src="https://img.shields.io/badge/Standard-Token--2022-14F195?style=for-the-badge" alt="Token-2022" />
@@ -23,7 +23,7 @@
   <p>
     🎬 <strong>Watch the 2-Minute Demo Video:</strong> <a href="https://youtu.be/pZI0qYkwNDg"><strong>https://youtu.be/pZI0qYkwNDg</strong></a>
     &nbsp;&nbsp;•&nbsp;&nbsp;
-    🌐 <strong>Live App:</strong> <a href="https://useslyz.vercel.app"><strong>useslyz.vercel.app</strong></a>
+    🌐 <strong>Live App:</strong> <a href="https://www.useslyz.xyz"><strong>www.useslyz.xyz</strong></a>
   </p>
 </div>
 
@@ -327,7 +327,7 @@ Slyz bridges two separate token ecosystems through a unified investment, portfol
     |--> Wallet signs --> Broadcast --> Confirmed on Solana Mainnet
     |
     +--> Generate claim URL:
-         https://useslyz.vercel.app/gift/claim#gift=<base64(payload+secretKey)>
+         https://www.useslyz.xyz/gift/claim#gift=<base64(payload+secretKey)>
          (secret key ONLY in URL hash -- never sent to any server)
 
   Recipient opens link --> connects wallet --> clicks "Claim"
@@ -421,12 +421,12 @@ Edit `.env.local`:
 
 ```env
 # Primary Solana RPC (Alchemy Mainnet recommended).
-# The Alchemy app MUST allowlist the deployed origin (e.g. https://useslyz.vercel.app),
+# The Alchemy app MUST allowlist the deployed origin (e.g. https://www.useslyz.xyz or https://useslyz.vercel.app),
 # otherwise both balance reads and transaction sends will fail.
 NEXT_PUBLIC_ALCHEMY_RPC_URL=https://solana-mainnet.g.alchemy.com/v2/YOUR_KEY
 
 # Public site URL (used for metadata and wallet origin verification)
-NEXT_PUBLIC_APP_URL=https://useslyz.vercel.app
+NEXT_PUBLIC_APP_URL=https://www.useslyz.xyz
 
 # Solana cluster
 NEXT_PUBLIC_SOLANA_NETWORK=mainnet-beta
@@ -513,11 +513,20 @@ slyz/
 | Principle | Implementation |
 |---|---|
 | **Non-Custodial** | Slyz never holds user funds or private keys. All transactions are built in the browser and signed by the user's wallet. |
-| **Databaseless Gifting** | Gift vault secret keys exist only in the URL hash fragment. They are never sent to Slyz servers, never stored in any database, and never logged. The entire gifting system runs without a backend database. |
+| **Cryptographic Escrow Gifting** | Gift vault ephemeral keys exist solely within the URL hash fragment (#gift=...). They are never transmitted over HTTP to any centralized server. Gift escrow is secured on-chain on Solana. |
 | **Preflight Simulation** | Every gift transaction is simulated before the wallet signature prompt. Simulation errors are parsed into human-readable messages for frozen accounts, paused transfers, insufficient balance, and hook failures. |
 | **Impact Guard** | PreStocks purchases enforce slippage limits and order size caps ($25 per leg) to protect against thin AMM liquidity. |
 | **Live Capability Verification** | On-chain multipliers and fee rates are read from the blockchain at runtime via `getParsedAccountInfo`, not assumed from static values. A pre-deploy verification script validates all 18 mints. |
 | **Vault Sponsorship** | Senders deposit 0.0035 SOL into the ephemeral vault to cover the recipient's ATA rent and claim fees. Recipients pay nothing. |
+
+---
+
+## Official Channels & Support
+
+- 🌐 **Official Website:** [https://www.useslyz.xyz](https://www.useslyz.xyz)
+- 📬 **Operations & Support:** [support@useslyz.xyz](mailto:support@useslyz.xyz)
+- 💬 **Telegram Community:** [@Useslyz](https://t.me/Useslyz)
+- 🐦 **X (Twitter):** [@UseSlyz](https://x.com/UseSlyz)
 
 ---
 

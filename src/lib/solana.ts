@@ -9,7 +9,7 @@ import { USDC_MINT, TOKEN_2022_PROGRAM_ID, MIN_SOL_BALANCE } from "./constants";
  * rate-limits (HTTP 429), and a silent failover to a throttled RPC produced fake
  * $0.00 balances with no visible error — a worse failure mode than an honest one.
  *
- * The Alchemy app MUST allowlist the deployed origin (e.g. https://useslyz.vercel.app),
+ * The Alchemy app MUST allowlist the deployed origin (e.g. https://www.useslyz.xyz or https://useslyz.vercel.app),
  * otherwise both balance reads and transaction sends fail.
  */
 const PRIMARY_RPC_URL =

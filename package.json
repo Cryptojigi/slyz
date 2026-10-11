@@ -15,6 +15,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/wallet-adapter-walletconnect": "^0.1.22",
     "@solana/web3.js": "^1.95.3",
+    "@supabase/supabase-js": "^2.117.3",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "framer-motion": "^11.5.4",

@@ -22,6 +22,7 @@ import {
   GiftClaimPayload,
   parseGiftClaimFromHash,
   executeClaimGift,
+  simulateClaimGift,
 } from "@/lib/gifting";
 import { GiftCountdownClock } from "@/components/GiftCountdownClock";
 
@@ -33,9 +34,11 @@ export default function GiftClaimPage() {
   const [mounted, setMounted] = useState(false);
   const [payload, setPayload] = useState<GiftClaimPayload | null>(null);
   const [isExpired, setIsExpired] = useState(false);
-  const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed" | "failed">("idle");
+  const [claimStatus, setClaimStatus] = useState<"idle" | "claiming" | "claimed" | "reclaimed" | "failed">("idle");
   const [claimTxSig, setClaimTxSig] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -48,9 +51,66 @@ export default function GiftClaimPage() {
           parsed.expiryTimestamp && parsed.expiryTimestamp > 0 && now >= parsed.expiryTimestamp
         );
         setIsExpired(expired);
+
+        // Fetch backend status to verify if already claimed or reclaimed
+        if (parsed.id) {
+          fetch(`/api/gifts/${parsed.id}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data?.gift?.status === "claimed") {
+                setClaimStatus("claimed");
+                if (data.gift.signature) {
+                  setClaimTxSig(data.gift.signature);
+                }
+              } else if (data?.gift?.status === "reclaimed") {
+                setClaimStatus("reclaimed");
+                if (data.gift.signature) {
+                  setClaimTxSig(data.gift.signature);
+                }
+              }
+            })
+            .catch(() => {});
+        }
       }
     }
   }, []);
+
+  // Pre-flight simulation check when wallet is connected
+  useEffect(() => {
+    if (!wallet.publicKey || !payload || isExpired || claimStatus === "claimed") {
+      setSimulationError(null);
+      setIsSimulating(false);
+      return;
+    }
+
+    let active = true;
+    setIsSimulating(true);
+    setSimulationError(null);
+
+    simulateClaimGift({
+      connection,
+      payload,
+      recipientPublicKey: wallet.publicKey,
+    })
+      .then((res) => {
+        if (!active) return;
+        setIsSimulating(false);
+        if (!res.success) {
+          setSimulationError(res.error || "Simulation failed");
+        } else {
+          setSimulationError(null);
+        }
+      })
+      .catch((err) => {
+        if (!active) return;
+        setIsSimulating(false);
+        setSimulationError(err?.message || "Simulation failed");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [connection, wallet.publicKey, payload, isExpired, claimStatus]);
 
   const handleExpireEvent = () => {
     setIsExpired(true);
@@ -66,6 +126,11 @@ export default function GiftClaimPage() {
 
     if (isExpired) {
       setErrorMessage("This gift link has expired and can no longer be claimed.");
+      return;
+    }
+
+    if (simulationError) {
+      setErrorMessage(simulationError);
       return;
     }
 
@@ -138,31 +203,25 @@ export default function GiftClaimPage() {
 
   const themeConfig = {
     gold: {
-      cardGlow: "shadow-[0_0_50px_rgba(245,166,35,0.12)] border-[#F5A623]/30",
-      accentBg: "bg-[#F5A623]/10 border-[#F5A623]/30 text-[#F5A623]",
-      badge: "pill-badge-purple",
+      accentBg: "bg-[#161B26] border-[#262D3D] text-white",
       btnGrad: "from-[#F5A623] to-[#D97706] text-[#0B0E14]",
     },
     lime: {
-      cardGlow: "shadow-[0_0_50px_rgba(205,224,106,0.12)] border-[#CDE06A]/30",
-      accentBg: "bg-[#CDE06A]/10 border-[#CDE06A]/30 text-[#CDE06A]",
-      badge: "pill-badge-lime",
+      accentBg: "bg-[#161B26] border-[#262D3D] text-white",
       btnGrad: "from-[#CDE06A] to-[#A8C738] text-[#0B0E14]",
     },
     purple: {
-      cardGlow: "shadow-[0_0_50px_rgba(141,138,255,0.12)] border-[#8D8AFF]/30",
-      accentBg: "bg-[#8D8AFF]/10 border-[#8D8AFF]/30 text-[#8D8AFF]",
-      badge: "pill-badge-purple",
+      accentBg: "bg-[#161B26] border-[#262D3D] text-white",
       btnGrad: "from-[#8D8AFF] to-[#6A66FF] text-white",
     },
   }[payload.theme || (isPrivate ? "gold" : "lime")];
 
   return (
-    <div className="max-w-lg mx-auto py-6 sm:py-10 px-4">
-      <div className={`rounded-3xl bg-[#161B26]/90 border ${themeConfig.cardGlow} backdrop-blur-xl p-6 sm:p-8 space-y-6 transition-all duration-500`}>
+    <div className="max-w-lg mx-auto py-4 sm:py-6 px-4">
+      <div className="rounded-3xl bg-[#161B26] border border-[#262D3D] p-6 sm:p-8 space-y-6">
         {/* Top Header Badge */}
         <div className="flex items-center justify-between">
-          <span className={`pill-badge ${themeConfig.badge} text-[10px]`}>
+          <span className="px-2.5 py-1 rounded-lg bg-[#0B0E14] border border-[#262D3D] text-[#8F9CAE] text-[10px] font-semibold uppercase tracking-wider">
             {isPrivate ? "Private Pre-IPO Equity Gift" : "Tokenized Equity Gift"}
           </span>
           <div className="flex items-center gap-1.5 text-xs text-[#8F9CAE]">
@@ -174,7 +233,7 @@ export default function GiftClaimPage() {
         {/* Central Visual: Expired vs Active Gift Card */}
         {isExpired ? (
           <div className="text-center space-y-4 py-4">
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/10">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
               <Clock className="w-8 h-8" />
             </div>
 
@@ -190,7 +249,7 @@ export default function GiftClaimPage() {
                 Unclaimed shares remain securely in the escrow vault.
               </p>
               {payload.note && (
-                <div className="p-3.5 rounded-2xl bg-[#0B0E14]/70 border border-white/5 max-w-sm mx-auto text-xs text-slate-300 italic mt-3">
+                <div className="p-3.5 rounded-2xl bg-[#0B0E14] border border-[#262D3D] max-w-sm mx-auto text-xs text-slate-300 italic mt-3">
                   &ldquo;{payload.note}&rdquo;
                 </div>
               )}
@@ -203,7 +262,7 @@ export default function GiftClaimPage() {
         ) : (
           <div className="text-center space-y-5 py-2">
             <div className="relative inline-block">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#0B0E14] border-2 border-[#CDE06A] shadow-xl shadow-[#CDE06A]/10 mx-auto flex items-center justify-center">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#0B0E14] border border-[#262D3D] mx-auto flex items-center justify-center">
                 {asset.logo ? (
                   <Image
                     src={asset.logo}
@@ -262,16 +321,37 @@ export default function GiftClaimPage() {
         )}
 
         {/* Error Notice */}
-        {errorMessage && (
+        {(errorMessage || simulationError) && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMessage}</span>
+            <span>{errorMessage || simulationError}</span>
           </div>
         )}
 
         {/* Claim Actions */}
         <div className="pt-2">
-          {claimStatus === "claimed" ? (
+          {claimStatus === "reclaimed" ? (
+            <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-center space-y-3">
+              <CheckCircle2 className="w-8 h-8 text-purple-400 mx-auto" />
+              <div>
+                <h4 className="font-bold text-white text-base">Gift Link Reclaimed & Void</h4>
+                <p className="text-xs text-[#8F9CAE]">
+                  The sender has already reclaimed these shares back to their wallet. This claim link is permanently inert.
+                </p>
+              </div>
+              {claimTxSig && (
+                <a
+                  href={`https://solscan.io/tx/${claimTxSig}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#8D8AFF] hover:underline font-mono"
+                >
+                  <span>View On-Chain Receipt on Solscan</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          ) : claimStatus === "claimed" ? (
             <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3">
               <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
               <div>
@@ -327,13 +407,25 @@ export default function GiftClaimPage() {
             <button
               type="button"
               onClick={handleClaim}
-              disabled={claimStatus === "claiming"}
-              className="w-full btn-primary !py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+              disabled={claimStatus === "claiming" || isSimulating || Boolean(simulationError)}
+              className={`w-full btn-primary !py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-lg ${
+                Boolean(simulationError) || isSimulating ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+              }`}
             >
               {claimStatus === "claiming" ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Transferring Shares to Wallet...</span>
+                </>
+              ) : isSimulating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Simulating Claim Transaction...</span>
+                </>
+              ) : simulationError ? (
+                <>
+                  <AlertCircle className="w-4 h-4 text-rose-400" />
+                  <span>Claim Unavailable</span>
                 </>
               ) : (
                 <>

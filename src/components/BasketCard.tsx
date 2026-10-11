@@ -68,7 +68,7 @@ export const BasketCard: React.FC<Props> = ({ basket, prices }) => {
           </div>
         ) : (
           <div className="p-5 sm:p-6 pb-0 flex items-center justify-between gap-2 mb-4 shrink-0">
-            <span className="pill-badge bg-[#1D2332] text-[#8F9CAE] border border-[#262D3D]">
+            <span className="px-2.5 py-1 rounded-lg bg-[#161B26] text-[#8F9CAE] border border-[#262D3D] text-[10px] font-semibold uppercase tracking-wider">
               {basket.category}
             </span>
             <div

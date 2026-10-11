@@ -357,9 +357,9 @@ export function LiquidationModal({
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#262D3D] flex items-center justify-between shrink-0">
           <div>
-            <span className="pill-badge pill-badge-purple mb-1 text-[10px]">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8D8AFF] mb-1">
               {isSingleAsset ? "Single Stock Exit" : "Sequential Exit"}
-            </span>
+            </p>
             <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <span>
                 {isSingleAsset

@@ -18,9 +18,9 @@ import {
   ArrowRight,
   Wallet,
   Layers,
-  Flame,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
-import { useWalletBalances } from "@/context/WalletBalanceContext";
 import {
   VERIFIED_STOCKS,
   CURATED_BASKETS,
@@ -40,6 +40,7 @@ import {
 } from "@/lib/portfolio";
 import { GiftStockModal } from "@/components/GiftStockModal";
 import { getStoredSentGifts, SentGiftRecord } from "@/lib/gifting";
+import { getOrSignWalletAuth } from "@/lib/walletAuthClient";
 import { GiftCountdownClock } from "@/components/GiftCountdownClock";
 
 export default function GiftHubPage() {
@@ -61,7 +62,8 @@ export default function GiftHubPage() {
   const [selectedStockSymbol, setSelectedStockSymbol] = useState<string | null>(null);
   const [sentGifts, setSentGifts] = useState<SentGiftRecord[]>([]);
   const [copiedGiftId, setCopiedGiftId] = useState<string | null>(null);
-  const [vaultFilter, setVaultFilter] = useState<"all" | "active" | "claimed" | "expired">("all");
+  const [vaultFilter, setVaultFilter] = useState<"all" | "active" | "claimed" | "expired" | "drafts">("all");
+  const [loadingGifts, setLoadingGifts] = useState(false);
 
   // Load cached prices and sent gifts on mount
   useEffect(() => {
@@ -96,11 +98,86 @@ export default function GiftHubPage() {
     }
   }, [wallet.publicKey]);
 
+  // Load Sent Gifts from Supabase with wallet authentication
+  const loadSentGifts = useCallback(async () => {
+    if (!wallet.publicKey) {
+      setSentGifts([]);
+      return;
+    }
+    setLoadingGifts(true);
+    try {
+      const authHeaders = await getOrSignWalletAuth(wallet);
+      if (!authHeaders) return;
+
+      const res = await fetch(`/api/gifts?sender=${wallet.publicKey.toBase58()}`, {
+        headers: authHeaders,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.gifts) {
+          const mapped: SentGiftRecord[] = data.gifts.map((g: any) => ({
+            id: g.id,
+            symbol: g.symbol,
+            shareAmount: g.rawAmount ? Number(g.rawAmount) / 1e8 : 0,
+            rawAmountString: g.rawAmount,
+            estimatedUsd: g.estimatedUsd,
+            senderName: "You",
+            senderPublicKey: g.sender,
+            deliveryType: "link",
+            claimUrl: g.claimUrl,
+            vaultPublicKey: g.vault,
+            secretKeyBase58: g.secretKeyBase58,
+            txSignature: g.signature || "",
+            createdAt: new Date(g.createdAt).getTime(),
+            unlockTimestamp: g.unlockAt ? Math.floor(new Date(g.unlockAt).getTime() / 1000) : 0,
+            expiryTimestamp: g.expiresAt ? Math.floor(new Date(g.expiresAt).getTime() / 1000) : 0,
+            status: g.status,
+            theme: "gold",
+            note: g.note || "",
+          }));
+          setSentGifts(mapped);
+          try {
+            localStorage.setItem("slyz_sent_gifts", JSON.stringify(mapped));
+          } catch {}
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to retrieve remote gift records:", err);
+      setSentGifts(getStoredSentGifts());
+    } finally {
+      setLoadingGifts(false);
+    }
+  }, [wallet.publicKey, wallet.signMessage]);
+
   useEffect(() => {
     loadData();
     const interval = setInterval(loadData, 25000);
     return () => clearInterval(interval);
   }, [loadData]);
+
+  useEffect(() => {
+    if (wallet.connected && wallet.publicKey) {
+      loadSentGifts();
+    }
+  }, [wallet.connected, wallet.publicKey, loadSentGifts]);
+
+  // Discard draft awaiting signature
+  const handleDiscardDraft = async (id: string) => {
+    try {
+      const authHeaders = await getOrSignWalletAuth(wallet);
+      if (!authHeaders) return;
+      const res = await fetch(`/api/gifts?id=${id}`, {
+        method: "DELETE",
+        headers: authHeaders,
+      });
+      if (res.ok) {
+        setSentGifts((prev) => prev.filter((g) => g.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to discard draft:", err);
+    }
+  };
 
   // Derive user positions
   const storedBaskets = mounted ? getStoredBaskets() : [];
@@ -126,19 +203,22 @@ export default function GiftHubPage() {
     setTimeout(() => setCopiedGiftId(null), 2500);
   };
 
-  // Filtered sent gifts based on expiration
+  // Filtered sent gifts based on expiration & status
   const nowSec = Math.floor(Date.now() / 1000);
   const filteredGifts = sentGifts.filter((g) => {
     const isExpired = g.expiryTimestamp > 0 && g.expiryTimestamp <= nowSec && g.status !== "claimed";
-    const isActive = (g.expiryTimestamp === 0 || g.expiryTimestamp > nowSec) && g.status !== "claimed";
+    const isActive = (g.status === "funded" || g.status === "submitted") && (g.expiryTimestamp === 0 || g.expiryTimestamp > nowSec);
+    const isDraft = g.status === "awaiting_signature";
+
     if (vaultFilter === "active") return isActive;
     if (vaultFilter === "claimed") return g.status === "claimed";
     if (vaultFilter === "expired") return isExpired;
+    if (vaultFilter === "drafts") return isDraft;
     return true;
   });
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-12">
+    <div className="space-y-8 max-w-6xl mx-auto pb-4">
       {/* Top Banner / Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#161B26] via-[#10141D] to-[#0B0E14] border border-[#262D3D] p-6 sm:p-10 shadow-2xl">
         <div className="absolute -right-16 -top-16 w-80 h-80 bg-[#CDE06A]/10 rounded-full blur-3xl pointer-events-none" />
@@ -153,8 +233,8 @@ export default function GiftHubPage() {
               </span>
             </h1>
             <p className="text-sm text-[#8F9CAE] leading-relaxed">
-              Surprise friends or family with fractional shares of Apple, Tesla, Nvidia, SpaceX, or OpenAI.
-              Generate a secure claim link with custom expiration (7–30 mins or custom duration up to 24 hrs) and sponsored zero-fee claiming.
+              Surprise friends or family with fractional shares of Apple, Tesla, or Nvidia.
+              Generate a non-custodial claim link with custom expiration and sponsored zero-fee claiming.
             </p>
           </div>
 
@@ -249,7 +329,7 @@ export default function GiftHubPage() {
                       setSelectedStockSymbol(pos.symbol);
                       setIsGiftModalOpen(true);
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-[#F5A623]/10 hover:bg-[#F5A623]/20 border border-[#F5A623]/30 hover:border-[#F5A623] text-[#F5A623] text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all active:scale-95 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-[#CDE06A]/10 hover:bg-[#CDE06A]/20 border border-[#CDE06A]/30 hover:border-[#CDE06A] text-[#CDE06A] text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all active:scale-95 cursor-pointer"
                   >
                     <Gift className="w-3.5 h-3.5" />
                     <span>Gift</span>
@@ -268,15 +348,25 @@ export default function GiftHubPage() {
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#F5A623]" />
               <h2 className="font-bold text-base text-white">Sent Gift Vaults & Status</h2>
+              {wallet.connected && (
+                <button
+                  onClick={loadSentGifts}
+                  disabled={loadingGifts}
+                  title="Refresh Gift Records"
+                  className="p-1 rounded-lg text-[#8F9CAE] hover:text-white transition-all cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingGifts ? "animate-spin" : ""}`} />
+                </button>
+              )}
             </div>
             <p className="text-xs text-[#8F9CAE] mt-0.5">
-              Track live countdowns, copy claim links, or view on-chain settlement.
+              Track live countdowns, copy claim links, or monitor on-chain settlement status.
             </p>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 bg-[#0B0E14] p-1 rounded-xl border border-[#262D3D]">
-            {(["all", "active", "claimed", "expired"] as const).map((filter) => (
+          {/* Filter Options */}
+          <div className="flex items-center gap-1.5 bg-[#0B0E14] p-1 rounded-xl border border-[#262D3D] flex-wrap">
+            {(["all", "active", "claimed", "expired", "drafts"] as const).map((filter) => (
               <button
                 key={filter}
                 onClick={() => setVaultFilter(filter)}
@@ -286,7 +376,7 @@ export default function GiftHubPage() {
                     : "text-[#8F9CAE] hover:text-white"
                 }`}
               >
-                {filter === "active" ? "Active Links" : filter}
+                {filter === "active" ? "Active Links" : filter === "drafts" ? "Drafts" : filter}
               </button>
             ))}
           </div>
@@ -325,7 +415,9 @@ export default function GiftHubPage() {
             {filteredGifts.map((gift) => {
               const asset = VERIFIED_STOCKS[gift.symbol];
               const isExpired = gift.expiryTimestamp > 0 && gift.expiryTimestamp <= nowSec && gift.status !== "claimed";
-              const isActive = (gift.expiryTimestamp === 0 || gift.expiryTimestamp > nowSec) && gift.status !== "claimed";
+              const isActive = (gift.status === "funded" || gift.status === "submitted") && (gift.expiryTimestamp === 0 || gift.expiryTimestamp > nowSec);
+              const isDraft = gift.status === "awaiting_signature";
+              const isUnknown = gift.status === "unknown";
 
               return (
                 <div
@@ -355,9 +447,7 @@ export default function GiftHubPage() {
                           </span>
                         </div>
                         <span className="text-[11px] text-[#8F9CAE] font-mono block">
-                          ~{(gift.netShareAmount ?? gift.shareAmount).toFixed(4)} shares • {gift.recipientAddressOrDomain
-                            ? `Direct: ${gift.recipientAddressOrDomain.slice(0, 6)}...${gift.recipientAddressOrDomain.slice(-4)}`
-                            : "Claim Link Escrow"}
+                          {gift.note ? `"${gift.note}"` : "Claim Link Escrow"}
                         </span>
                       </div>
                     </div>
@@ -366,13 +456,25 @@ export default function GiftHubPage() {
                       className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide uppercase ${
                         gift.status === "claimed"
                           ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                          : gift.status === "reclaimed"
+                          ? "bg-purple-500/10 text-purple-400 border border-purple-500/30"
+                          : isDraft
+                          ? "bg-slate-500/10 text-slate-400 border border-slate-500/30"
+                          : isUnknown
+                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
                           : isExpired
                           ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
-                          : "bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/30"
+                          : "bg-[#CDE06A]/10 text-[#CDE06A] border border-[#CDE06A]/30"
                       }`}
                     >
                       {gift.status === "claimed"
                         ? "Claimed"
+                        : gift.status === "reclaimed"
+                        ? "Reclaimed"
+                        : isDraft
+                        ? "Not Sent"
+                        : isUnknown
+                        ? "Pending Confirm"
                         : isExpired
                         ? "Expired"
                         : "Active Link"}
@@ -395,7 +497,26 @@ export default function GiftHubPage() {
 
                   {/* Action Bar */}
                   <div className="flex items-center justify-between pt-2 border-t border-[#262D3D]/50 text-xs">
-                    {gift.claimUrl ? (
+                    {isDraft ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDiscardDraft(gift.id)}
+                        className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1.5 font-semibold cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Discard Draft</span>
+                      </button>
+                    ) : gift.status === "claimed" ? (
+                      <span className="text-xs text-[#8F9CAE] flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Settled & Void</span>
+                      </span>
+                    ) : gift.status === "reclaimed" ? (
+                      <span className="text-xs text-[#8F9CAE] flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Reclaimed & Destroyed</span>
+                      </span>
+                    ) : gift.claimUrl ? (
                       <button
                         type="button"
                         onClick={() => handleCopyLink(gift.id, gift.claimUrl!)}
@@ -414,67 +535,26 @@ export default function GiftHubPage() {
                         )}
                       </button>
                     ) : (
-                      <span className="text-xs text-[#8F9CAE]">Direct Transfer</span>
+                      <span className="text-xs text-[#8F9CAE]">Link Unavailable</span>
                     )}
 
-                    <a
-                      href={`https://solscan.io/tx/${gift.txSignature}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-[#8F9CAE] hover:text-white flex items-center gap-1"
-                    >
-                      <span>Solscan</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    {gift.txSignature && (
+                      <a
+                        href={`https://solscan.io/tx/${gift.txSignature}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-[#8F9CAE] hover:text-white flex items-center gap-1"
+                      >
+                        <span>Solscan</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
-
-      {/* How Non-Custodial Gifting Works */}
-      <div className="bento-card space-y-6">
-        <div className="space-y-1">
-          <span className="pill-badge pill-badge-lime">How It Works</span>
-          <h2 className="text-xl font-bold text-white">Non-Custodial Architecture</h2>
-          <p className="text-xs text-[#8F9CAE] max-w-xl">
-            Slyz Gifting uses client-side temporary keypairs, URL hash encoding, and zero-fee gas sponsorship.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl bg-[#0B0E14] border border-[#262D3D] space-y-3">
-            <div className="w-9 h-9 rounded-xl bg-[#CDE06A]/10 border border-[#CDE06A]/30 flex items-center justify-center text-[#CDE06A] font-bold text-sm">
-              1
-            </div>
-            <h3 className="font-bold text-white text-sm">Pick Stock & Set Expiration</h3>
-            <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Select any tokenized stock or pre-IPO share. Set how long the claim link remains valid before expiring (7–30 minutes, or a custom duration up to 24 hours).
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-[#0B0E14] border border-[#262D3D] space-y-3">
-            <div className="w-9 h-9 rounded-xl bg-[#8D8AFF]/10 border border-[#8D8AFF]/30 flex items-center justify-center text-[#8D8AFF] font-bold text-sm">
-              2
-            </div>
-            <h3 className="font-bold text-white text-sm">Share Secret URL Hash</h3>
-            <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              Your browser deposits the stock into a dedicated escrow keypair. The private key stays inside the URL hash fragment (#gift=...) and never touches any server.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-[#0B0E14] border border-[#262D3D] space-y-3">
-            <div className="w-9 h-9 rounded-xl bg-[#F5A623]/10 border border-[#F5A623]/30 flex items-center justify-center text-[#F5A623] font-bold text-sm">
-              3
-            </div>
-            <h3 className="font-bold text-white text-sm">Beneficiary Claims Before Expiry</h3>
-            <p className="text-xs text-[#8F9CAE] leading-relaxed">
-              The recipient opens the link, sees the expiration countdown timer, and claims their shares into any Solana wallet with sponsored zero-fee claiming.
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Gift Stock Modal */}
@@ -490,7 +570,7 @@ export default function GiftHubPage() {
           solBalance={balances.solBalance}
           onSuccess={() => {
             loadData();
-            setSentGifts(getStoredSentGifts());
+            loadSentGifts();
           }}
         />
       )}

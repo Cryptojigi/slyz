@@ -66,25 +66,25 @@ export function GiftCountdownClock({
 
   const themeStyles = {
     gold: {
-      boxBg: "bg-[#1D1B13]/80 border-[#F5A623]/30 text-[#F5A623]",
-      numberText: "text-[#FCD34D]",
-      labelText: "text-[#D97706]",
-      colonText: "text-[#F5A623]/60",
-      glow: "shadow-[0_0_25px_rgba(245,166,35,0.15)]",
+      boxBg: "bg-[#161B26] border-[#262D3D] text-[#8F9CAE]",
+      numberText: "text-white",
+      labelText: "text-[#8F9CAE]",
+      colonText: "text-[#262D3D]",
+      glow: "",
     },
     lime: {
-      boxBg: "bg-[#161B12]/80 border-[#CDE06A]/30 text-[#CDE06A]",
-      numberText: "text-[#E6F38E]",
-      labelText: "text-[#CDE06A]",
-      colonText: "text-[#CDE06A]/60",
-      glow: "shadow-[0_0_25px_rgba(205,224,106,0.15)]",
+      boxBg: "bg-[#161B26] border-[#262D3D] text-[#8F9CAE]",
+      numberText: "text-white",
+      labelText: "text-[#8F9CAE]",
+      colonText: "text-[#262D3D]",
+      glow: "",
     },
     purple: {
-      boxBg: "bg-[#171426]/80 border-[#8D8AFF]/30 text-[#8D8AFF]",
-      numberText: "text-[#B4B2FF]",
-      labelText: "text-[#8D8AFF]",
-      colonText: "text-[#8D8AFF]/60",
-      glow: "shadow-[0_0_25px_rgba(141,138,255,0.15)]",
+      boxBg: "bg-[#161B26] border-[#262D3D] text-[#8F9CAE]",
+      numberText: "text-white",
+      labelText: "text-[#8F9CAE]",
+      colonText: "text-[#262D3D]",
+      glow: "",
     },
   }[theme];
 
@@ -99,11 +99,11 @@ export function GiftCountdownClock({
 
   return (
     <div className={`flex flex-col items-center justify-center space-y-2.5 ${className}`}>
-      <div className={`flex items-center justify-center gap-1.5 sm:gap-3 p-3 sm:p-4 rounded-2xl border ${themeStyles.boxBg} ${themeStyles.glow} backdrop-blur-md`}>
+      <div className={`flex items-center justify-center gap-1.5 sm:gap-3 p-3 sm:p-4 rounded-xl border ${themeStyles.boxBg}`}>
         {units.map((unit, idx) => (
           <React.Fragment key={unit.label}>
             <div className="flex flex-col items-center min-w-[52px] sm:min-w-[64px]">
-              <div className="px-2 py-1.5 sm:py-2 rounded-xl bg-[#0B0E14]/90 border border-white/5 w-full flex items-center justify-center shadow-inner">
+              <div className="px-2 py-1.5 sm:py-2 rounded-lg bg-[#0B0E14] border border-[#262D3D] w-full flex items-center justify-center">
                 <span className={`font-mono text-2xl sm:text-3xl font-bold tracking-tight ${themeStyles.numberText}`}>
                   {unit.value}
                 </span>

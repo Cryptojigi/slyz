@@ -480,7 +480,7 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-4">
       {/* 1. Terminal Investor Header */}
       <div className="pb-4 sm:pb-6 border-b border-[#262D3D]">
         <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-tight break-words">
@@ -570,7 +570,7 @@ export default function DashboardPage() {
                     Source: prestocks.com/api/prestocks
                   </span>
                 </div>
-                <span className="pill-badge pill-badge-purple text-[10px]">
+                <span className="px-2.5 py-1 rounded-lg bg-[#161B26] border border-[#262D3D] text-[#8F9CAE] text-[10px] font-mono">
                   9 Decimals • Token-2022
                 </span>
               </div>
@@ -1274,11 +1274,7 @@ export default function DashboardPage() {
                   : "Tokenized pre-IPO economic exposure verified via https://prestocks.com/api/prestocks."}
               </p>
             </div>
-            <span
-              className={`pill-badge self-start sm:self-auto ${
-                marketFilter === "public" ? "pill-badge-lime" : "pill-badge-purple"
-              }`}
-            >
+            <span className="px-2.5 py-1 rounded-lg bg-[#161B26] border border-[#262D3D] text-[#8F9CAE] text-xs font-mono self-start sm:self-auto">
               {marketFilter === "public" ? `${PUBLIC_XSTOCK_COUNT} Curated xStocks` : "8 Verified PreStocks"}
             </span>
           </div>
@@ -1764,8 +1760,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Corner Version Tag */}
-      <div className="flex justify-end pt-2 pb-4">
-        <span className="pill-badge pill-badge-lime text-[10px] sm:text-xs">
+      <div className="flex justify-end pt-2 pb-2">
+        <span className="text-[11px] font-mono text-[#8F9CAE]">
           Terminal v1.0
         </span>
       </div>
@@ -1776,7 +1772,7 @@ export default function DashboardPage() {
           <div className="bg-[#161B26] border border-[#262D3D] rounded-2xl w-full max-w-lg p-6 space-y-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#262D3D] pb-4">
               <div>
-                <span className="pill-badge pill-badge-lime mb-1">Custom Weights</span>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#CDE06A] mb-1">Custom Weights</p>
                 <h3 className="text-xl font-bold text-white">
                   Customize {editingTheme.name}
                 </h3>
